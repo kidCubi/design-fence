@@ -1,6 +1,6 @@
 # design-fence
 
-A process for building software with an AI agent, installed into a project as a git submodule: how work moves from a request to `main` (`PROCESS.md`), the hooks that enforce what matters, and the skills that run it. Modelled on Brad Frost's bfw-process: rules in the repo, grounded in the design system, checked by hooks rather than by asking twice.
+A process for building software with an AI agent, installed into a project as a git submodule: how work moves from a request to `main` (`PROCESS.md`), the hooks that enforce what matters, and the skills that run it. Rules in the repo, grounded in the design system, checked by hooks rather than by asking twice.
 
 It is a [Claude Code plugin](https://code.claude.com/docs/en/plugins) loaded from the submodule's directory, plus files any agent can read (`AGENTS.md`, `PROCESS.md`) and a command line any tool or person can run.
 
