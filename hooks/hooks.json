@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/validate.mjs"], "timeout": 900}
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^mcp__.*__(figma_take_screenshot|figma_capture_screenshot|figma_get_component_image|get_screenshot)$",
+        "hooks": [
+          {"type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/screenshot-budget.mjs"]}
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {"type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/screenshot-budget.mjs"]}
+        ]
+      }
+    ]
+  }
+}

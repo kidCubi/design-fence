@@ -1,0 +1,11 @@
+{
+  "name": "design-fence",
+  "owner": {"name": "Yassine Bakiri"},
+  "plugins": [
+    {
+      "name": "design-fence",
+      "source": "./",
+      "description": "The design-fence process: skills ship, reflect and figma; validate and screenshot-budget hooks."
+    }
+  ]
+}
