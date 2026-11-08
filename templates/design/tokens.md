@@ -35,3 +35,4 @@ Which border, line and text tokens go on which surface, so a spec picks one that
 1. A semantic token aliases a primitive; it never holds a raw value.
 2. A component binds semantic (or component) tokens, never primitives and never raw values.
 3. A new token is added only when no existing role fits; the spec that needs it says why.
+4. A number variable is scoped to what it is for (gap, radius, font size, …), not to all uses: Figma's picker offers it only there, and the tokens export knows it is a size.

@@ -90,22 +90,24 @@ async function exported(options) {
     v('c2', 'border/strong', 'COLOR', {light: {type: 'VARIABLE_ALIAS', id: 'c1'}, dark: {r: 0.227, g: 0.227, b: 0.251, a: 0.5}}),
     v('s1', 'space/2', 'FLOAT', {one: 4}, ['GAP']),
     v('s2', 'font/weight-regular', 'FLOAT', {one: 400}, ['FONT_WEIGHT']),
+    v('s3', 'radius/sm', 'FLOAT', {one: 6}, ['ALL_SCOPES']),
+    v('m1', 'motion/out', 'EASING', {one: {type: 'CUSTOM_CUBIC_BEZIER', easingFunctionCubicBezier: {x1: 0.33000001, y1: 1, x2: 0.68, y2: 1}}}, ['ALL_SCOPES']),
   ];
   globalThis.figma = {
     variables: {
       getLocalVariablesAsync: async () => variables,
       getLocalVariableCollectionsAsync: async () => [
-        {variableIds: ['c1', 'c2'], modes: [{modeId: 'light', name: 'Light'}, {modeId: 'dark', name: 'Dark'}]},
-        {variableIds: ['s1', 's2'], modes: [{modeId: 'one', name: 'Mode 1'}]},
+        {name: 'Colors', variableIds: ['c1', 'c2'], modes: [{modeId: 'light', name: 'Light'}, {modeId: 'dark', name: 'Dark'}]},
+        {name: 'Sizing', variableIds: ['s1', 's2', 's3', 'm1'], modes: [{modeId: 'one', name: 'Mode 1'}]},
       ],
     },
   };
-  return tokens(options);
+  return tokens({px: ['radius/'], ...options});
 }
 
 test('tokens as W3C design tokens: groups, aliases, dimensions, the other modes', async () => {
   const result = await exported({format: 'dtcg'});
-  assert.equal(result.count, 4);
+  assert.equal(result.count, 6);
   assert.deepEqual(result.collisions, []);
   assert.deepEqual(JSON.parse(result.text), {
     surface: {
@@ -116,6 +118,8 @@ test('tokens as W3C design tokens: groups, aliases, dimensions, the other modes'
     },
     space: {2: {$type: 'dimension', $value: '4px'}},
     font: {'weight-regular': {$type: 'number', $value: 400}},
+    radius: {sm: {$type: 'dimension', $value: '6px'}},
+    motion: {out: {$type: 'cubicBezier', $value: [0.33, 1, 0.68, 1]}},
   });
   assert.equal(result.hash, fnv1a(result.text));
 });
@@ -124,8 +128,9 @@ test('tokens as CSS custom properties, and the hash alone', async () => {
   const css = await exported({format: 'css'});
   assert.equal(
     css.text,
-    ':root {\n  --surface-raised: #ffffff;\n  --border-strong: var(--surface-raised);\n  --space-2: 4px;\n  --font-weight-regular: 400;\n}\n\n' +
-      '[data-mode="Dark"] {\n  --surface-raised: #2a2a2e;\n  --border-strong: #3a3a4080;\n}\n',
+    ':root {\n  --surface-raised: #ffffff;\n  --border-strong: var(--surface-raised);\n  --space-2: 4px;\n  --font-weight-regular: 400;\n' +
+      '  --radius-sm: 6px;\n  --motion-out: cubic-bezier(0.33, 1, 0.68, 1);\n}\n\n' +
+      '[data-colors="dark"] {\n  --surface-raised: #2a2a2e;\n  --border-strong: #3a3a4080;\n}\n',
   );
   const only = await exported({format: 'css', hashOnly: true});
   assert.equal(only.text, undefined);

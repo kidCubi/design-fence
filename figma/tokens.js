@@ -3,26 +3,31 @@
  * variables as the text of the project's tokens file, run through the bridge
  * with `figma_execute`, as this file's text followed by
  *
- *     return await tokens({format: 'dtcg'});            // or 'css'
- *     return await tokens({format: 'dtcg', hashOnly: true});
+ *     return await tokens({format: 'dtcg', px: ['space/', 'radius/']});   // or 'css'
+ *     return await tokens({format: 'dtcg', px: […], hashOnly: true});
  *
  * It reads only, and returns `{format, count, hash, text, collisions}`:
  *
  * - `dtcg`: the W3C design-token format (JSON, two-space indented), one
- *   group per `/` of a variable's name, aliases as `{group.name}`, sizes as
- *   `px` dimensions (from the variable's scopes), the other modes of a
- *   collection under `$extensions["figma.modes"]`. For a project whose
- *   pipeline (Style Dictionary, …) builds its code tokens from it;
+ *   group per `/` of a variable's name, aliases as `{group.name}`, easings
+ *   as `cubicBezier`, the other modes of a collection under
+ *   `$extensions["figma.modes"]`. For a project whose pipeline (Style
+ *   Dictionary, …) builds its code tokens from it;
  * - `css`: custom properties on `:root` (`--surface-raised`), aliases as
- *   `var(…)`, the other modes under `[data-mode="<mode>"]`. For a project
- *   whose tokens file is that CSS;
+ *   `var(…)`, easings as `cubic-bezier(…)`, the other modes under
+ *   `[data-<collection>="<mode>"]`. For a project whose tokens file is
+ *   that CSS;
+ * - a number is a `px` size when its variable is scoped to sizes (gap,
+ *   radius, width and height, stroke, font size, …) or its name starts
+ *   with one of `px` (the prefixes `AGENTS.md` lists: a variable scoped to
+ *   all uses says nothing about its unit);
  * - `hash`: FNV-1a of `text`, as `design-fence hash <file>` computes it on
  *   the repo's copy: equal hashes, nothing to export, and the text need not
  *   come through the conversation (`hashOnly`);
  * - `collisions`: names that are both a token and a group (`a/b` and
  *   `a/b/c`), which the DTCG format cannot hold.
  */
-async function tokens({format = 'dtcg', hashOnly = false} = {}) {
+async function tokens({format = 'dtcg', px = [], hashOnly = false} = {}) {
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
   const variables = await figma.variables.getLocalVariablesAsync();
   const byId = Object.fromEntries(variables.map(v => [v.id, v]));
@@ -31,11 +36,14 @@ async function tokens({format = 'dtcg', hashOnly = false} = {}) {
     const part = v => Math.round(v * 255).toString(16).padStart(2, '0');
     return '#' + part(c.r) + part(c.g) + part(c.b) + (c.a !== undefined && c.a < 1 ? part(c.a) : '');
   };
+  const slug = text => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const typeOf = v => {
     if (v.resolvedType === 'COLOR') return 'color';
+    if (v.resolvedType === 'EASING') return 'cubicBezier';
     if (v.resolvedType === 'BOOLEAN') return 'boolean';
     if (v.resolvedType === 'STRING') return (v.scopes || []).includes('FONT_FAMILY') ? 'fontFamily' : 'string';
-    return (v.scopes || []).some(s => SIZES.includes(s)) ? 'dimension' : 'number';
+    const sized = (v.scopes || []).some(s => SIZES.includes(s)) || px.some(prefix => v.name.startsWith(prefix));
+    return sized ? 'dimension' : 'number';
   };
   const path = v => v.name.split('/');
   const plain = (v, value) => {
@@ -44,6 +52,12 @@ async function tokens({format = 'dtcg', hashOnly = false} = {}) {
       return target ? {alias: target} : {raw: 'library variable'};
     }
     if (v.resolvedType === 'COLOR') return {raw: hex(value)};
+    if (value && value.easingFunctionCubicBezier) {
+      const b = value.easingFunctionCubicBezier;
+      const points = [b.x1, b.y1, b.x2, b.y2].map(n => Math.round(n * 1000) / 1000);
+      return {raw: points, css: `cubic-bezier(${points.join(', ')})`};
+    }
+    if (value && typeof value === 'object') return {raw: JSON.stringify(value)};
     if (typeof value === 'number') {
       const n = Math.round(value * 1000) / 1000;
       return {raw: typeOf(v) === 'dimension' ? `${n}px` : n};
@@ -57,7 +71,7 @@ async function tokens({format = 'dtcg', hashOnly = false} = {}) {
       const v = byId[id];
       if (!v) continue;
       const modes = c.modes.map(m => ({mode: m.name, ...plain(v, v.valuesByMode[m.modeId])}));
-      entries.push({v, type: typeOf(v), modes});
+      entries.push({v, collection: c.name, type: typeOf(v), modes});
     }
   }
 
@@ -66,13 +80,13 @@ async function tokens({format = 'dtcg', hashOnly = false} = {}) {
 
   let text;
   if (format === 'css') {
-    const prop = v => '--' + v.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const value = m => (m.alias ? `var(${prop(m.alias)})` : String(m.raw));
+    const prop = v => '--' + slug(v.name);
+    const value = m => (m.alias ? `var(${prop(m.alias)})` : m.css || String(m.raw));
     const blocks = {':root': []};
     for (const e of entries) {
       blocks[':root'].push(`  ${prop(e.v)}: ${value(e.modes[0])};`);
       for (const m of e.modes.slice(1)) {
-        const selector = `[data-mode="${m.mode}"]`;
+        const selector = `[data-${slug(e.collection)}="${slug(m.mode)}"]`;
         (blocks[selector] = blocks[selector] || []).push(`  ${prop(e.v)}: ${value(m)};`);
       }
     }
