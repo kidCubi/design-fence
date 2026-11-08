@@ -16,7 +16,11 @@ After cloning: `git submodule update --init && node .agents/design-fence/install
 
 ## The design system
 
-<!-- Where its source of truth is (a Figma file, a package), how to read its catalog before writing (snapshot files, an MCP server), and what "not found" means here. With the design module (PROCESS.md, "The design module"): `design/index.md` first (its "Sources" says where components and icons come from); the Figma file (key, pages, where work in progress goes); the exporter; whether type is bound to variables or to text styles (the lint reads `no-text-style` on every text otherwise); the surface components are shown on; the component library, its Storybook and token-build commands. -->
+<!-- Where its source of truth is (a Figma file, a package), how to read its catalog before writing (the library's code and stories, an MCP server), and what "not found" means here. With the design module (PROCESS.md, "The design module"): `design/index.md` first (its "Sources" says where components and icons come from); the Figma file (key, pages, where work in progress goes); the tokens file and its format (`dtcg` for a pipeline such as Style Dictionary, or `css`); whether type is bound to variables or to text styles (the lint reads `no-text-style` on every text otherwise); the surface components are shown on; the component library and its token-build command. -->
+
+## Storybook
+
+<!-- With the design module: where it is (or "none yet": set up at the first component built, playbooks/component.md), its version, its run and build commands, where the library's stories go and the title they take (`Components/<Name>`), its decorators, whether stories link their designs (@storybook/addon-designs), its visual testing. When there are several, which one is the design system's. -->
 
 ## Commands
 

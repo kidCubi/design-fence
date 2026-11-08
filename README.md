@@ -17,8 +17,9 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 | `playbooks/reflect.md` | A review of the work just done against the project's bar; its verdict goes into each commit as a `Reflect:` line |
 | `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge |
 | `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
-| `bin/design-fence.mjs` | `check`, `commits`, `rules`, and `hook` for the git hooks |
+| `bin/design-fence.mjs` | `check`, `commits`, `rules`, `specs` (the design specs against Storybook), `hash` (a file's FNV-1a, against Figma's), and `hook` for the git hooks |
 | `figma/lint-gaps.js` | Design module: the Figma lint `figma_lint_design` does not make (unbound spacing, radius, stroke; default names; invisible borders; stale paints; descriptions; properties against the spec), run through the bridge |
+| `figma/tokens.js` | Design module: Figma's variables as the project's tokens file (W3C design tokens or CSS), or only its hash, run through the bridge |
 | `figma/sources.js` | Design module: what a Figma file's design system is made of (local components, library components in use with their keys, variables), for `design/index.md`, run once through the bridge |
 | `templates/` | `AGENTS.md`, `CLAUDE.md` (a pointer), `validate.json`, the CI workflow `design-fence.yml`; `design/`: the philosophy, the token rules, the index, the flows map and the component spec |
 | `ENFORCEMENT.md` | The ledger template: which rules are enforced, by what, and what green does not mean |
@@ -40,13 +41,19 @@ Nothing to install per agent: any agent that reads `AGENTS.md` (or a pointer to 
 
 ### The design module (optional)
 
-For a project designed in Figma and built from a Storybook component library: specs in the repo, Figma as the human's gate, a snapshot of Figma in the repo for agents to read, Storybook built from it, and a UX map beside them (`PROCESS.md`, "The design module").
+For a project designed in Figma and built from a Storybook component library: specs in the repo, Figma as the human's gate, Storybook built from the approved designs (set up at the first component if the project has none, adopted as it is if it has one), Figma's variables exported to the code's tokens file, and a UX map beside them (`PROCESS.md`, "The design module").
 
 ```sh
 node .agents/design-fence/install.mjs --design
 ```
 
-It adds `"design": {"dir": "design"}` to `.agents/validate.json` (rewriting it as two-space JSON) and the templates `design/PHILOSOPHY.md`, `tokens.md`, `index.md` and `flows.yml` the project does not have. Then follow `playbooks/start.md`: the foundation for a new project, the adoption for an existing one. Its checks on the snapshot are not shipped yet: see the ledger.
+It adds `"design": {"dir": "design"}` to `.agents/validate.json` (rewriting it as two-space JSON) and the templates `design/PHILOSOPHY.md`, `tokens.md`, `index.md` and `flows.yml` the project does not have. Then follow `playbooks/start.md`: the foundation for a new project, the adoption for an existing one. Once the project has Storybook, name its index and the library's folder in the section (`"storybookIndex": "storybook-static/index.json", "library": "./src/components/"`) and add `design-fence specs` to the checks:
+
+  ```json
+  {"name": "design specs", "when": ["design/components/**", "**/*.stories.*"], "run": "node .agents/design-fence/bin/design-fence.mjs specs"}
+  ```
+
+What happens in Figma stays advisory: see the ledger.
 
 ## What the project provides
 

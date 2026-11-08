@@ -1,13 +1,13 @@
 # The design of {{project}}: index
 
-The first file to read for anything users see: one line per piece, with where its spec, its Figma node and its story are. Read the specs and snapshot entries the work touches from here, not the whole folder, and not Figma.
+The first file to read for anything users see: one line per piece, with where its spec, its Figma node and its story are. Read the specs and the stories the work touches from here, not the whole folder, and not Figma.
 
-Statuses: `draft` (spec written, not approved), `approved` (the human approved it in Figma; snapshot exported), `built` (in the component library, with its stories), `as-is` (adopted from what existed, not yet reviewed).
+Statuses: `draft` (spec written, not approved), `approved` (the human approved it in Figma; its spec and Figma node are its record until it is built), `built` (in the component library, with its stories), `as-is` (adopted from what existed, not yet reviewed).
 
 ## Foundations
 
 - Philosophy: `PHILOSOPHY.md`
-- Tokens: rules `tokens.md`, values `snapshot/tokens.json`
+- Tokens: rules `tokens.md`, values in Figma, exported to <!-- the code's tokens file --> (`figma/tokens.js`)
 - Flows: `flows.yml`
 - Figma file: <!-- name and file key, pages -->
 
@@ -22,6 +22,6 @@ What the Figma file's design system is made of, from design-fence's `figma/sourc
 
 ## Components
 
-| Component | Status | Spec | Figma node | Story |
+| Component | Status | Spec | Figma node | Story (Storybook title) |
 |---|---|---|---|---|
 | | | `components/<name>.md` | | |

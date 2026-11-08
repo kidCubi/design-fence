@@ -4,7 +4,7 @@ status: draft            # draft | approved | built | as-is (design/index.md)
 figma: ""                # the component (set) node id
 figma_version: ""        # the Figma version the human approved
 approved_by: ""          # who said "good" at the gate
-story: ""                # the Storybook story id
+story: ""                # the Storybook title of its stories (Components/<Name>)
 ---
 
 # <Name>

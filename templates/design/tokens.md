@@ -1,6 +1,6 @@
 # The tokens of {{project}}: the rules
 
-The rules the tokens follow. The values live in Figma (variables); `snapshot/tokens.json` is their copy in the repo, written by the exporter only, and the code's tokens are generated from it. This file says how tokens are built and named, so that a new one is placed, not invented.
+The rules the tokens follow. The values live in Figma (variables); the code's tokens file (`AGENTS.md` names it) is their copy, written by the tokens export only (`figma/tokens.js`). This file says how tokens are built and named, so that a new one is placed, not invented.
 
 ## Layers
 
