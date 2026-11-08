@@ -8,13 +8,19 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 
 | | |
 |---|---|
-| `PROCESS.md` | The layers (project > process > personal), the non-negotiables, full and quick modes and their phases, what is enforced |
+| `PROCESS.md` | The layers (project > process > personal), the non-negotiables, where to start, full and quick modes and their phases, the design module, what is enforced |
+| `playbooks/start.md` | Which way in: the foundation of a new project, the adoption of an existing one, or which playbook a request needs |
+| `playbooks/design.md` | Design module: from a spec to a design approved by the human in Figma, exported to the repo |
+| `playbooks/component.md` | Design module: from an approved design to the component library and its stories |
+| `playbooks/flows.md` | Design module: the UX map (`design/flows.yml`): views, actions, paths, and the diagrams drawn from it |
 | `playbooks/ship.md` | Runs the phases: ground, ticket (GitHub issue), build, validate, visual check, human review, land, close; quick mode; an audit |
 | `playbooks/reflect.md` | A review of the work just done against the project's bar; its verdict goes into each commit as a `Reflect:` line |
 | `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge |
 | `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
 | `bin/design-fence.mjs` | `check`, `commits`, `rules`, and `hook` for the git hooks |
-| `templates/` | `AGENTS.md`, `CLAUDE.md` (a pointer), `validate.json`, the CI workflow `design-fence.yml` |
+| `figma/lint-gaps.js` | Design module: the Figma lint `figma_lint_design` does not make (unbound spacing, radius, stroke; default names; invisible borders; stale paints; descriptions; properties against the spec), run through the bridge |
+| `figma/sources.js` | Design module: what a Figma file's design system is made of (local components, library components in use with their keys, variables), for `design/index.md`, run once through the bridge |
+| `templates/` | `AGENTS.md`, `CLAUDE.md` (a pointer), `validate.json`, the CI workflow `design-fence.yml`; `design/`: the philosophy, the token rules, the index, the flows map and the component spec |
 | `ENFORCEMENT.md` | The ledger template: which rules are enforced, by what, and what green does not mean |
 
 ## Install in a project
@@ -31,6 +37,16 @@ The installer only adds what is missing (running it again changes nothing):
 - `CLAUDE.md`: a pointer to `AGENTS.md` and `PROCESS.md`, for Claude Code, which reads its own file. Another tool that does not read `AGENTS.md` gets the same two-line pointer in the file it reads.
 
 Nothing to install per agent: any agent that reads `AGENTS.md` (or a pointer to it) has the rules, and every commit it makes goes through the hooks.
+
+### The design module (optional)
+
+For a project designed in Figma and built from a Storybook component library: specs in the repo, Figma as the human's gate, a snapshot of Figma in the repo for agents to read, Storybook built from it, and a UX map beside them (`PROCESS.md`, "The design module").
+
+```sh
+node .agents/design-fence/install.mjs --design
+```
+
+It adds `"design": {"dir": "design"}` to `.agents/validate.json` (rewriting it as two-space JSON) and the templates `design/PHILOSOPHY.md`, `tokens.md`, `index.md` and `flows.yml` the project does not have. Then follow `playbooks/start.md`: the foundation for a new project, the adoption for an existing one. Its checks on the snapshot are not shipped yet: see the ledger.
 
 ## What the project provides
 
@@ -56,6 +72,7 @@ Nothing to install per agent: any agent that reads `AGENTS.md` (or a pointer to 
 
 ## Use
 
+- With the design module, start from `.agents/design-fence/playbooks/start.md`: it says which playbook a request needs.
 - Ask the agent to follow `.agents/design-fence/playbooks/ship.md` for a request or an issue ("quick" for a prototype, "status" for the audit), or `reflect.md` to review the work just done.
 - Commit as usual: the hooks run the checks and ask for the `Reflect:` line.
 - `node .agents/design-fence/bin/design-fence.mjs check` (`--all`, `--no-cache`, `--base <ref>`): the checks, by hand.

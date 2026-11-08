@@ -18,3 +18,8 @@ The last column matters most: a green check is easily read as "this complies" wh
 | "Not found" is a finding, filed as an issue | advisory | — | — |
 | Name what ran in every report | advisory | — | — |
 | End done or parked | advisory | — | — |
+| Design module: nothing passes the design gate without the human's word | advisory | — (the spec's `approved_by` is the author's word) | — |
+| Design module: no unbound value and no frame without auto-layout in Figma | advisory | `figma_lint_design` (design-system, layout, wcag) and `figma/lint-gaps.js`, run through the bridge (`playbooks/design.md`, step 3) | That the nodes not linted follow the rules, or the instances inside a node (linted with their own component); that what the lint does not know (effects, typography values outside a text style) is bound |
+| Design module: the snapshot is the exporter's, and matches Figma | advisory | the checksum of `playbooks/figma.md` | — |
+| Design module: every approved spec has its snapshot entry and its story | advisory | — | — |
+| Design module: no raw value in the code that a token covers | advisory, unless the project wires a check (a stylelint rule) | — | — |
