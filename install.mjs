@@ -4,7 +4,7 @@
  * convention at `.agents/design-fence`). Run from anywhere in the project,
  * once per clone:
  *
- *     node .agents/design-fence/install.mjs
+ *     node .agents/design-fence/install.mjs [--design]
  *
  * It only adds what is missing, so running it again changes nothing:
  *
@@ -14,7 +14,10 @@
  *   that read their own file rather than `AGENTS.md`;
  * - `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md` and the
  *   CI workflow `.github/workflows/design-fence.yml`: from the templates,
- *   for the project to fill in, if it has none.
+ *   for the project to fill in, if it has none;
+ * - with `--design`, the design module (PROCESS.md, "The design module"): a
+ *   `design` section in `.agents/validate.json` if it has none, and the
+ *   `design/` templates the project does not have.
  */
 
 import fs from 'node:fs';
@@ -55,15 +58,30 @@ export function withImports(text, relative) {
   return `${text}${text && !text.endsWith('\n') ? '\n' : ''}${text ? '\n' : ''}${missing.join('\n')}\n`;
 }
 
-function install(root) {
+/** The design module's templates (`templates/design/`), copied to its folder. */
+const DESIGN = ['PHILOSOPHY.md', 'tokens.md', 'index.md', 'flows.yml'];
+
+function install(root, {design = false} = {}) {
   const relative = relativeTo(root, HOME);
   const done = [];
   const write = (file, content) => {
     fs.mkdirSync(path.dirname(path.join(root, file)), {recursive: true});
     fs.writeFileSync(path.join(root, file), content);
-    done.push(file);
+    if (!done.includes(file)) {
+      done.push(file);
+    }
   };
   const template = name => fs.readFileSync(path.join(HOME, name), 'utf8');
+  const fill = (file, source) => {
+    if (!fs.existsSync(path.join(root, file))) {
+      write(
+        file,
+        template(source)
+          .replaceAll('{{project}}', path.basename(root))
+          .replaceAll('.agents/design-fence', relative),
+      );
+    }
+  };
 
   const claudePath = path.join(root, 'CLAUDE.md');
   const claude = fs.existsSync(claudePath) ? fs.readFileSync(claudePath, 'utf8') : '';
@@ -81,13 +99,17 @@ function install(root) {
     ['.github/workflows/design-fence.yml', 'templates/design-fence.yml'],
   ];
   for (const [file, source] of fresh) {
-    if (!fs.existsSync(path.join(root, file))) {
-      write(
-        file,
-        template(source)
-          .replaceAll('{{project}}', path.basename(root))
-          .replaceAll('.agents/design-fence', relative),
-      );
+    fill(file, source);
+  }
+
+  if (design) {
+    const config = JSON.parse(fs.readFileSync(path.join(root, '.agents/validate.json'), 'utf8'));
+    if (!config.design) {
+      config.design = {dir: 'design'};
+      write('.agents/validate.json', `${JSON.stringify(config, null, 2)}\n`);
+    }
+    for (const name of DESIGN) {
+      fill(`${config.design.dir ?? 'design'}/${name}`, `templates/design/${name}`);
     }
   }
 
@@ -104,7 +126,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     console.error('Run this inside the project (a git repository).');
     process.exit(2);
   }
-  const {done, hooks} = install(root);
+  const {done, hooks} = install(root, {design: process.argv.includes('--design')});
   console.log(done.length ? `Wrote: ${done.join(', ')}` : 'The project files are there: nothing to write.');
   if (hooks.state === 'other') {
     console.log(
@@ -114,5 +136,5 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
   } else {
     console.log(`Git hooks on: core.hooksPath ${hooks.wanted} (this clone).`);
   }
-  console.log('Commit CLAUDE.md, AGENTS.md, .agents/ and .github/workflows/design-fence.yml.');
+  console.log('Commit what it wrote.');
 }

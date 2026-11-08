@@ -128,6 +128,21 @@ test('install adds what is missing, turns the hooks on, and does nothing a secon
   assert.equal(fs.existsSync(path.join(root, '.claude')), false);
 });
 
+test('install --design adds the design module once, and keeps what the project has', () => {
+  const root = repository({checks: [NO_BAD]});
+  fs.mkdirSync(path.join(root, 'design'));
+  fs.writeFileSync(path.join(root, 'design/index.md'), 'ours\n');
+  const {target} = installed(root);
+  const run = () =>
+    execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
+  assert.match(run(), /Wrote: .agents\/validate.json, design\/PHILOSOPHY.md, design\/tokens.md, design\/flows.yml/);
+  const config = JSON.parse(fs.readFileSync(path.join(root, '.agents/validate.json'), 'utf8'));
+  assert.deepEqual(config, {checks: [NO_BAD], design: {dir: 'design'}});
+  assert.equal(fs.readFileSync(path.join(root, 'design/index.md'), 'utf8'), 'ours\n');
+  assert.match(fs.readFileSync(path.join(root, 'design/PHILOSOPHY.md'), 'utf8'), new RegExp(path.basename(root)));
+  assert.match(run(), /nothing to write/);
+});
+
 test('install leaves another hooks path alone, and says so', () => {
   const root = repository({checks: []});
   gitRun(root, 'config', 'core.hooksPath', '.husky');
@@ -240,5 +255,8 @@ test('the command line: check reports and fails, rules says whether the hooks ar
   assert.match(rules, /## Git hooks\n\nOff: run/);
   assert.match(rules, /- no bad: when src\/\*\*/);
   assert.match(rules, /Enforcement ledger/);
+  assert.match(rules, /## Design module\n\nOff\./);
+  fs.writeFileSync(path.join(root, '.agents/validate.json'), JSON.stringify({checks: [NO_BAD], design: {dir: 'ui'}}));
+  assert.match(cli('rules').stdout, /## Design module\n\nOn: read ui\/index.md first/);
   assert.equal(cli('commits').status, 2);
 });

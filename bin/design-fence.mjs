@@ -108,6 +108,11 @@ function rules(root) {
       (config
         ? (config.checks ?? []).map(c => `- ${c.name}: when ${[c.when].flat().join(', ')}`).join('\n')
         : 'None.'),
+    `## Design module\n\n${
+      config?.design
+        ? `On: read ${config.design.dir ?? 'design'}/index.md first; the way in is ${path.relative(root, HOME)}/playbooks/start.md.`
+        : 'Off.'
+    }`,
     read(path.join(root, '.agents/ENFORCEMENT.md')).trim(),
     'Now read AGENTS.md in full.',
   ];
