@@ -5,6 +5,8 @@
  *     design-fence check [--all] [--no-cache] [--base <ref>]   the project's checks on what changed
  *     design-fence commits <revs…>                             commits changing code with no Reflect line
  *     design-fence rules                                       the rules, the checks, the ledger, the hooks
+ *     design-fence specs                                       the design specs against Storybook's index
+ *     design-fence hash <file>                                 a file's FNV-1a, to compare with figma/tokens.js
  *     design-fence hook pre-commit | commit-msg <file> | pre-push   what the git hooks run
  *
  * Run from anywhere inside the project.
@@ -18,6 +20,7 @@ import {hooksState} from '../install.mjs';
 import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
+import {checkSpecs, readSpecs, readStories} from '../lib/specs.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ZERO = /^0+$/;
@@ -118,6 +121,33 @@ function rules(root) {
   ];
   console.log(parts.filter(Boolean).join('\n\n'));
   return 0;
+}
+
+function specs(root) {
+  const design = loadConfig(root)?.design;
+  if (!design) {
+    console.log(`The design module is off (no design section in ${CONFIG}).`);
+    return 0;
+  }
+  const all = readSpecs(root, design);
+  const stories = readStories(root, design);
+  const problems = checkSpecs(all, stories, design);
+  const against = stories ? `${stories.length} stories of ${design.storybookIndex}` : 'no Storybook index (design.storybookIndex)';
+  console.log(`${all.length} spec(s), against ${against}.`);
+  for (const problem of problems) {
+    console.log(`- ${problem}`);
+  }
+  return problems.length ? 1 : 0;
+}
+
+/** FNV-1a (32 bits) of a text, in hex: the same as figma/tokens.js computes in Figma. */
+export function fnv1a(text) {
+  let hash = 0x811c9dc5;
+  for (const byte of Buffer.from(text, 'utf8')) {
+    hash ^= byte;
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
 }
 
 const NEVER_SKIP = 'Fix the cause, not the check, and never skip the hooks (--no-verify).';
@@ -221,6 +251,11 @@ function main(argv) {
       return commits(root, args);
     case 'rules':
       return rules(root);
+    case 'specs':
+      return specs(root);
+    case 'hash':
+      console.log(fnv1a(fs.readFileSync(path.resolve(process.cwd(), args[0]), 'utf8')));
+      return 0;
     case 'hook':
       return hook(root, args);
     default:
