@@ -1,22 +1,21 @@
 # design-fence
 
-A process for building software with an AI agent, installed into a project as a git submodule: how work moves from a request to `main` (`PROCESS.md`), the hooks that enforce what matters, and the skills that run it. Rules in the repo, grounded in the design system, checked by hooks rather than by asking twice.
+A process for building software with AI agents, for any agent, any model and any person, installed into a project as a git submodule: how work moves from a request to `main` (`PROCESS.md`), the playbooks that run it, and the git hooks and CI that enforce what matters. Rules in the repo, grounded in the design system, checked at every commit rather than by asking twice.
 
-It is a [Claude Code plugin](https://code.claude.com/docs/en/plugins) loaded from the submodule's directory, plus files any agent can read (`AGENTS.md`, `PROCESS.md`) and a command line any tool or person can run.
+Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGENTS.md`, `PROCESS.md`, the playbooks); the enforcement is git (hooks every commit and push goes through) and CI; the checks are a command line any tool or person runs.
 
 ## What is in it
 
 | | |
 |---|---|
 | `PROCESS.md` | The layers (project > process > personal), the non-negotiables, full and quick modes and their phases, what is enforced |
-| `skills/ship` | Runs the phases: ground, ticket (GitHub issue), build, validate, visual check, human review, land, close; quick mode; an audit |
-| `skills/reflect` | A review of the work just done against the project's bar |
-| `skills/figma` | Working in Figma through the figma-console Desktop Bridge |
-| `hooks/validate.mjs` | Stop hook: the project's checks on what changed; sends the agent back while they fail (three attempts) |
-| `hooks/screenshot-budget.mjs` | One design-tool screenshot per phase; verify by reading properties instead |
-| `bin/design-fence.mjs` | `check`, `rules`, `phase`: the same checks and rules, outside Claude Code |
+| `playbooks/ship.md` | Runs the phases: ground, ticket (GitHub issue), build, validate, visual check, human review, land, close; quick mode; an audit |
+| `playbooks/reflect.md` | A review of the work just done against the project's bar; its verdict goes into each commit as a `Reflect:` line |
+| `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge |
+| `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
+| `bin/design-fence.mjs` | `check`, `commits`, `rules`, and `hook` for the git hooks |
+| `templates/` | `AGENTS.md`, `CLAUDE.md` (a pointer), `validate.json`, the CI workflow `design-fence.yml` |
 | `ENFORCEMENT.md` | The ledger template: which rules are enforced, by what, and what green does not mean |
-| `templates/` | `AGENTS.md`, `CLAUDE.md`, `validate.json` for a new project |
 
 ## Install in a project
 
@@ -27,11 +26,11 @@ node .agents/design-fence/install.mjs
 
 The installer only adds what is missing (running it again changes nothing):
 
-- `.claude/settings.json`: design-fence as the project's plugin, from `./.agents/design-fence`. Each person trusts the folder once in Claude Code; then the skills (`/design-fence:ship`, …) and hooks load. Commit this file: check it is not ignored.
-- `CLAUDE.md`: imports `AGENTS.md` and `PROCESS.md`.
-- `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md`: templates to fill in, if the project has none.
+- the git hooks: `core.hooksPath` set to `.agents/design-fence/hooks` in this clone. Git does not share that setting: **every clone runs the installer once** (`git submodule update --init && node .agents/design-fence/install.mjs`), people and agents' sandboxes alike. If the clone already has a `core.hooksPath`, it is left alone and the installer says so.
+- `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md`, `.github/workflows/design-fence.yml`: templates to fill in, if the project has none.
+- `CLAUDE.md`: a pointer to `AGENTS.md` and `PROCESS.md`, for Claude Code, which reads its own file. Another tool that does not read `AGENTS.md` gets the same two-line pointer in the file it reads.
 
-A clone needs `git submodule update --init` (or `git clone --recurse-submodules`) for the plugin to be there.
+Nothing to install per agent: any agent that reads `AGENTS.md` (or a pointer to it) has the rules, and every commit it makes goes through the hooks.
 
 ## What the project provides
 
@@ -46,28 +45,37 @@ A clone needs `git submodule update --init` (or `git clone --recurse-submodules`
       {"name": "format", "when": ["src/**/*.{js,css}"], "run": "npx --yes prettier@3.3.3 --check {files}"},
       {"name": "tests", "when": "src/**", "run": "node --test test/*.test.js"}
     ],
+    "reflect": {"when": ["src/**", "test/**"]},
     "visual": {"run": "node e2e/visualCheck.mjs"}
   }
   ```
 
-  `node` is the major version the checks need: they run with the first Node found that has it (the running one, `DESIGN_FENCE_NODE`, nvm's, the usual places), whatever `node` the hook was started with. `base`: commits since it count as changed too. `{files}`: the matched files that exist, relative to the check's `cwd`. `visual` is run by `ship` in phase 6, not by the hook. A check that passed on the same contents is not run again.
+  `node` is the major version the checks need: they run with the first Node found that has it (the running one, `DESIGN_FENCE_NODE`, nvm's, the usual places). `base`: commits since it count as changed too. `{files}`: the matched files that exist, relative to the check's `cwd`. `reflect.when`: the files a commit must carry a `Reflect:` line for (by default every file but Markdown and plain text). `visual` is run by `ship.md` in phase 6, not by a hook. A check that passed on the same contents is not run again.
 - **`.agents/ENFORCEMENT.md`**: the ledger, with the project's own rows.
+- **The CI workflow**: the project's own setup steps (dependencies) for its checks.
 
 ## Use
 
-- `/design-fence:ship <request or #issue>`, `/design-fence:ship quick <request>`, `/design-fence:ship status`.
-- `node .agents/design-fence/bin/design-fence.mjs check` (`--all`, `--no-cache`): the checks, by hand or from another tool.
-- `node .agents/design-fence/bin/design-fence.mjs rules`: the rules for an agent that did not load `AGENTS.md`.
+- Ask the agent to follow `.agents/design-fence/playbooks/ship.md` for a request or an issue ("quick" for a prototype, "status" for the audit), or `reflect.md` to review the work just done.
+- Commit as usual: the hooks run the checks and ask for the `Reflect:` line.
+- `node .agents/design-fence/bin/design-fence.mjs check` (`--all`, `--no-cache`, `--base <ref>`): the checks, by hand.
+- `node .agents/design-fence/bin/design-fence.mjs commits origin/main..HEAD`: the commits that change code without a `Reflect:` line.
+- `node .agents/design-fence/bin/design-fence.mjs rules`: the rules, and whether the hooks are on, for an agent that did not load `AGENTS.md`.
 
 ## Update
 
 ```sh
 git submodule update --remote .agents/design-fence
+node .agents/design-fence/install.mjs
 git commit -am "chore: design-fence <version>"
 ```
 
 Changes to how to work anywhere go here, as a change to this repository; what is specific to one project goes into that project's `AGENTS.md`.
 
+### From 0.1 (a Claude Code plugin)
+
+0.2 drops the plugin: the skills are playbooks, the Stop hook is the pre-commit hook, and the screenshot budget is advice. In the project: delete design-fence's plugin entries from `.claude/settings.json`, run the installer (it turns the git hooks on and adds the CI workflow), and replace `/design-fence:ship` and `/design-fence:reflect` in `AGENTS.md` by the playbooks' paths.
+
 ## Develop
 
-`node --test test/*.test.mjs` (Node 20 or newer). To try the plugin without installing: `claude --plugin-dir path/to/design-fence`.
+`node --test test/*.test.mjs` (Node 20 or newer).

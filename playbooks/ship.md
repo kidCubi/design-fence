@@ -1,22 +1,18 @@
----
-name: ship
-description: "Take a piece of work from a request to the default branch, through the phases of design-fence's PROCESS.md: ground, ticket (a GitHub issue), build, validate, visual check, human review, land, close. Use to do a request or an issue end to end, to turn a request into a ticket only, to land and close finished work, for a quick (prototype) run, or to audit that issues match what is on the default branch."
-argument-hint: "<request or #issue> | ticket <request> | quick <request> | land | status"
----
-
 # Ship: from a request to the default branch
 
-This skill runs the phases of `PROCESS.md` (design-fence). The project's `AGENTS.md` gives everything specific: the repository, the default branch, labels, commands, the design system and how to read it. Read both before starting if they are not already in context; if unsure they were loaded, run `node .agents/design-fence/bin/design-fence.mjs rules`.
+A playbook for any agent or person: take a piece of work from a request to the default branch, through the phases of `PROCESS.md` (ground, ticket, build, validate, visual check, human review, land, close). Use it to do a request or an issue end to end, to turn a request into a ticket only, to land and close finished work, for a quick (prototype) run, or to audit that issues match what is on the default branch.
 
-**Record each phase as you enter it:** `node .agents/design-fence/bin/design-fence.mjs phase <name>` (`ground`, `ticket`, `build`, `validate`, `visual`, `review`, `land`). The per-phase budgets (one design-tool screenshot) count against it.
+The project's `AGENTS.md` gives everything specific: the repository, the default branch, labels, commands, the design system and how to read it. Read both before starting if they are not already in context; if unsure they were loaded, run `node .agents/design-fence/bin/design-fence.mjs rules`, which also says whether the git hooks are on.
 
 ## What to run
 
-- `<request>` or `#<n>`: full mode, from wherever the work is to landed and closed.
-- `ticket <request>`: phases 1 to 3 only.
-- `quick <request>`: quick mode (below).
-- `land`: phase 8 for finished work on the current branch.
-- `status`: the audit at the end.
+The request says which:
+
+- a request or `#<n>`: full mode, from wherever the work is to landed and closed;
+- "ticket" and a request: phases 1 to 3 only;
+- "quick" and a request: quick mode (below);
+- "land": phase 8 for finished work on the current branch;
+- "status": the audit at the end.
 
 Stance: run without stopping for approval between phases. Ask only when a wrong guess is expensive (`PROCESS.md`, non-negotiable 7). Otherwise choose, write the choice where it will be read (the issue's "Open questions"), and go on. One summary at the end.
 
@@ -53,15 +49,15 @@ Plain words, the user's own vocabulary, full sentences. Label it ready, or block
 2. Re-read the issue and the code it names: the default branch moves.
 3. Compose from the design system: its components and recipes, its tokens. Nothing hand-rolled that it covers; nothing new in the interface without a design-system counterpart (`AGENTS.md`).
 4. Write in the style of the neighbouring code, with tests the way neighbouring logic is tested, and the docs `AGENTS.md` names updated in the same change.
-5. For anything beyond a small change, review it as the `reflect` skill does and apply what it recommends.
+5. Review it as `playbooks/reflect.md` says, and apply what it recommends. Its verdict goes into each commit of the change as a `Reflect:` line (phase 8); review again when the change moves on after it.
 
 ## 5. Validate
 
-`node .agents/design-fence/bin/design-fence.mjs check`. The Stop hook runs the same checks and sends you back while they fail; run it yourself before committing so the hook has nothing to say. Fix the cause, never the check. If a check cannot pass for a reason outside the work, say so plainly; do not report it as passed.
+`node .agents/design-fence/bin/design-fence.mjs check`. The pre-commit hook runs the same checks and refuses the commit while they fail; run it yourself first so the hook has nothing to say. Fix the cause, never the check, and never skip the hooks (`--no-verify`). If a check cannot pass for a reason outside the work, say so plainly; do not report it as passed.
 
 ## 6. Visual check (anything users see)
 
-Run the project's `visual` command (`.agents/validate.json`), which drives the real app and saves screenshots. Check each acceptance point that has a look, and that the console shows no new error. One set of screenshots for the human at the end of this phase; within it, check values (computed sizes, colours, the design file's properties), not pictures.
+Run the project's `visual` command (`.agents/validate.json`), or check as `AGENTS.md` says when it has none: drive the real app, check each acceptance point that has a look, and that the console shows no new error. One set of screenshots for the human at the end of this phase; within it, check values (computed sizes, colours, the design file's properties), not pictures.
 
 ## 7. Human review
 
@@ -69,18 +65,18 @@ Show the human what changed and the screenshots, and wait for their word: good, 
 
 ## 8. Land and close
 
-1. Commit on the ticket branch: conventional prefix, `(#<n>)`, a body saying what changed and why, the session's attribution line. One ticket may be several commits; never mix tickets in one.
+1. Commit on the ticket branch: conventional prefix, `(#<n>)`, a body saying what changed and why, the `Reflect:` line with the review's verdict, and the session's attribution line if the tool adds one. One ticket may be several commits; never mix tickets in one. The commit-msg hook refuses a commit that changes code without its `Reflect:` line.
 2. `git fetch --prune`. If the default branch moved, rebase the ticket's own unpushed commits on it and validate again.
-3. Land as `AGENTS.md` says (a fast-forward push, or a pull request). **Never force-push or rewrite the default branch.** If the push is refused, fetch and re-apply on top; if the branch was rewritten (the old tip is no longer an ancestor), stop and tell the user. If the permission system refuses the push, tell the user what to allow; do not look for another way in.
+3. Land as `AGENTS.md` says (a fast-forward push, or a pull request). The pre-push hook checks every pushed commit for its `Reflect:` line and runs the checks again. **Never force-push or rewrite the default branch.** If the push is refused, fetch and re-apply on top; if the branch was rewritten (the old tip is no longer an ancestor), stop and tell the user. If the tool's permissions refuse the push, tell the user what to allow; do not look for another way in.
 4. **Verify by content** on the remote default branch (`git cat-file -e origin/<branch>:<path>`, `git grep` for a function or a string). A hash or a "merged" label is not proof.
 5. **Close the issue** with a comment: the commit, and anything done differently from the ticket (`gh issue close <n> --comment "…"`).
 6. **Summary**, standing on its own: what landed and where, what was checked and how (name what ran), what was not, what differs from the ticket, and the issues filed for what is left. No open offers.
 
 ## Quick mode
 
-For a prototype, an exploration, a demonstration: phases 1, 4 and 5, on a `quick/<slug>` branch or a worktree, no issue unless asked, nothing landed on the default branch. The non-negotiables of `PROCESS.md` still hold. "Do it for real now" means full mode from phase 2 on what exists: a ticket that describes it, then build as refinement, not a rewrite.
+For a prototype, an exploration, a demonstration: phases 1, 4 and 5, on a `quick/<slug>` branch or a worktree, no issue unless asked, nothing landed on the default branch. The non-negotiables of `PROCESS.md` and the git hooks still hold. "Do it for real now" means full mode from phase 2 on what exists: a ticket that describes it, then build as refinement, not a rewrite.
 
-## Audit (`status`)
+## Audit (status)
 
 1. `git fetch --prune`. List open and recently closed issues, and what is on the remote default branch.
 2. For each issue, find the truth by content: work there → should be closed; not there → should be open.

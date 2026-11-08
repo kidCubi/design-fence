@@ -1,7 +1,7 @@
 /**
  * design-fence on a real (temporary) git repository: which checks run, the
- * cache of passes, and the two hooks as Claude Code calls them (a JSON
- * payload on stdin, the exit code and stderr as the verdict).
+ * cache of passes, the installer, and the git hooks as git runs them on a
+ * commit and a push.
  */
 
 import assert from 'node:assert/strict';
@@ -16,6 +16,7 @@ import {changedFiles} from '../lib/git.mjs';
 import {plan, runChecks} from '../lib/check.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const REFLECT = 'Reflect: holds the bar';
 
 /** A repository with one commit and the given validate.json. */
 function repository(config) {
@@ -33,6 +34,26 @@ function repository(config) {
   return root;
 }
 
+/** design-fence copied into a repository, as a submodule would put it, and installed. */
+function installed(root) {
+  const target = path.join(root, '.agents/design-fence');
+  fs.cpSync(HOME, target, {
+    recursive: true,
+    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
+  });
+  const output = execFileSync(process.execPath, [path.join(target, 'install.mjs')], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  return {target, output};
+}
+
+/** Runs git in `root`, returning `{status, output}` instead of throwing. */
+function gitRun(root, ...args) {
+  const result = spawnSync('git', ['-C', root, ...args], {encoding: 'utf8'});
+  return {status: result.status, output: `${result.stdout}${result.stderr}`};
+}
+
 // A check that fails when a changed file contains "bad".
 const NO_BAD = {
   name: 'no bad',
@@ -40,14 +61,6 @@ const NO_BAD = {
   cwd: 'src',
   run: `node -e "const fs=require('fs');process.exit(process.argv.slice(1).some(f=>fs.readFileSync(f,'utf8').includes('bad'))?1:0)" {files}`,
 };
-
-function hook(script, root, payload) {
-  return spawnSync(process.execPath, [path.join(HOME, 'hooks', script)], {
-    cwd: root,
-    input: JSON.stringify({cwd: root, session_id: 's1', ...payload}),
-    encoding: 'utf8',
-  });
-}
 
 test('only checks whose files changed run, on those files', () => {
   const root = repository({checks: [NO_BAD, {name: 'other', when: 'docs/**', run: 'true'}]});
@@ -70,6 +83,7 @@ test('commits since the base count as changed', () => {
   assert.deepEqual(changedFiles(root), []);
   assert.deepEqual(changedFiles(root, 'base'), ['src/c.js']);
   assert.deepEqual(changedFiles(root, 'no-such-ref'), []);
+  assert.deepEqual(runChecks(root, {base: 'base'}).results, []);
 });
 
 test('a deleted file triggers its check but is not passed to it', () => {
@@ -91,63 +105,124 @@ test('a pass is not run again on the same contents', () => {
   assert.deepEqual(runChecks(root).results.map(r => [r.ok, r.cached]), [[false, false]]);
 });
 
-test('the Stop hook blocks while a check fails, then gives up after three tries', () => {
-  const root = repository({checks: [NO_BAD]});
-  assert.equal(hook('validate.mjs', root, {hook_event_name: 'Stop'}).status, 0);
-  fs.writeFileSync(path.join(root, 'src/a.js'), 'bad\n');
-  for (const attempt of [1, 2, 3]) {
-    const result = hook('validate.mjs', root, {hook_event_name: 'Stop'});
-    assert.equal(result.status, 2);
-    assert.match(result.stderr, new RegExp(`attempt ${attempt} of 3`));
-    assert.match(result.stderr, /## no bad/);
-  }
-  const fourth = hook('validate.mjs', root, {hook_event_name: 'Stop'});
-  assert.equal(fourth.status, 0);
-  assert.match(JSON.parse(fourth.stdout).systemMessage, /still failing after 3 attempts: no bad/);
-  fs.writeFileSync(path.join(root, 'src/a.js'), 'good\n');
-  assert.equal(hook('validate.mjs', root, {hook_event_name: 'Stop'}).status, 0);
-});
-
-test('the Stop hook lets the agent stop where there is nothing to check', () => {
-  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'design-fence-none-'));
-  assert.equal(hook('validate.mjs', outside, {hook_event_name: 'Stop'}).status, 0);
-  const root = repository({checks: [NO_BAD]});
-  fs.rmSync(path.join(root, '.agents/validate.json'));
-  assert.equal(hook('validate.mjs', root, {hook_event_name: 'Stop'}).status, 0);
-});
-
-test('one screenshot per phase; a prompt or a new phase gives it back', () => {
+test('install adds what is missing, turns the hooks on, and does nothing a second time', () => {
   const root = repository({checks: []});
-  const shoot = () =>
-    hook('screenshot-budget.mjs', root, {
-      hook_event_name: 'PreToolUse',
-      tool_name: 'mcp__figma-console__figma_take_screenshot',
-    });
+  fs.rmSync(path.join(root, '.agents'), {recursive: true});
+  const {target, output} = installed(root);
+  assert.match(
+    output,
+    /Wrote: CLAUDE.md, AGENTS.md, .agents\/validate.json, .agents\/ENFORCEMENT.md, .github\/workflows\/design-fence.yml/,
+  );
+  assert.match(output, /Git hooks on: core.hooksPath .agents\/design-fence\/hooks/);
+  assert.equal(gitRun(root, 'config', '--get', 'core.hooksPath').output.trim(), '.agents/design-fence/hooks');
+  const again = execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
+  assert.match(again, /nothing to write/);
+  const claude = fs.readFileSync(path.join(root, 'CLAUDE.md'), 'utf8');
+  assert.match(claude, /^@AGENTS\.md$/m);
+  assert.match(claude, /^@\.agents\/design-fence\/PROCESS\.md$/m);
+  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), new RegExp(path.basename(root)));
+  assert.match(
+    fs.readFileSync(path.join(root, '.github/workflows/design-fence.yml'), 'utf8'),
+    /\.agents\/design-fence\/bin\/design-fence\.mjs commits/,
+  );
+  assert.equal(fs.existsSync(path.join(root, '.claude')), false);
+});
+
+test('install leaves another hooks path alone, and says so', () => {
+  const root = repository({checks: []});
+  gitRun(root, 'config', 'core.hooksPath', '.husky');
+  const {output} = installed(root);
+  assert.match(output, /Git hooks NOT on: core.hooksPath is already .husky/);
+  assert.equal(gitRun(root, 'config', '--get', 'core.hooksPath').output.trim(), '.husky');
+});
+
+test('a commit is refused while a check fails, and passes once fixed', () => {
+  const root = repository({checks: [NO_BAD]});
+  installed(root);
+  gitRun(root, 'add', '-A');
+  assert.equal(gitRun(root, 'commit', '-q', '-m', `chore: design-fence\n\n${REFLECT}`).status, 0);
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'bad\n');
+  gitRun(root, 'add', '-A');
+  const refused = gitRun(root, 'commit', '-q', '-m', `fix: a\n\n${REFLECT}`);
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.output, /the project's checks fail/);
+  assert.match(refused.output, /FAIL no bad/);
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'good\n');
+  gitRun(root, 'add', '-A');
+  assert.equal(gitRun(root, 'commit', '-q', '-m', `fix: a\n\n${REFLECT}`).status, 0);
+});
+
+test('a commit of code needs its Reflect line; prose does not', () => {
+  const root = repository({checks: []});
+  installed(root);
+  gitRun(root, 'add', '-A');
+  gitRun(root, 'commit', '-q', '-m', `chore: design-fence\n\n${REFLECT}`);
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'changed\n');
+  gitRun(root, 'add', '-A');
+  const refused = gitRun(root, 'commit', '-q', '-m', 'fix: a');
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.output, /changes src\/a\.js and its message has no Reflect line/);
+  assert.match(refused.output, /playbooks\/reflect\.md/);
+  assert.equal(gitRun(root, 'commit', '-q', '-m', `fix: a\n\n${REFLECT}`).status, 0);
+  fs.writeFileSync(path.join(root, 'README.md'), '# Notes\n');
+  gitRun(root, 'add', '-A');
+  assert.equal(gitRun(root, 'commit', '-q', '-m', 'docs: notes').status, 0);
+});
+
+test('commits lists those of code without a Reflect line; a push of one is refused', () => {
+  const root = repository({checks: []});
+  const remote = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'design-fence-remote-')));
+  execFileSync('git', ['init', '-q', '--bare', remote]);
+  gitRun(root, 'remote', 'add', 'origin', remote);
+  assert.equal(gitRun(root, 'push', '-q', 'origin', 'main').status, 0);
+  installed(root);
+  gitRun(root, 'add', '-A');
+  gitRun(root, 'commit', '-q', '-m', `chore: design-fence\n\n${REFLECT}`);
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'skipped\n');
+  gitRun(root, 'add', '-A');
+  // Made where the hooks did not run.
+  gitRun(root, 'commit', '-q', '--no-verify', '-m', 'fix: no review');
   const cli = (...args) =>
-    execFileSync(process.execPath, [path.join(HOME, 'bin/design-fence.mjs'), ...args], {
+    spawnSync(process.execPath, [path.join(root, '.agents/design-fence/bin/design-fence.mjs'), ...args], {
       cwd: root,
       encoding: 'utf8',
     });
-  assert.equal(shoot().status, 0);
-  const refused = shoot();
-  assert.equal(refused.status, 2);
-  assert.match(refused.stderr, /already had its screenshot/);
-  assert.equal(hook('screenshot-budget.mjs', root, {hook_event_name: 'UserPromptSubmit'}).status, 0);
-  assert.equal(shoot().status, 0);
-  assert.equal(shoot().status, 2);
-  cli('phase', 'build');
-  assert.equal(cli('phase').trim(), 'build');
-  assert.equal(shoot().status, 0);
-  assert.match(shoot().stderr, /\(build\)/);
-  // Another session has its own budget.
-  const other = hook('screenshot-budget.mjs', root, {
-    hook_event_name: 'PreToolUse',
-    session_id: 's2',
-  });
-  assert.equal(other.status, 0);
+  const listed = cli('commits', 'origin/main..HEAD');
+  assert.equal(listed.status, 1);
+  assert.match(listed.stdout, /fix: no review: changes src\/a\.js/);
+  assert.doesNotMatch(listed.stdout, /chore: design-fence/);
+  const pushed = gitRun(root, 'push', 'origin', 'main');
+  assert.notEqual(pushed.status, 0);
+  assert.match(pushed.output, /without a Reflect line/);
+  assert.match(pushed.output, /fix: no review/);
+  gitRun(root, 'commit', '-q', '--amend', '-m', `fix: reviewed\n\n${REFLECT}`);
+  assert.equal(cli('commits', 'origin/main..HEAD').status, 0);
+  assert.equal(gitRun(root, 'push', '-q', 'origin', 'main').status, 0);
 });
 
-test('the command line: check reports and fails, rules prints the ledger', () => {
+test('a first push to an empty remote asks nothing of the commits from before design-fence', () => {
+  const root = repository({checks: []});
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'older work, never reviewed\n');
+  gitRun(root, 'add', '-A');
+  gitRun(root, 'commit', '-q', '-m', 'feat: from before design-fence');
+  const remote = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'design-fence-empty-')));
+  execFileSync('git', ['init', '-q', '--bare', remote]);
+  gitRun(root, 'remote', 'add', 'origin', remote);
+  installed(root);
+  gitRun(root, 'add', '-A');
+  gitRun(root, 'commit', '-q', '-m', `chore: design-fence\n\n${REFLECT}`);
+  assert.equal(gitRun(root, 'push', '-q', 'origin', 'main').status, 0);
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'after, skipped\n');
+  gitRun(root, 'add', '-A');
+  gitRun(root, 'commit', '-q', '--no-verify', '-m', 'fix: no review');
+  gitRun(root, 'checkout', '-q', '-b', 'topic');
+  const pushed = gitRun(root, 'push', 'origin', 'topic');
+  assert.notEqual(pushed.status, 0);
+  assert.match(pushed.output, /fix: no review/);
+  assert.doesNotMatch(pushed.output, /from before design-fence/);
+});
+
+test('the command line: check reports and fails, rules says whether the hooks are on', () => {
   const root = repository({checks: [NO_BAD]});
   const cli = (...args) =>
     spawnSync(process.execPath, [path.join(HOME, 'bin/design-fence.mjs'), ...args], {
@@ -162,27 +237,8 @@ test('the command line: check reports and fails, rules prints the ledger', () =>
   fs.writeFileSync(path.join(root, '.agents/ENFORCEMENT.md'), '## Enforcement ledger\n| x |\n');
   const rules = cli('rules').stdout;
   assert.match(rules, /The non-negotiables/);
+  assert.match(rules, /## Git hooks\n\nOff: run/);
   assert.match(rules, /- no bad: when src\/\*\*/);
   assert.match(rules, /Enforcement ledger/);
-});
-
-test('install adds what is missing and nothing on a second run', () => {
-  const root = repository({checks: []});
-  fs.rmSync(path.join(root, '.agents'), {recursive: true});
-  const target = path.join(root, '.agents/design-fence');
-  fs.mkdirSync(path.dirname(target), {recursive: true});
-  fs.cpSync(HOME, target, {
-    recursive: true,
-    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
-  });
-  const run = () =>
-    execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
-  assert.match(run(), /Wrote: .claude\/settings.json, CLAUDE.md, AGENTS.md, .agents\/validate.json, .agents\/ENFORCEMENT.md/);
-  assert.match(run(), /Already installed/);
-  const claude = fs.readFileSync(path.join(root, 'CLAUDE.md'), 'utf8');
-  assert.match(claude, /^@AGENTS\.md$/m);
-  assert.match(claude, /^@\.agents\/design-fence\/PROCESS\.md$/m);
-  const settings = JSON.parse(fs.readFileSync(path.join(root, '.claude/settings.json'), 'utf8'));
-  assert.equal(settings.extraKnownMarketplaces['design-fence'].source.path, './.agents/design-fence');
-  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), new RegExp(path.basename(root)));
+  assert.equal(cli('commits').status, 2);
 });

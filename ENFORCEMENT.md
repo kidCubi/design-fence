@@ -9,8 +9,11 @@ The last column matters most: a green check is easily read as "this complies" wh
 
 | Rule | Status | By | What a green result does not mean |
 |---|---|---|---|
-| The project's checks pass on what changed | enforced | Stop hook → `design-fence check` (Claude Code); by hand elsewhere | That files the checks' `when` patterns do not match were checked; that a check passed on code it never ran on. After three failed attempts the hook lets the agent stop: it then says so in its report. |
-| One design-tool screenshot per phase | enforced | PreToolUse hook (Claude Code only) | That the result was verified: reading the design file's properties is what verifies it. Other tools have no hook. |
+| The project's checks pass on what changed | enforced | pre-commit hook → `design-fence check`; pre-push hook again; CI | That files the checks' `when` patterns do not match were checked. The hook checks the working tree, so what is committed may differ from what passed when only part of it is staged. |
+| A commit that changes code carries the reflect review's verdict (`Reflect:` line) | enforced | commit-msg hook; pre-push hook and CI on every pushed commit | That the review ran, or was thorough: the line is the author's word. Merge commits are not checked. |
+| The git hooks are on in every clone | advisory | `install.mjs` sets `core.hooksPath`; `design-fence rules` says when they are off; CI catches what they missed | — |
+| Never skip the hooks (`--no-verify`) | advisory | — (CI reports what a skipped hook would have refused) | — |
+| One design-tool screenshot per phase | advisory | — | — |
 | Ground before writing (read the code and the catalog, never memory) | advisory | — | — |
 | "Not found" is a finding, filed as an issue | advisory | — | — |
 | Name what ran in every report | advisory | — | — |

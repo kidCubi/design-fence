@@ -1,19 +1,13 @@
----
-name: reflect
-description: "Reflect on what was just implemented: re-read the change with fresh eyes, check it holds the project's bar on code structure and style, find hacks, and propose improvements. Use after finishing an implementation or a ticket, or when asked to reflect on, self-review or double-check the quality of the work just done."
-argument-hint: "[what to review: empty for the current work, or a branch, PR number or paths]"
----
-
 # Reflect on what was just implemented
 
-Step back from the work just done and judge it as a demanding reviewer of this codebase would: is it structured and written to the same bar as the code around it, with no hacks? Then propose improvements, if there are any.
+A playbook for any agent or person: step back from the work just done and judge it as a demanding reviewer of this codebase would: is it structured and written to the same bar as the code around it, with no hacks? Then propose improvements, if there are any. Run it after finishing an implementation or a ticket, before committing it: every commit that changes code carries this review's verdict as a `Reflect:` line, and the commit-msg hook refuses one without it.
 
-This is a review of structure and style, of your own work. It is not a bug hunt (`/code-review` does that) and it is not a place to defend earlier choices. If a choice made an hour ago now looks wrong, say so.
+This is a review of structure and style, of your own work. It is not a bug hunt (a separate code review does that) and it is not a place to defend earlier choices. If a choice made an hour ago now looks wrong, say so.
 
 ## 1. Establish what to review
 
-- With an argument: review that (a branch, a PR number via `gh pr diff`, or the given paths).
-- Without: review what this session implemented. Combine:
+- When named: review that (a branch, a pull request via `gh pr diff`, or the given paths).
+- Otherwise: review what this session implemented. Combine:
   - uncommitted work: `git status --short`, `git diff`, `git diff --staged`;
   - the commits of the current branch that are not on its base: `git log --oneline <base>..HEAD` and `git diff <base>...HEAD`. The base is the remote default branch (`AGENTS.md`). Fetch first (`git fetch --prune`). If the branch is stacked on another ticket branch, review only this ticket's commits. For work already on the default branch, review the commits named (`git show <commit>`).
 - If nothing was implemented, say so and stop.
@@ -85,5 +79,13 @@ Answer in this order:
 Rules for the report:
 
 - Be specific and honest. "No issues found" is a valid result when it is true; do not invent findings to look thorough, and do not soften real ones.
-- Do not change code in this step. Propose, then let the user choose. If they say to apply the improvements, apply them, re-run the tests and the format check, and say what changed.
-- Git: this skill reads only. Commits and pushes happen only when the user asks.
+- Do not change code in this step. Propose, then let the user choose (`playbooks/ship.md` applies what it recommends on its own). If improvements are applied, re-run the tests and the format check, say what changed, and review the result again: the verdict must be about the code being committed.
+- Git: this review reads only. Commits and pushes happen only when the user (or `ship.md`) asks.
+
+## 5. Record the verdict
+
+When the change is committed, its message carries the verdict on a line of its own:
+
+    Reflect: <the verdict, in a sentence: holds the bar, or what was found and done>
+
+The commit-msg hook refuses a commit that changes code without it, and the pre-push hook and CI check every pushed commit for it. The line is the author's word that the review ran on that commit: write what the review said, never a line for its own sake.

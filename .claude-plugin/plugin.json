@@ -1,6 +1,0 @@
-{
-  "name": "design-fence",
-  "description": "A process for building software with an AI agent: phases, rules, the Stop-hook checks and the per-phase screenshot budget.",
-  "version": "0.1.0",
-  "author": {"name": "Yassine Bakiri"}
-}

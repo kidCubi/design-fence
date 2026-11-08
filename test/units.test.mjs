@@ -4,7 +4,8 @@ import {test} from 'node:test';
 import {parseStatus} from '../lib/git.mjs';
 import {globToRegExp, matchesAny} from '../lib/glob.mjs';
 import {findNode, majorOf} from '../lib/node.mjs';
-import {withImports, withPlugin} from '../install.mjs';
+import {needingReview, reflectVerdict} from '../lib/reflect.mjs';
+import {withImports} from '../install.mjs';
 import {section} from '../bin/design-fence.mjs';
 
 test('** spans directories, * and ? stay within a name', () => {
@@ -49,17 +50,29 @@ test('findNode takes the running Node when it is recent enough, else none', () =
   assert.equal(findNode(undefined, [process.execPath]).version, process.version);
 });
 
-test('the plugin is added to settings once, keeping what is there', () => {
-  const settings = {permissions: {allow: ['Bash(ls)']}, enabledPlugins: {'x@y': true}};
-  const next = withPlugin(settings, '.agents/design-fence');
-  assert.deepEqual(next.permissions, settings.permissions);
-  assert.deepEqual(next.extraKnownMarketplaces['design-fence'], {
-    source: {source: 'directory', path: './.agents/design-fence'},
-  });
-  assert.equal(next.enabledPlugins['design-fence@design-fence'], true);
-  assert.equal(next.enabledPlugins['x@y'], true);
-  assert.deepEqual(withPlugin(next, '.agents/design-fence'), next);
-  assert.equal(settings.extraKnownMarketplaces, undefined);
+test('by default every file but prose needs the review', () => {
+  const files = ['README.md', 'doc/a.md', 'notes.txt', 'src/a.js', 'package.json', '.agents/x'];
+  assert.deepEqual(needingReview(files, null), ['src/a.js', 'package.json', '.agents/x']);
+  assert.deepEqual(needingReview(files, {checks: []}), ['src/a.js', 'package.json', '.agents/x']);
+});
+
+test("the project's reflect.when replaces the default", () => {
+  const config = {reflect: {when: ['src/**', 'doc/**']}};
+  assert.deepEqual(needingReview(['README.md', 'doc/a.md', 'src/a.js', 'x.js'], config), [
+    'doc/a.md',
+    'src/a.js',
+  ]);
+});
+
+test('the verdict of a Reflect line, on a line of its own', () => {
+  const message = 'feat: a thing (#3)\n\nWhy it changed.\n\nReflect: holds the bar; one magic number named\nCo-Authored-By: X\n';
+  assert.equal(reflectVerdict(message), 'holds the bar; one magic number named');
+  assert.equal(reflectVerdict('fix: x\n\nReflect:   spaced out  \n'), 'spaced out');
+  assert.equal(reflectVerdict('fix: x\n\nReflect:\n'), '');
+  assert.equal(reflectVerdict('fix: x\n\nReflect:    \n'), '');
+  assert.equal(reflectVerdict('fix: x\n\nWe Reflect: later\n'), '');
+  assert.equal(reflectVerdict('fix: x\n\n# Reflect: in a comment\n'), '');
+  assert.equal(reflectVerdict('fix: x'), '');
 });
 
 test('CLAUDE.md gains the imports it lacks, once', () => {

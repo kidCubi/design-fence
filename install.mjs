@@ -1,36 +1,48 @@
 #!/usr/bin/env node
 /**
  * Installs design-fence into the project holding it (as a submodule, by
- * convention at `.agents/design-fence`). Run from anywhere in the project:
+ * convention at `.agents/design-fence`). Run from anywhere in the project,
+ * once per clone:
  *
  *     node .agents/design-fence/install.mjs
  *
  * It only adds what is missing, so running it again changes nothing:
  *
- * - `.claude/settings.json`: design-fence as a plugin of the project, loaded
- *   from this directory (its skills and hooks), once the folder is trusted;
- * - `CLAUDE.md`: imports `AGENTS.md` and this `PROCESS.md`;
- * - `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md`: from the
- *   templates, for the project to fill in, if it has none.
+ * - the git hooks: `core.hooksPath` set to this directory's `hooks/`, in this
+ *   clone (git does not share it: every clone runs this once);
+ * - `CLAUDE.md`: a pointer to `AGENTS.md` and `PROCESS.md`, for the tools
+ *   that read their own file rather than `AGENTS.md`;
+ * - `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md` and the
+ *   CI workflow `.github/workflows/design-fence.yml`: from the templates,
+ *   for the project to fill in, if it has none.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-import {projectRoot} from './lib/git.mjs';
+import {git, projectRoot} from './lib/git.mjs';
 
 const HOME = path.dirname(fileURLToPath(import.meta.url));
-const NAME = 'design-fence';
 
-/** The settings with design-fence's marketplace and plugin added. */
-export function withPlugin(settings, relative) {
-  const next = structuredClone(settings);
-  next.extraKnownMarketplaces ??= {};
-  next.extraKnownMarketplaces[NAME] ??= {source: {source: 'directory', path: `./${relative}`}};
-  next.enabledPlugins ??= {};
-  next.enabledPlugins[`${NAME}@${NAME}`] ??= true;
-  return next;
+/** `path` relative to `root`, with `/` separators. */
+const relativeTo = (root, file) => path.relative(root, file).split(path.sep).join('/');
+
+/**
+ * Whether the project's git hooks are design-fence's: `{state, current,
+ * wanted}`, the state `on`, `off` (no hooks path set) or `other` (set to
+ * another directory, left alone).
+ */
+export function hooksState(root, home = HOME) {
+  const wanted = relativeTo(root, path.join(home, 'hooks'));
+  let current = '';
+  try {
+    current = git(root, ['config', '--get', 'core.hooksPath']).trim();
+  } catch {
+    // Not set.
+  }
+  const state = !current ? 'off' : path.resolve(root, current) === path.resolve(root, wanted) ? 'on' : 'other';
+  return {state, current, wanted};
 }
 
 /** CLAUDE.md with the two imports, added if missing. */
@@ -44,7 +56,7 @@ export function withImports(text, relative) {
 }
 
 function install(root) {
-  const relative = path.relative(root, HOME).split(path.sep).join('/');
+  const relative = relativeTo(root, HOME);
   const done = [];
   const write = (file, content) => {
     fs.mkdirSync(path.dirname(path.join(root, file)), {recursive: true});
@@ -52,16 +64,6 @@ function install(root) {
     done.push(file);
   };
   const template = name => fs.readFileSync(path.join(HOME, name), 'utf8');
-
-  const settingsFile = '.claude/settings.json';
-  const settingsPath = path.join(root, settingsFile);
-  const settings = fs.existsSync(settingsPath)
-    ? JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
-    : {};
-  const next = withPlugin(settings, relative);
-  if (JSON.stringify(next) !== JSON.stringify(settings)) {
-    write(settingsFile, `${JSON.stringify(next, null, 2)}\n`);
-  }
 
   const claudePath = path.join(root, 'CLAUDE.md');
   const claude = fs.existsSync(claudePath) ? fs.readFileSync(claudePath, 'utf8') : '';
@@ -76,13 +78,24 @@ function install(root) {
     ['AGENTS.md', 'templates/AGENTS.md'],
     ['.agents/validate.json', 'templates/validate.json'],
     ['.agents/ENFORCEMENT.md', 'ENFORCEMENT.md'],
+    ['.github/workflows/design-fence.yml', 'templates/design-fence.yml'],
   ];
   for (const [file, source] of fresh) {
     if (!fs.existsSync(path.join(root, file))) {
-      write(file, template(source).replaceAll('{{project}}', path.basename(root)));
+      write(
+        file,
+        template(source)
+          .replaceAll('{{project}}', path.basename(root))
+          .replaceAll('.agents/design-fence', relative),
+      );
     }
   }
-  return done;
+
+  const hooks = hooksState(root);
+  if (hooks.state === 'off') {
+    git(root, ['config', 'core.hooksPath', hooks.wanted]);
+  }
+  return {done, hooks};
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -91,10 +104,15 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     console.error('Run this inside the project (a git repository).');
     process.exit(2);
   }
-  const done = install(root);
-  console.log(done.length ? `Wrote: ${done.join(', ')}` : 'Already installed: nothing to do.');
-  console.log(
-    'Commit .claude/settings.json (check it is not ignored), CLAUDE.md, AGENTS.md and .agents/. ' +
-      'Each person trusts the folder once in Claude Code for the plugin to load.',
-  );
+  const {done, hooks} = install(root);
+  console.log(done.length ? `Wrote: ${done.join(', ')}` : 'The project files are there: nothing to write.');
+  if (hooks.state === 'other') {
+    console.log(
+      `Git hooks NOT on: core.hooksPath is already ${hooks.current}. Point it to ${hooks.wanted}, ` +
+        'or call its pre-commit, commit-msg and pre-push from your own hooks.',
+    );
+  } else {
+    console.log(`Git hooks on: core.hooksPath ${hooks.wanted} (this clone).`);
+  }
+  console.log('Commit CLAUDE.md, AGENTS.md, .agents/ and .github/workflows/design-fence.yml.');
 }

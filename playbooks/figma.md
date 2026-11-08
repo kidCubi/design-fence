@@ -1,11 +1,8 @@
----
-name: figma
-description: "Work in a Figma file through the figma-console Desktop Bridge: connect (and fix the connection), read and change nodes and variables, verify without screenshot loops, export the design system's snapshots, import images, capture HTML into Figma. Use before any Figma read or write, when the bridge is not connected, or when exporting variables or components to the repo."
----
-
 # Working in Figma
 
-The project's `AGENTS.md` names the file (file key, pages) and where its snapshots and exporters are. This skill is how to work in it.
+A playbook for any agent with the figma-console MCP server: connect (and fix the connection), read and change nodes and variables, verify without screenshot loops, export the design system's snapshots, import images, capture HTML into Figma. Use it before any Figma read or write, when the bridge is not connected, or when exporting variables or components to the repo.
+
+The project's `AGENTS.md` names the file (file key, pages) and where its snapshots and exporters are. This playbook is how to work in it.
 
 ## Connect first, over the bridge only
 
@@ -15,7 +12,7 @@ The project's `AGENTS.md` names the file (file key, pages) and where its snapsho
    1. Figma Desktop (not the browser), the file open.
    2. Plugins → Development → Figma Desktop Bridge → Run; wait a few seconds.
    3. Not in the menu: Plugins → Development → Import plugin from manifest → `~/.figma-console-mcp/plugin/manifest.json` (hidden folder on macOS: Cmd+Shift+G in the dialog).
-   4. Still failing: the server falls back to ports 9224–9232 when 9223 is taken, and old servers from other sessions hold ports (`otherInstances` in the status, `lsof -i :9223`). Re-import the manifest, restart the plugin, then restart the Claude Code session.
+   4. Still failing: the server falls back to ports 9224–9232 when 9223 is taken, and old servers from other sessions hold ports (`otherInstances` in the status, `lsof -i :9223`). Re-import the manifest, restart the plugin, then restart the agent's session.
 4. The connection can drop between two calls. When a call fails with "Cannot connect", check the status again rather than retrying blindly.
 
 ## Read and verify through the bridge
@@ -27,7 +24,7 @@ The project's `AGENTS.md` names the file (file key, pages) and where its snapsho
 
 ## Screenshots: one per phase, for the human
 
-At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. A hook enforces it: a second screenshot in the same phase is refused; a new human prompt, or the next phase (`design-fence phase <name>`), gives it back.
+At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. Nothing enforces it in every tool: hold to it.
 
 ## Variables and snapshots
 
