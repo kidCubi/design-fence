@@ -27,7 +27,7 @@ Stance: run without stopping for approval between phases. Ask only when a wrong 
 ## 1. Request → 2. Ground
 
 1. `git fetch --prune`. Read the code on the remote default branch that the request touches, not the local checkout's possibly older copy.
-2. For anything with a look: read the design system's catalog as `AGENTS.md` says (the component's description and properties, the tokens), never from memory. Something the work needs and the catalog lacks is a **finding**: note it for the ticket's "Open questions" and, if it blocks, as its own issue.
+2. For anything with a look: read the design system's catalog as `AGENTS.md` says (the component's description and properties, the tokens), never from memory. Something the work needs and the catalog lacks is a **finding**: note it for the ticket's "Open questions" and, if it blocks, as its own issue. With the design module, the catalog is `design/index.md` and the snapshot, and the views of `design/flows.yml` the work touches; what they lack goes through `design.md` and `component.md` before the build, never around them (`start.md`, "Which way").
 3. Look for an open issue that already covers the request; extend it rather than adding a second.
 
 ## 3. Ticket
