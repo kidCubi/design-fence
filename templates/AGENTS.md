@@ -20,7 +20,7 @@ After cloning: `git submodule update --init && node .agents/design-fence/install
 
 ## Storybook
 
-<!-- With the design module: where it is (or "none yet": set up at the first component built, playbooks/component.md), its version, its run and build commands, where the library's stories go and the title they take (`Components/<Name>`), its decorators, whether stories link their designs (@storybook/addon-designs), its visual testing. When there are several, which one is the design system's. -->
+<!-- With the design module: where it is (or "none yet": set up at the first component built, playbooks/component.md, with Web Components and Vite), the elements' prefix (`osfm-`), its version, its run and build commands, where the library's stories go and the title they take (`Components/<Name>`), its decorators, whether stories link their designs (@storybook/addon-designs), its visual testing. When there are several, which one is the design system's. -->
 
 ## Commands
 

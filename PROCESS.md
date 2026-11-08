@@ -81,8 +81,10 @@ Nothing is copied from Figma into the repo but its variables: a built component'
 | Spec | `design/`: `PHILOSOPHY.md`, `tokens.md`, `components/*.md`, `flows.yml` | Intent and rules: what each thing is for, its parts, properties, states, layout, tokens | The agent, from the request and the human's answers | Part of the design gate |
 | Figma | The file `AGENTS.md` names | The values (variables) and the designs, auto-layout and bound variables throughout | The agent through the bridge (`playbooks/figma.md`), or a designer | **The human approves here** |
 | Tokens file | The code's tokens file `AGENTS.md` names (W3C design tokens for the project's pipeline, or CSS) | Figma's variables, as code | The tokens export only (`figma/tokens.js`), never by hand | its hash matches Figma's |
-| Storybook | The component library | The components and their stories, built from the spec and the approved Figma node | The agent (`playbooks/component.md`) | Checked against Figma by values, once, when built; all stories' visual regression |
+| Storybook | The component library, as web components | The components and their stories, built from the spec and the approved Figma node | The agent (`playbooks/component.md`) | Checked against Figma by values, once, when built; all stories' visual regression |
 | App | The code | Views composed from the library | Full mode | Phases 5 to 8 |
+
+**The component library is web components**: each component a custom element, styled with the tokens' custom properties, so it works in whatever the app is written in, now and later. In an adopted project, new components are web components; the existing ones stay as they are until a request touches them.
 
 **The spec holds the rules, Figma the values.** When the human approves something in Figma that the spec does not say, the spec is updated to say it before it is marked approved; when the two disagree, the spec is fixed first, then Figma. A token's value is changed in Figma, never in the repo.
 

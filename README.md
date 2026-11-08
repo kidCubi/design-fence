@@ -41,7 +41,7 @@ Nothing to install per agent: any agent that reads `AGENTS.md` (or a pointer to 
 
 ### The design module (optional)
 
-For a project designed in Figma and built from a Storybook component library: specs in the repo, Figma as the human's gate, Storybook built from the approved designs (set up at the first component if the project has none, adopted as it is if it has one), Figma's variables exported to the code's tokens file, and a UX map beside them (`PROCESS.md`, "The design module").
+For a project designed in Figma and built from a Storybook component library: specs in the repo, Figma as the human's gate, Storybook built from the approved designs as web components (set up at the first component if the project has none, adopted as it is if it has one), Figma's variables exported to the code's tokens file, and a UX map beside them (`PROCESS.md`, "The design module").
 
 ```sh
 node .agents/design-fence/install.mjs --design

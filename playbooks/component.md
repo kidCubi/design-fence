@@ -8,8 +8,8 @@ A playbook for any agent or person, with the design module on: phase D6 of the d
 
 Once per project, at the first component built.
 
-- **The project has none.** Storybook is the record of every built component (`PROCESS.md`, "The design module"), so it is set up now, not before: propose it to the human (the framework, where it goes, the dependency it adds) and wait for their word, then set it up with Storybook's own installer (`npm create storybook@latest`) and write its place and commands into `AGENTS.md`.
-- **The project has one** (adoption, `start.md`): use it as it is. Its stories, decorators and title hierarchy stay; new stories follow them. `AGENTS.md` says which Storybook is the design system's when there are several, and which folder is the library (its stories have specs; page and app stories belong to the views of `flows.yml`).
+- **The project has none.** Storybook is the record of every built component (`PROCESS.md`, "The design module"), so it is set up now, not before: propose it to the human (where it goes, the dependency it adds) and wait for their word, then set it up with Storybook's own installer for web components (`npm create storybook@latest`, Web Components with Vite: `@storybook/web-components-vite`) and write its place, commands and the elements' prefix into `AGENTS.md`.
+- **The project has one** (adoption, `start.md`): use it as it is; a Storybook of another framework renders the new web components in its stories (React 19, Vue and Angular take custom elements as they are). Its stories, decorators and title hierarchy stay; new stories follow them. `AGENTS.md` says which Storybook is the design system's when there are several, and which folder is the library (its stories have specs; page and app stories belong to the views of `flows.yml`).
 
 Then `.agents/validate.json`'s `design` section names Storybook's index (`storybookIndex`, the `index.json` of a build or of the dev server) and the library's folder (`library`), and its checks run `design-fence specs` on the specs and the stories.
 
@@ -25,7 +25,8 @@ The code's tokens come from the tokens file `design.md` writes (step 5), through
 
 ## 3. Build
 
-- Props named and valued as the spec's properties table (its "Code" column), parts as its anatomy, layout as its layout section (hug, fill and fixed in CSS terms, gaps and padding from tokens).
+- A web component (`PROCESS.md`, "The design module"): a custom element named with the project's prefix (`<prefix>-text-area`), defined once, its parts in its shadow root, styled with the tokens' custom properties (they inherit through it), its events as `CustomEvent`s.
+- Props named and valued as the spec's properties table (its "Code" column, as attributes and properties), parts as its anatomy, layout as its layout section (hug, fill and fixed in CSS terms, gaps and padding from tokens).
 - Tokens only: no raw colour, size, radius or duration that a token covers.
 - Nothing the spec does not list: no extra prop, variant or state "for later". Something the code needs that the spec lacks goes back to the spec (`design.md`, step 2), and through the gate if it shows.
 - Accessibility as the spec's section says, tested the way neighbouring components are.
