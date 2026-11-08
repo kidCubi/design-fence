@@ -1,0 +1,31 @@
+# The UX map of the project: its views, the actions on them, and where each
+# leads. This file is the source of truth; diagrams (Mermaid, an HTML page,
+# a FigJam board) are generated from it when someone asks, never edited.
+# design-fence's playbooks/flows.md says how to keep it.
+#
+# views:   id, route (or "modal: <view>" / "state: <view>"), purpose,
+#          the components it shows (names from index.md), its Figma node.
+# actions: id, the view it starts from, what triggers it, the view it leads
+#          to, and when it is allowed (if not always).
+# flows:   a goal in the user's words, and its steps as action ids in order.
+# unsure:  true on anything read from the code that the human has not yet
+#          confirmed.
+
+views:
+  - id: example-list
+    route: /examples
+    purpose: See the examples and pick one
+    components: []
+    figma: ""
+
+actions:
+  - id: open-example
+    from: example-list
+    trigger: an example's row is chosen
+    to: example-list
+    when: ""
+
+flows:
+  - id: find-an-example
+    goal: The user finds an example and opens it
+    steps: [open-example]
