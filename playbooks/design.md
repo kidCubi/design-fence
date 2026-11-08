@@ -1,16 +1,16 @@
 # Design: from a spec to an approved design in Figma
 
-A playbook for any agent or person, with the design module on: phases D1 to D5 of the design loop (`PROCESS.md`). Take a request for something users see, write or amend its spec, build it in Figma, bring it to the human's gate, and export it to the repo once approved. Use it for a new component, a change to one (a variant, a state, its layout), a new or changed token, or a view's design. `component.md` takes it to Storybook after.
+A playbook for any agent or person, with the design module on: phases D1 to D5 of the design loop (`PROCESS.md`). Take a request for something users see, write or amend its spec, build it in Figma, bring it to the human's gate, and record it in the repo once approved (the spec, and the tokens file when a variable changed). Use it for a new component, a change to one (a variant, a state, its layout), a new or changed token, or a view's design. `component.md` takes it to Storybook after.
 
-`AGENTS.md` names the Figma file, its pages (where work in progress goes) and the exporter; `playbooks/figma.md` is how to work in Figma.
+`AGENTS.md` names the Figma file, its pages (where work in progress goes), the tokens file and its format; `playbooks/figma.md` is how to work in Figma.
 
 ## 1. Ground
 
-1. Read `design/index.md`, then only what the request touches: the specs, their entries in `design/snapshot/`, and the views of `design/flows.yml` that show them (what else changes when this changes). Read the snapshot, not Figma.
+1. Read `design/index.md`, then only what the request touches: the specs, the built components' code and stories (props, variants, the tokens their CSS uses), the tokens file, and the views of `design/flows.yml` that show them (what else changes when this changes). Read the repo, not Figma, for what it holds.
 2. If it exists, start from its spec: the change is an amendment, not a new page. Prefer, in order: what exists as it is, a new variant or property of something that exists, a new component that composes existing ones, then something new; a new thing says why the ones before it could not do.
 3. What the request needs and the philosophy or the token rules do not allow is a **finding**: ask the human, with a proposal. Do not decide it in Figma.
 4. Where the parts come from: `design/index.md`, "Sources". If it has none yet, run `figma/sources.js` (in design-fence) once through `figma_execute` and write its result there: the file's local components, the library components it uses (icons among them) with their keys, its variable collections. A library's other components cannot be listed from the file, so a part the spec needs and "Sources" lacks is a finding: name it from the code's set (an icon by the name the code's icon package and Storybook use), and have it imported (in Figma: Assets, the library, the component), or import it by key when "Sources" has the key.
-5. No snapshot yet (adoption not done, no exporter): ground in **one** `figma_execute` that returns only what the request touches: the components it names or would compose (properties, variant options, the default variant two levels deep with its bound variables by name) and the variables by name. Compute in the plugin what only needs an answer: where to place the work is one free `{x, y}`, never the page's list of nodes (on a busy page, thousands of tokens).
+5. What the repo does not hold (an approved component not built yet, a component only Figma has, as before adoption): ground in **one** `figma_execute` that returns only what the request touches: the components it names or would compose (properties, variant options, the default variant two levels deep with its bound variables by name) and the variables by name. Compute in the plugin what only needs an answer: where to place the work is one free `{x, y}`, never the page's list of nodes (on a busy page, thousands of tokens).
 
 ## 2. Spec
 
@@ -58,10 +58,10 @@ Four calls, from the connection to the gate: the build, one lint, the fixes if a
    - **Try again**: restore the version saved in step 3, then step 2 with what was learnt.
 3. Nothing passes this gate without the human's word, whatever the request said. Quick mode stops before it.
 
-## 5. Export
+## 5. Record
 
 1. Save the approved version: `await figma.saveVersionHistoryAsync('approved <name>')`, and note its id.
-2. The spec: `status: approved`, `figma` (the node id), `figma_version`, `approved_by`, and anything decided at the gate that it does not say yet.
-3. The snapshot: run the exporter `AGENTS.md` names, through the bridge (`figma.md`, "Variables and snapshots"), to `design/snapshot/tokens.json` (variables in the W3C design-token format, aliases kept, every mode) and `design/snapshot/components.json` (each component's name, key, node id, description, properties, variants, layout and bound tokens by part; no geometry beyond that). Confirm it matches the live file by checksum. Never edit it by hand.
+2. The spec: `status: approved`, `figma` (the node id), `figma_version`, `approved_by`, and anything decided at the gate that it does not say yet. The spec and the Figma node are now the component's record until it is built; nothing else is copied out of Figma.
+3. The tokens file, when the work added or changed a variable: `figma/tokens.js` (in design-fence) through `figma_execute`, in the format `AGENTS.md` names (`dtcg` for a project whose pipeline builds its code tokens from W3C design tokens, `css` for one whose tokens file is CSS custom properties). First with `hashOnly: true`, against `design-fence hash <tokens file>`: equal, nothing to write; different, run it again for the text and write it to the file as it comes, never edited by hand.
 4. `design/index.md`: the row's status and its Figma node; "Sources" again from `figma/sources.js` when the work imported something.
-5. Commit the spec and the snapshot together, with their `Reflect:` line (`reflect.md`). Then `component.md`.
+5. `design-fence specs` holds (`PROCESS.md`, "Enforcement"). Commit the spec (and the tokens file) with their `Reflect:` line (`reflect.md`). Then `component.md`.

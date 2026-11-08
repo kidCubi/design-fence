@@ -1,8 +1,8 @@
 # Working in Figma
 
-A playbook for any agent with the figma-console MCP server: connect (and fix the connection), read and change nodes and variables, verify without screenshot loops, export the design system's snapshots, import images, capture HTML into Figma. Use it before any Figma read or write, when the bridge is not connected, or when exporting variables or components to the repo.
+A playbook for any agent with the figma-console MCP server: connect (and fix the connection), read and change nodes and variables, verify without screenshot loops, export the tokens, import images, capture HTML into Figma. Use it before any Figma read or write, when the bridge is not connected, or when exporting variables or components to the repo.
 
-The project's `AGENTS.md` names the file (file key, pages) and where its snapshots and exporters are. This playbook is how to work in it.
+The project's `AGENTS.md` names the file (file key, pages), the tokens file and its format. This playbook is how to work in it.
 
 ## Connect first, over the bridge only
 
@@ -17,9 +17,9 @@ The project's `AGENTS.md` names the file (file key, pages) and where its snapsho
 
 ## Calls, cheaply
 
-Every response stays in the conversation and is paid again on each later turn, and every script sent is written out by the agent. One run (a new component, from grounding to the gate, with no snapshot) took 12 calls and about 24k tokens, counted from the characters sent and returned; the same result fits in about 4 calls and 8k when what follows and `design.md`, step 3, are kept to.
+Every response stays in the conversation and is paid again on each later turn, and every script sent is written out by the agent. One run (a new component, from grounding to the gate, the file's components read through Figma) took 12 calls and about 24k tokens, counted from the characters sent and returned; the same result fits in about 4 calls and 8k when what follows and `design.md`, step 3, are kept to.
 
-- Read the repo's snapshot, not Figma, for what it holds. Grounding through Figma was more than half of that run.
+- Read the repo, not Figma, for what it holds: specs, built components and their stories, the tokens file. Grounding through Figma was more than half of that run.
 - Load the schemas of the tools the work needs in one search at the start (`figma_get_status`, `figma_execute`, `figma_lint_design`, `figma_capture_screenshot`), not one at a time.
 - Return only what the next decision needs. Compute in the plugin what needs only an answer (a free spot, a count, a match) instead of returning the list to compute it from.
 - One call that changes and verifies (it returns the values it set, and lints what it built) instead of a change, then a read, then a lint.
@@ -37,13 +37,13 @@ Every response stays in the conversation and is paid again on each later turn, a
 
 At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. Nothing enforces it in every tool: hold to it.
 
-## Variables and snapshots
+## Variables and the tokens file
 
-- What the repo's snapshot already holds is read from the snapshot, not from Figma: the bridge is for changing, linting and exporting.
+- What the repo already holds is read from the repo, not from Figma: the bridge is for changing, linting, reading an approved design once when it is built, and exporting the tokens.
 - Before changing what exists, and at an approval, save a named version: `await figma.saveVersionHistoryAsync('<title>')` returns its id (`design.md`, steps 3 and 5).
 - Bind a paint with the variable's own colour: `figma.variables.setBoundVariableForPaint({type: 'SOLID', color: <the variable's value for the node>}, 'color', variable)`. A placeholder colour (black) is replaced only when the binding is new; rebinding a paint to the variable it already had keeps the placeholder, and the node shows black (`lint-gaps.js` reports it as `stale-paint`).
 - Change a variable in place (rename rather than delete and recreate: bindings follow its id). The plugin API cannot reorder variables; values come back as float32 (round them).
-- Export through the bridge with the project's exporter (`AGENTS.md`), as `return await <script>` in `figma_execute`. To confirm the repo's snapshot matches the live file without moving it through the conversation, compute a checksum (FNV-1a of the JSON) in Figma and in Node and compare.
+- Export the tokens with design-fence's `figma/tokens.js` through `figma_execute`, in the format `AGENTS.md` names. To learn whether the repo's tokens file matches the live file without moving it through the conversation, compare `tokens({hashOnly: true}).hash` with `design-fence hash <tokens file>`; only when they differ does the text come through, once.
 
 ## Images
 
