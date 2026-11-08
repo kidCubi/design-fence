@@ -1,0 +1,36 @@
+# design-fence in CI: what the git hooks enforce, again on what a push or a
+# pull request brings, for the commits made where the hooks did not run
+# (another machine, --no-verify). Pin the actions to commit SHAs if the
+# project does.
+name: design-fence
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  fence:
+    name: Reflect lines and checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The project's own setup for its checks (dependencies) goes here.
+      - name: Reflect lines and checks
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          # A branch's first push has no commit before: from where it left main.
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            BASE=$(git merge-base origin/main HEAD)
+          fi
+          node .agents/design-fence/bin/design-fence.mjs commits "$BASE..HEAD"
+          node .agents/design-fence/bin/design-fence.mjs check --base "$BASE"

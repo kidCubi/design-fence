@@ -1,0 +1,19 @@
+{
+  "node": 22,
+  "base": "origin/main",
+  "checks": [
+    {
+      "name": "format",
+      "when": ["src/**/*.{js,css}"],
+      "run": "npx --yes prettier@3.3.3 --check {files}"
+    },
+    {
+      "name": "tests",
+      "when": "src/**",
+      "run": "node --test test/*.test.js"
+    }
+  ],
+  "visual": {
+    "run": "node e2e/visualCheck.mjs"
+  }
+}
