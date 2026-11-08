@@ -34,7 +34,7 @@ How people and AI agents build software together in a project that has design-fe
 |---|---|---|
 | New | Full mode | **Foundation** first: philosophy, tokens, flows, the first components; no feature before the first approval |
 | Existing, new to design-fence | Full mode | **Adopt** first: an inventory of what exists, described as it is, its gaps filed as issues |
-| A request | Full mode | The **design loop** when something users see is new or changes; full mode directly when the snapshot has all it needs |
+| A request | Full mode | The **design loop** when something users see is new or changes; full mode directly when the component library has all it needs |
 
 ## Two modes
 
@@ -61,38 +61,41 @@ The non-negotiables above, and the git hooks, stay on in quick mode. With the de
 
 ## The design module (optional)
 
-For a project whose design lives in Figma and whose components live in Storybook. It is on when `.agents/validate.json` has a `design` section (`install.mjs --design` adds it and the `design/` templates); without it, everything above holds as it is.
+For a project whose design lives in Figma and whose components live in Storybook (set up at the first component built, if the project has none: `playbooks/component.md`). It is on when `.agents/validate.json` has a `design` section (`install.mjs --design` adds it and the `design/` templates); without it, everything above holds as it is.
 
 The work flows down a chain, each layer built only from the one above it, and comes back up when a layer finds something missing:
 
 ```
-spec (design/) → Figma → snapshot (design/snapshot/) → Storybook → app code
-intent, rules    values,   the copy agents read          components   composition
-                 the human gate                          from it      (full mode)
+spec (design/) → Figma ─────────→ Storybook ──→ app code
+intent, rules    values, designs   components     composition
+                 the human gate    and stories    (full mode)
+                       └── tokens export → the code's tokens file
 
 flows map (design/flows.yml), beside it: views, actions, paths, the components each view shows
 ```
+
+Nothing is copied from Figma into the repo but its variables: a built component's record is the code and its stories, an approved one not built yet is its spec and its Figma node.
 
 | Layer | Where | Holds | Changed by | Gate |
 |---|---|---|---|---|
 | Spec | `design/`: `PHILOSOPHY.md`, `tokens.md`, `components/*.md`, `flows.yml` | Intent and rules: what each thing is for, its parts, properties, states, layout, tokens | The agent, from the request and the human's answers | Part of the design gate |
 | Figma | The file `AGENTS.md` names | The values (variables) and the designs, auto-layout and bound variables throughout | The agent through the bridge (`playbooks/figma.md`), or a designer | **The human approves here** |
-| Snapshot | `design/snapshot/`: `tokens.json`, `components.json` | What Figma holds, as files: what every agent reads | The exporter only, after the gate | Its lint |
-| Storybook | The component library | The components and their stories, built from the snapshot | The agent (`playbooks/component.md`) | Checked against the snapshot; all stories' visual regression |
+| Tokens file | The code's tokens file `AGENTS.md` names (W3C design tokens for the project's pipeline, or CSS) | Figma's variables, as code | The tokens export only (`figma/tokens.js`), never by hand | its hash matches Figma's |
+| Storybook | The component library | The components and their stories, built from the spec and the approved Figma node | The agent (`playbooks/component.md`) | Checked against Figma by values, once, when built; all stories' visual regression |
 | App | The code | Views composed from the library | Full mode | Phases 5 to 8 |
 
-**The spec holds the rules, Figma the values.** When the human approves something in Figma that the spec does not say, the spec is updated to say it before the export; when the two disagree, the spec is fixed first, then Figma. A token's value is changed in Figma, never in the repo.
+**The spec holds the rules, Figma the values.** When the human approves something in Figma that the spec does not say, the spec is updated to say it before it is marked approved; when the two disagree, the spec is fixed first, then Figma. A token's value is changed in Figma, never in the repo.
 
 ### The design loop
 
 | # | Phase | Output | Gate |
 |---|---|---|---|
-| D1 | **Ground** | `design/index.md`, the specs and snapshot entries the request touches, the views of `flows.yml` that use them | — |
+| D1 | **Ground** | `design/index.md`, the specs and the stories the request touches, the views of `flows.yml` that use them | — |
 | D2 | **Spec** | The component's spec, new or amended (`status: draft`); `flows.yml` if a path changes | — |
 | D3 | **Figma** | The design, built from existing components and variables, with no unbound value and no frame without auto-layout | its lint, run through the bridge |
 | D4 | **Design gate** | One screenshot and the link: good, change (back to D2, then D3), try again | **the human**; nothing passes it otherwise |
-| D5 | **Export** | The snapshot, the spec `approved` with the Figma version | the snapshot matches the file (checksum) |
-| D6 | **Storybook** | The component and a story per variant and state, from the snapshot (`status: built`) | stories against the snapshot, visual regression of all stories |
+| D5 | **Record** | The spec `approved` with the Figma node and version; the tokens file, if a variable changed | the tokens file's hash matches Figma's |
+| D6 | **Storybook** | The component and a story per variant and state, from the spec and the Figma node (`status: built`) | stories against Figma by values, visual regression of all stories, `design-fence specs` |
 | D7 | **App** | Full mode from phase 2, composing from the library | as in full mode |
 
 `playbooks/design.md` runs D1 to D5, `playbooks/component.md` D6. A change to something that exists starts from its spec, never from a blank page: the spec is reviewed, the change is drafted in Figma, the spec refined from what the human said, and Figma again, until the gate says good.
@@ -103,7 +106,7 @@ flows map (design/flows.yml), beside it: views, actions, paths, the components e
 
 ### Reading, cheaply
 
-Agents read files, not tools: `design/index.md` first, then only the specs, snapshot entries and views the work touches. Figma is reached through its MCP server only to change a design, to lint it and to export it, through one server (figma-console, `playbooks/figma.md`); Storybook's index and the flows are read from files. One screenshot per phase still holds; the design gate's screenshot is its phase's one.
+Agents read files, not tools: `design/index.md` first, then only the specs, stories and views the work touches. Figma is reached through its MCP server only to read an approved design once when it is built, to change a design, to lint it and to export the tokens, through one server (figma-console, `playbooks/figma.md`); Storybook's index and the flows are read from files. One screenshot per phase still holds; the design gate's screenshot is its phase's one.
 
 ## Enforcement: what actually stops the agent
 
@@ -118,7 +121,7 @@ The hooks are on once `node .agents/design-fence/install.mjs` has run in the clo
 
 What is not enforced stays advice: the screenshot budget of `playbooks/figma.md` (one design-tool screenshot per phase, for the human), grounding, naming what ran.
 
-With the design module, a git hook cannot see Figma (it needs the bridge), so what it can check is checked on the snapshot and the code: the snapshot's lint (no unbound value, auto-layout, descriptions, token names), the parity of specs, snapshot and stories, and no raw value in the code. design-fence does not ship these checks yet: until it does, a project wires what it can as its own checks (a stylelint rule for raw values, for one), and the rest is advisory in its ledger. The design gate is the human's word, recorded in the spec (`approved_by`), as the `Reflect:` line is the author's.
+With the design module, a git hook cannot see Figma (it needs the bridge), so what it checks is in the repo: `design-fence specs` (each spec's status and what it needs, built specs against Storybook's index, the library's stories against the specs), added to `.agents/validate.json` as a check; no raw value in the code where a token exists, with the project's own linter (a stylelint rule). What happens in Figma (its lint, the tokens file matching it) is advisory in the ledger. The design gate is the human's word, recorded in the spec (`approved_by`), as the `Reflect:` line is the author's.
 
 ## Cold start
 
