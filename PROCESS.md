@@ -59,6 +59,23 @@ Phases 1, 4 and 5 only, on a branch or in a worktree. Nothing lands on the defau
 
 The non-negotiables above, and the git hooks, stay on in quick mode. With the design module, quick mode may sketch in Figma without a spec, but stops before the design gate: nothing is approved from quick mode.
 
+## The tracker
+
+Issues live in the project's tracker, whatever it is (GitHub, GitLab, Linear, Jira, Notion, a file in the repo), reached however the project reaches it (a CLI, an MCP server, an API). The process asks five things of it:
+
+| Operation | Where the process uses it | On GitHub, for example |
+|---|---|---|
+| **Find** open issues on a subject, and those closed lately | grounding (an issue that already covers the request), the audit | `gh issue list --search "…"` |
+| **File** an issue in the ticket shape (`playbooks/ship.md`, phase 3) | tickets, findings, an adoption's gaps, what a session leaves | `gh issue create` |
+| **Read** one by its id | building it | `gh issue view <n>` |
+| **Mark** it ready, blocked or done | the ticket, closing it | labels, `gh issue close` |
+| **Comment** on it | closing it with where it landed | `gh issue comment <n>` |
+
+`AGENTS.md`, "Places", says for this project: the tracker and where its issues go (a repository, a project, a database, a team); how it is reached, and for an MCP server, its name and the tool for each operation; how an id is written, in branches and commit messages (`#12`, `ENG-123`, a page's short id); and how ready, blocked and done are shown (labels, a status field).
+
+- **No tracker named:** ask the human, once, and write the answer into `AGENTS.md` before filing anything.
+- **The tracker cannot be reached** (its tool is not connected, a permission or the human's own settings refuse the write): write each issue out in full, in the ticket shape, in the session's summary for the human to file, and say why. Never a file in the repo, or another tool, that `AGENTS.md` does not name: an issue nobody looks for is lost.
+
 ## The design module (optional)
 
 For a project whose design lives in Figma and whose components live in Storybook (set up at the first component built, if the project has none: `playbooks/component.md`). It is on when `.agents/validate.json` has a `design` section (`install.mjs --design` adds it and the `design/` templates); without it, everything above holds as it is.

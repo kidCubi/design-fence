@@ -8,12 +8,12 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 
 | | |
 |---|---|
-| `PROCESS.md` | The layers (project > process > personal), the non-negotiables, where to start, full and quick modes and their phases, the design module, what is enforced |
+| `PROCESS.md` | The layers (project > process > personal), the non-negotiables, where to start, full and quick modes and their phases, what the process asks of the tracker, the design module, what is enforced |
 | `playbooks/start.md` | Which way in: the foundation of a new project, the adoption of an existing one, or which playbook a request needs |
 | `playbooks/design.md` | Design module: from a spec to a design approved by the human in Figma, exported to the repo |
 | `playbooks/component.md` | Design module: from an approved design to the component library and its stories |
 | `playbooks/flows.md` | Design module: the UX map (`design/flows.yml`): views, actions, paths, and the diagrams drawn from it |
-| `playbooks/ship.md` | Runs the phases: ground, ticket (GitHub issue), build, validate, visual check, human review, land, close; quick mode; an audit |
+| `playbooks/ship.md` | Runs the phases: ground, ticket (in the project's tracker), build, validate, visual check, human review, land, close; quick mode; an audit |
 | `playbooks/reflect.md` | A review of the work just done against the project's bar; its verdict goes into each commit as a `Reflect:` line |
 | `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge |
 | `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
@@ -57,7 +57,7 @@ What happens in Figma stays advisory: see the ledger.
 
 ## What the project provides
 
-- **`AGENTS.md`**: what the project is, its non-negotiables, its design system and how to read it, commands, places (repository, labels, how work lands), code style. Short: it points to detail rather than restating it.
+- **`AGENTS.md`**: what the project is, its non-negotiables, its design system and how to read it, commands, places (repository, the tracker and how to reach it, how work lands), code style. Short: it points to detail rather than restating it.
 - **`.agents/validate.json`**: the checks, each run when a changed file matches its `when`:
 
   ```json

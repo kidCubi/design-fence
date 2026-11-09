@@ -16,6 +16,7 @@ The last column matters most: a green check is easily read as "this complies" wh
 | One design-tool screenshot per phase | advisory | — | — |
 | Ground before writing (read the code and the catalog, never memory) | advisory | — | — |
 | "Not found" is a finding, filed as an issue | advisory | — | — |
+| Issues go to the tracker `AGENTS.md` names, or into the summary when it cannot be reached; never into a file or a tool it does not name | advisory | — | — |
 | Name what ran in every report | advisory | — | — |
 | End done or parked | advisory | — | — |
 | Design module: nothing passes the design gate without the human's word | advisory | — (the spec's `approved_by` is the author's word) | — |

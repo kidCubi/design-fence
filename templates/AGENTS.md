@@ -29,7 +29,7 @@ After cloning: `git submodule update --init && node .agents/design-fence/install
 ## Places
 
 - Repository: <!-- owner/name -->, default branch `main`.
-- Tickets: GitHub issues; labels <!-- … -->.
+- Tickets: <!-- the tracker and where issues go (GitHub issues of owner/name, a Linear team, a Notion database); how it is reached (`gh`, an MCP server and its tool for find, file, read, mark and comment); how an id is written (`#12`, `ENG-123`); how ready, blocked and done are shown (labels, a status field). PROCESS.md, "The tracker". -->
 - Landing: <!-- fast-forward push to main | pull request -->.
 - Docs to update with a change: <!-- … -->.
 
