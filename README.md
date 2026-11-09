@@ -62,7 +62,7 @@ What happens in Figma stays advisory: see the ledger.
 
   ```json
   {
-    "node": 22,
+    "node": 20,
     "base": "origin/main",
     "checks": [
       {"name": "format", "when": ["src/**/*.{js,css}"], "run": "npx --yes prettier@3.3.3 --check {files}"},
