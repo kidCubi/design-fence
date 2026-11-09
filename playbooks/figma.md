@@ -8,6 +8,7 @@ The project's `AGENTS.md` names the file (file key, pages), the tokens file and 
 
 1. Call `figma_get_status` with `probe: true` before the first Figma call of the session, and again only when a call fails.
 2. Healthy: `setup.valid: true`, `transport.active: "websocket"`, the probe succeeds, and the connected file is the one `AGENTS.md` names. Check the file name before writing: several files may have the plugin open.
+   - The plugin is current: the connected file's `pluginVersion` equals the server's `bundledPluginVersion` (`pluginUpdateAvailable` is not true). An older plugin answers the commands it does not know with "Unknown method" (creating a slot needs 1.41 or later): before any new kind of call, ask the human to re-import the manifest (step 3.3) and run the plugin again.
 3. Not connected (`transport.active: "none"`): **stop and tell the human**, with the fix. Do not fall back to REST tools or another server.
    1. Figma Desktop (not the browser), the file open.
    2. Plugins → Development → Figma Desktop Bridge → Run; wait a few seconds.
@@ -35,7 +36,17 @@ Every response stays in the conversation and is paid again on each later turn, a
 
 ## Screenshots: one per phase, for the human
 
-At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. Nothing enforces it in every tool: hold to it.
+At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Take it of the section (or frame) around the work: a component set exported alone comes out on white, and light-on-dark components disappear. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. Nothing enforces it in every tool: hold to it.
+
+## Plugin API: what surprises
+
+- `clone()` puts the copy on the page, not in the component set: append it to the set before binding the set's properties to it.
+- `resize()` makes an auto-layout frame fixed: set the sizing modes (`layoutSizingHorizontal`, `primaryAxisSizingMode`) after it, not before.
+- A size read in the call that changed the node can be stale: verify sizes in the next call.
+- On a text layer, `boundVariables.fontSize` (and the other text bindings) is a list: read `Array.isArray(v) ? v[0] : v`.
+- A `/` in a frame's name reads as a component's path, and the linter calls it detached: name frames without it.
+- Auto layout has no negative margin. To move one child out of line with tokens (the hero's image a step left of its sentence), change the parent's padding on that side and give the other children a wrapper frame whose padding takes them back; the code does the same (the padding, then a margin), so the two match.
+- A script that throws halfway leaves what it built so far, frames created before their parent included: build inside `try`, and remove the section (and any orphan at the page's root) in `catch`.
 
 ## Variables and the tokens file
 
