@@ -8,7 +8,8 @@
  *
  * It reads only, and returns:
  *
- * - `local`: how many component sets and components the file defines;
+ * - `local`: the component sets and the components (outside sets) the file
+ *   defines: how many, and their names, for the index's list;
  * - `remote`: the library components the file uses, by set (or component)
  *   name, with how many of its variants are in use and its key, which
  *   `figma.importComponentSetByKeyAsync` (or `importComponentByKeyAsync`)
@@ -22,15 +23,17 @@
  */
 async function sources() {
   await figma.loadAllPagesAsync();
-  const local = {sets: 0, components: 0};
+  const local = {sets: 0, components: 0, names: []};
   const remote = {};
   const seen = new Set();
   for (const page of figma.root.children) {
     for (const node of page.findAllWithCriteria({types: ['COMPONENT_SET', 'COMPONENT']})) {
       if (node.type === 'COMPONENT_SET') {
         local.sets++;
+        local.names.push(node.name);
       } else if (!(node.parent && node.parent.type === 'COMPONENT_SET')) {
         local.components++;
+        local.names.push(node.name);
       }
     }
     for (const instance of page.findAllWithCriteria({types: ['INSTANCE']})) {
@@ -52,6 +55,7 @@ async function sources() {
   } catch (e) {
     // Needs the teamlibrary permission, which a plugin may not have.
   }
+  local.names.sort();
   return {
     local,
     remote: Object.keys(remote)

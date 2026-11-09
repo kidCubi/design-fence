@@ -21,13 +21,18 @@
  *   radius, width and height, stroke, font size, …) or its name starts
  *   with one of `px` (the prefixes `AGENTS.md` lists: a variable scoped to
  *   all uses says nothing about its unit);
+ * - a number is a duration in milliseconds when its name starts with one of
+ *   `ms` (`ms: ['duration/']`): `150ms` in CSS, a `duration` token in DTCG;
+ *   left out, durations stay bare numbers;
+ * - a font family is quoted in CSS only when it must be (a word that is not a
+ *   CSS identifier: `"Source 3 Sans"`), so `Public Sans` stays as it was;
  * - `hash`: FNV-1a of `text`, as `design-fence hash <file>` computes it on
  *   the repo's copy: equal hashes, nothing to export, and the text need not
  *   come through the conversation (`hashOnly`);
  * - `collisions`: names that are both a token and a group (`a/b` and
  *   `a/b/c`), which the DTCG format cannot hold.
  */
-async function tokens({format = 'dtcg', px = [], hashOnly = false} = {}) {
+async function tokens({format = 'dtcg', px = [], ms = [], hashOnly = false} = {}) {
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
   const variables = await figma.variables.getLocalVariablesAsync();
   const byId = Object.fromEntries(variables.map(v => [v.id, v]));
@@ -42,6 +47,7 @@ async function tokens({format = 'dtcg', px = [], hashOnly = false} = {}) {
     if (v.resolvedType === 'EASING') return 'cubicBezier';
     if (v.resolvedType === 'BOOLEAN') return 'boolean';
     if (v.resolvedType === 'STRING') return (v.scopes || []).includes('FONT_FAMILY') ? 'fontFamily' : 'string';
+    if (ms.some(prefix => v.name.startsWith(prefix))) return 'duration';
     const sized = (v.scopes || []).some(s => SIZES.includes(s)) || px.some(prefix => v.name.startsWith(prefix));
     return sized ? 'dimension' : 'number';
   };
@@ -60,7 +66,8 @@ async function tokens({format = 'dtcg', px = [], hashOnly = false} = {}) {
     if (value && typeof value === 'object') return {raw: JSON.stringify(value)};
     if (typeof value === 'number') {
       const n = Math.round(value * 1000) / 1000;
-      return {raw: typeOf(v) === 'dimension' ? `${n}px` : n};
+      const unit = {dimension: 'px', duration: 'ms'}[typeOf(v)];
+      return {raw: unit ? `${n}${unit}` : n};
     }
     return {raw: value};
   };
@@ -81,13 +88,18 @@ async function tokens({format = 'dtcg', px = [], hashOnly = false} = {}) {
   let text;
   if (format === 'css') {
     const prop = v => '--' + slug(v.name);
-    const value = m => (m.alias ? `var(${prop(m.alias)})` : m.css || String(m.raw));
+    // A family name stays bare when every word is a CSS identifier; otherwise quoted.
+    const family = (e, raw) =>
+      e.type === 'fontFamily' && !String(raw).split(' ').every(word => /^-?[A-Za-z_][\w-]*$/.test(word))
+        ? JSON.stringify(String(raw))
+        : String(raw);
+    const value = (m, e) => (m.alias ? `var(${prop(m.alias)})` : m.css || family(e, m.raw));
     const blocks = {':root': []};
     for (const e of entries) {
-      blocks[':root'].push(`  ${prop(e.v)}: ${value(e.modes[0])};`);
+      blocks[':root'].push(`  ${prop(e.v)}: ${value(e.modes[0], e)};`);
       for (const m of e.modes.slice(1)) {
         const selector = `[data-${slug(e.collection)}="${slug(m.mode)}"]`;
-        (blocks[selector] = blocks[selector] || []).push(`  ${prop(e.v)}: ${value(m)};`);
+        (blocks[selector] = blocks[selector] || []).push(`  ${prop(e.v)}: ${value(m, e)};`);
       }
     }
     text = Object.entries(blocks).map(([selector, lines]) => `${selector} {\n${lines.join('\n')}\n}\n`).join('\n');

@@ -124,6 +124,28 @@ test('tokens as W3C design tokens: groups, aliases, dimensions, the other modes'
   assert.equal(result.hash, fnv1a(result.text));
 });
 
+test('durations in ms when asked, font families quoted only when CSS needs it', async () => {
+  const tokens = new Function(`${fs.readFileSync(path.join(HOME, 'figma/tokens.js'), 'utf8')}\nreturn tokens;`)();
+  const v = (id, name, resolvedType, value, scopes = []) => ({id, name, resolvedType, valuesByMode: {one: value}, scopes});
+  const variables = [
+    v('d1', 'duration/fast', 'FLOAT', 150),
+    v('f1', 'font/family', 'STRING', 'Public Sans', ['FONT_FAMILY']),
+    v('f2', 'font/family-numbered', 'STRING', 'Source 3 Sans', ['FONT_FAMILY']),
+  ];
+  globalThis.figma = {
+    variables: {
+      getLocalVariablesAsync: async () => variables,
+      getLocalVariableCollectionsAsync: async () => [{name: 'Scale', variableIds: ['d1', 'f1', 'f2'], modes: [{modeId: 'one', name: 'Mode 1'}]}],
+    },
+  };
+  const css = await tokens({format: 'css', ms: ['duration/']});
+  assert.equal(css.text, ':root {\n  --duration-fast: 150ms;\n  --font-family: Public Sans;\n  --font-family-numbered: "Source 3 Sans";\n}\n');
+  const dtcg = JSON.parse((await tokens({format: 'dtcg', ms: ['duration/']})).text);
+  assert.deepEqual(dtcg.duration.fast, {$type: 'duration', $value: '150ms'});
+  const bare = await tokens({format: 'css'});
+  assert.match(bare.text, /--duration-fast: 150;/);
+});
+
 test('tokens as CSS custom properties, and the hash alone', async () => {
   const css = await exported({format: 'css'});
   assert.equal(

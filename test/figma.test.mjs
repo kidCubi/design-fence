@@ -152,10 +152,10 @@ test('sources lists local components, the library components in use once each, a
   check.parent = caret.parent = {type: 'COMPONENT_SET', name: 'Check', key: 'set1'};
   const button = {id: 'l1', remote: false};
   const instances = [check, check, caret, button].map(main => ({getMainComponentAsync: async () => main}));
-  const set = {type: 'COMPONENT_SET'};
+  const set = {type: 'COMPONENT_SET', name: 'Button'};
   const page = {
     findAllWithCriteria: ({types}) =>
-      types.includes('INSTANCE') ? instances : [set, {type: 'COMPONENT', parent: set}, {type: 'COMPONENT', parent: page}],
+      types.includes('INSTANCE') ? instances : [set, {type: 'COMPONENT', parent: set}, {type: 'COMPONENT', name: 'Avatar', parent: page}],
   };
   globalThis.figma = {
     loadAllPagesAsync: async () => {},
@@ -164,7 +164,7 @@ test('sources lists local components, the library components in use once each, a
     teamLibrary: {getAvailableLibraryVariableCollectionsAsync: async () => [{libraryName: 'Icons', name: 'Sizes'}]},
   };
   assert.deepEqual(await sources(), {
-    local: {sets: 1, components: 1},
+    local: {sets: 1, components: 1, names: ['Avatar', 'Button']},
     remote: ['Check (set, 2 in use) set1'],
     variables: {local: ['Colors (2)'], libraries: ['Icons / Sizes']},
   });
