@@ -19,6 +19,8 @@ story: ""                # the Storybook title of its stories (Components/<Name>
 
 <!-- Its parts, each with the layer name it has in Figma and the element it is in code. -->
 
+<!-- Layer names as they will be in Figma: never a name Figma gives (Frame, Text, Line, Rectangle). -->
+
 | Part | Figma layer | Required |
 |---|---|---|
 | | | |
@@ -33,11 +35,11 @@ story: ""                # the Storybook title of its stories (Components/<Name>
 
 ## States
 
-<!-- Rest, hover, focus, pressed, disabled, loading, error, empty: those that apply, and what changes in each. -->
+<!-- Rest, hover, focus, pressed, disabled, loading, error, empty: those that apply, and what changes in each. Motion, if any: what moves, for how long (duration tokens), and what it looks like with nothing moving (prefers-reduced-motion); it is approved in Storybook, not Figma. -->
 
 ## Layout
 
-<!-- Per part: direction, sizing (hug, fill, fixed), gap and padding (token names), alignment, min and max sizes, how it wraps or truncates, how it behaves in a narrow and a wide container. This is the auto-layout in Figma and the CSS in code. -->
+<!-- Per part: direction, sizing (hug, fill, fixed), gap and padding (token names), alignment, min and max sizes, how it wraps or truncates, how it behaves in a narrow and a wide container (a phone, a small window: what Figma does not show). This is the auto-layout in Figma and the CSS in code. -->
 
 ## Tokens
 

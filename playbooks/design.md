@@ -15,9 +15,11 @@ A playbook for any agent or person, with the design module on: phases D1 to D5 o
 ## 2. Spec
 
 1. Copy `templates/design/component.md` (in design-fence) to `design/components/<name>.md`, or amend the existing one. `status: draft`.
-2. Every section concrete enough to build without asking: parts with their layer names, the properties table (Figma's name and the code's), states, the layout of each part (direction, hug, fill or fixed, gap and padding as token names, min and max, wrap and truncation), the semantic tokens by part, and "Used in" from `flows.yml`.
+2. Every section concrete enough to build without asking: parts with their layer names (never a name Figma gives: Frame, Text, Line, Rectangle), the properties table (Figma's name and the code's), states, the layout of each part (direction, hug, fill or fixed, gap and padding as token names, min and max, wrap and truncation, and what it does narrower than Figma shows it: a phone, a small window), the semantic tokens by part, and "Used in" from `flows.yml`.
+   - Motion (an entrance, an animation bound to scroll): what moves, how long (duration tokens) and what nothing moving looks like (`prefers-reduced-motion`). Figma cannot show it: its gate is in Storybook (`component.md`, step 5).
 3. Amending an approved spec: say what changes and what stays, and set it back to `draft`. Its `figma_version` still names the last approved design until the gate says good.
 4. A token that does not exist yet: add its rule to `tokens.md` (rule 3: why no existing role fits) and the variable in step 3.
+5. A view's words (a page's sections, its headings and paragraphs) are not a component's: they go in `design/content/<view>.md` (copy `templates/design/content.md`), written to the philosophy's voice, with the facts they state checked against the repo. The human approves them (its status line) before the view is built in Figma; the view's Figma frame is built from them, never with placeholder text left in.
 
 ## 3. Figma
 
@@ -57,11 +59,12 @@ Four calls, from the connection to the gate: the build, one lint, the fixes if a
    - **Change**: write the change into the spec first, then Figma, then lint, and come back here with a new screenshot.
    - **Try again**: restore the version saved in step 3, then step 2 with what was learnt.
 3. Nothing passes this gate without the human's word, whatever the request said. Quick mode stops before it.
+4. Motion is not approved here: say so at the gate, and bring it to the human in Storybook when it runs (`component.md`, step 5).
 
 ## 5. Record
 
 1. Save the approved version: `await figma.saveVersionHistoryAsync('approved <name>')`, and note its id.
 2. The spec: `status: approved`, `figma` (the node id), `figma_version`, `approved_by`, and anything decided at the gate that it does not say yet. The spec and the Figma node are now the component's record until it is built; nothing else is copied out of Figma.
-3. The tokens file, when the work added or changed a variable: `figma/tokens.js` (in design-fence) through `figma_execute`, in the format `AGENTS.md` names (`dtcg` for a project whose pipeline builds its code tokens from W3C design tokens, `css` for one whose tokens file is CSS custom properties), with the `px` prefixes it lists (`space/`, `radius/`, …: a number variable scoped to all uses says nothing about its unit). First with `hashOnly: true`, against `design-fence hash <tokens file>`: equal, nothing to write; different, run it again for the text and write it to the file as it comes, never edited by hand.
+3. The tokens file, when the work added or changed a variable: `figma/tokens.js` (in design-fence) through `figma_execute`, in the format `AGENTS.md` names (`dtcg` for a project whose pipeline builds its code tokens from W3C design tokens, `css` for one whose tokens file is CSS custom properties), with the `px` prefixes it lists (`space/`, `radius/`, …: a number variable scoped to all uses says nothing about its unit), and its `ms` prefixes (`duration/`) when its durations are written with their unit. First with `hashOnly: true`, against `design-fence hash <tokens file>`: equal, nothing to write; different, run it again for the text and write it to the file as it comes, never edited by hand.
 4. `design/index.md`: the row's status and its Figma node; "Sources" again from `figma/sources.js` when the work imported something.
 5. `design-fence specs` holds (`PROCESS.md`, "Enforcement"). Commit the spec (and the tokens file) with their `Reflect:` line (`reflect.md`). Then `component.md`.

@@ -9,6 +9,7 @@ Statuses: `draft` (spec written, not approved), `approved` (the human approved i
 - Philosophy: `PHILOSOPHY.md`
 - Tokens: rules `tokens.md`, values in Figma, exported to <!-- the code's tokens file --> (`figma/tokens.js`)
 - Flows: `flows.yml`
+- Copy: <!-- the views' words, `content/<view>.md`, and whether each is approved -->
 - Figma file: <!-- name and file key, pages -->
 
 ## Sources
