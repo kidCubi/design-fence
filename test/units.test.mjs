@@ -5,8 +5,8 @@ import {parseStatus} from '../lib/git.mjs';
 import {globToRegExp, matchesAny} from '../lib/glob.mjs';
 import {findNode, majorOf} from '../lib/node.mjs';
 import {needingReview, reflectVerdict} from '../lib/reflect.mjs';
-import {withImports} from '../install.mjs';
-import {section} from '../bin/design-fence.mjs';
+import {claudeNext, withBlock} from '../install.mjs';
+import {section} from '../lib/markdown.mjs';
 
 test('** spans directories, * and ? stay within a name', () => {
   const glob = globToRegExp('viewer/**/*.js');
@@ -75,11 +75,28 @@ test('the verdict of a Reflect line, on a line of its own', () => {
   assert.equal(reflectVerdict('fix: x'), '');
 });
 
-test('CLAUDE.md gains the imports it lacks, once', () => {
-  const text = withImports('# Notes\n', 'tools/df');
-  assert.equal(text, '# Notes\n\n@AGENTS.md\n@tools/df/PROCESS.md\n');
-  assert.equal(withImports(text, 'tools/df'), text);
-  assert.equal(withImports('@AGENTS.md', 'x'), '@AGENTS.md\n\n@x/PROCESS.md\n');
+test("CLAUDE.md gains @AGENTS.md and loses design-fence's PROCESS.md import; none stays none", () => {
+  assert.equal(claudeNext('', 'x'), '');
+  const old =
+    "<!-- Claude Code reads CLAUDE.md; the rules live in AGENTS.md (read by every agent) and in design-fence's process. -->\n" +
+    '@AGENTS.md\n@.agents/design-fence/PROCESS.md\n';
+  assert.equal(claudeNext(old, '.agents/design-fence'), '@AGENTS.md\n');
+  const text = claudeNext('# Notes\n', 'tools/df');
+  assert.equal(text, '# Notes\n\n@AGENTS.md\n');
+  assert.equal(claudeNext(text, 'tools/df'), text);
+  assert.equal(claudeNext('@AGENTS.md\n@tools/df/PROCESS.md\n# Ours\n', 'tools/df'), '@AGENTS.md\n# Ours\n');
+});
+
+test("AGENTS.md: design-fence's block between its markers, added once, then replaced", () => {
+  const block = body => `<!-- design-fence: [^\\n]*-->\\n\\n${body}\\n\\n<!-- /design-fence -->`;
+  const added = withBlock('# P\n\nIntro\nmore.\n\n## Commands\n', 'B1');
+  assert.match(added, new RegExp(`^# P\\n\\nIntro\\nmore\\.\\n\\n${block('B1')}\\n\\n## Commands\\n$`));
+  const replaced = withBlock(added, 'B2');
+  assert.equal(replaced, added.replace('B1', 'B2'));
+  assert.equal(withBlock(replaced, 'B2'), replaced);
+  assert.match(withBlock('<!-- design-fence -->\n<!-- /design-fence -->\n## X\n', 'B'), new RegExp(`^${block('B')}\\n## X\\n$`));
+  assert.match(withBlock('# P\n\nIntro', 'B'), new RegExp(`^# P\\n\\nIntro\\n\\n${block('B')}\\n$`));
+  assert.match(withBlock('no title\n', 'B'), new RegExp(`^${block('B')}\\n\\nno title\\n$`));
 });
 
 test('a Markdown section, up to the next one', () => {

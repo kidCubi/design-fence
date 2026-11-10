@@ -1,8 +1,11 @@
 # AGENTS.md: {{project}}
 
-The rules of this project for any agent (and any person). The process is design-fence's (`.agents/design-fence/PROCESS.md`, run by the playbooks in `.agents/design-fence/playbooks/`: `ship.md` from a request to `main`, `reflect.md` the review every commit of code carries); this file says what is specific here, and wins where the two differ. Keep it short: point to detail rather than restating it.
+The rules of this project for any agent (and any person). The process is design-fence's (below, and `.agents/design-fence/PROCESS.md`); this file says what is specific here, and wins where the two differ. Keep it short: point to detail rather than restating it.
 
 After cloning: `git submodule update --init && node .agents/design-fence/install.mjs` (turns on the git hooks, in each clone).
+
+<!-- design-fence -->
+<!-- /design-fence -->
 
 ## What this is
 

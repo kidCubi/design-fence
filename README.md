@@ -21,7 +21,8 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 | `figma/lint-gaps.js` | Design module: the Figma lint `figma_lint_design` does not make (unbound spacing, radius, stroke; default names; invisible borders; stale paints; descriptions; properties against the spec), run through the bridge |
 | `figma/tokens.js` | Design module: Figma's variables as the project's tokens file (W3C design tokens or CSS), or only its hash, run through the bridge |
 | `figma/sources.js` | Design module: what a Figma file's design system is made of (local components, library components in use with their keys, variables), for `design/index.md`, run once through the bridge |
-| `templates/` | `AGENTS.md`, `CLAUDE.md` (a pointer), `validate.json`, the CI workflow `design-fence.yml`; `design/`: the philosophy, the token rules, the index, the flows map and the component spec |
+| `skills/` | The playbooks as skills (`design-fence-<playbook>/SKILL.md`: when to use it, and the playbook to read), linked into the project's skills folders by the installer |
+| `templates/` | `AGENTS.md`, design-fence's block in it (`agents-block.md`), `validate.json`, the CI workflow `design-fence.yml`; `design/`: the philosophy, the token rules, the index, the flows map and the component spec |
 | `ENFORCEMENT.md` | The ledger template: which rules are enforced, by what, and what green does not mean |
 
 ## Install in a project
@@ -31,13 +32,15 @@ git submodule add https://github.com/kidCubi/design-fence.git .agents/design-fen
 node .agents/design-fence/install.mjs
 ```
 
-The installer only adds what is missing (running it again changes nothing):
+The installer only adds what is missing and refreshes what is its own (running it again changes nothing):
 
 - the git hooks: `core.hooksPath` set to `.agents/design-fence/hooks` in this clone. Git does not share that setting: **every clone runs the installer once** (`git submodule update --init && node .agents/design-fence/install.mjs`), people and agents' sandboxes alike. If the clone already has a `core.hooksPath`, it is left alone and the installer says so.
 - `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md`, `.github/workflows/design-fence.yml`: templates to fill in, if the project has none.
-- `CLAUDE.md`: a pointer to `AGENTS.md` and `PROCESS.md`, for Claude Code, which reads its own file. Another tool that does not read `AGENTS.md` gets the same two-line pointer in the file it reads.
+- design-fence's block in `AGENTS.md`, between its markers: which playbook for which work, and the process's non-negotiables. It is added to an `AGENTS.md` the project already has, and replaced each time the installer runs; edit outside the markers.
+- the playbooks as skills: `.agents/skills/design-fence-*` (Codex) and `.claude/skills/design-fence-*` (Claude Code), links into `skills/`, so an agent that loads skills reads the right playbook when the work matches it. Copies instead of links when design-fence is not at `.agents/design-fence`, or where links fail.
+- no `CLAUDE.md`: Claude Code reads `AGENTS.md` when there is none (2.1.277 or later). In a `CLAUDE.md` the project has, the installer adds `@AGENTS.md` (Claude Code reads `CLAUDE.md` instead of `AGENTS.md`) and removes the import of `PROCESS.md` that earlier versions added.
 
-Nothing to install per agent: any agent that reads `AGENTS.md` (or a pointer to it) has the rules, and every commit it makes goes through the hooks.
+Nothing to install per agent: every agent loads `AGENTS.md`, which says which playbook to read, and every commit it makes goes through the hooks. Another tool that reads only its own file gets one line in it pointing to `AGENTS.md`.
 
 ### The design module (optional)
 
@@ -91,8 +94,11 @@ What happens in Figma stays advisory: see the ledger.
 ```sh
 git submodule update --remote .agents/design-fence
 node .agents/design-fence/install.mjs
-git commit -am "chore: design-fence <version>"
+git add .agents AGENTS.md .claude/skills $(test -f CLAUDE.md && echo CLAUDE.md)
+git commit -m "chore: design-fence <version>"
 ```
+
+The installer refreshes design-fence's block in `AGENTS.md` and adds the skills of new playbooks; `git add` takes the new links, which `commit -a` would leave out.
 
 Changes to how to work anywhere go here, as a change to this repository; what is specific to one project goes into that project's `AGENTS.md`.
 

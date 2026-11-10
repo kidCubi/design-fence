@@ -16,25 +16,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-import {hooksState} from '../install.mjs';
+import {agentsState, hooksState} from '../install.mjs';
 import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
+import {section} from '../lib/markdown.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
 import {checkSpecs, readSpecs, readStories} from '../lib/specs.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ZERO = /^0+$/;
-
-/** The section of a Markdown text under `## <title>`, up to the next one. */
-export function section(text, title) {
-  const lines = text.split('\n');
-  const start = lines.findIndex(line => line.startsWith('## ') && line.includes(title));
-  if (start < 0) {
-    return '';
-  }
-  const end = lines.findIndex((line, i) => i > start && line.startsWith('## '));
-  return lines.slice(start, end < 0 ? undefined : end).join('\n').trim();
-}
 
 function read(file) {
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
@@ -99,21 +89,38 @@ function commits(root, revs) {
 function rules(root) {
   const config = loadConfig(root);
   const hooks = hooksState(root, HOME);
+  const agents = agentsState(root, HOME, Boolean(config?.design));
+  const install = `run \`node ${path.relative(root, HOME)}/install.mjs\``;
+  const skills = Object.entries(agents.skills)
+    .map(([dir, n]) => `${n} of ${agents.wanted} in ${dir}/`)
+    .join(', ');
   const parts = [
     section(read(path.join(HOME, 'PROCESS.md')), 'non-negotiables'),
     section(read(path.join(root, 'AGENTS.md')), 'Non-negotiables'),
     `## Git hooks\n\n${
       hooks.state === 'on'
         ? `On (core.hooksPath ${hooks.wanted}).`
-        : `Off: run \`node ${path.relative(root, HOME)}/install.mjs\` to turn them on.`
+        : `Off: ${install} to turn them on.`
     }`,
+    '## What agents load\n\n' +
+      [
+        agents.block
+          ? "- AGENTS.md has design-fence's block (which playbook for which work)."
+          : `- AGENTS.md has no design-fence block: ${install}.`,
+        `- Skills: ${skills}${Object.values(agents.skills).every(n => n === agents.wanted) ? '.' : `: ${install}.`}`,
+        {
+          none: '- No CLAUDE.md: Claude Code (2.1.277 or later) reads AGENTS.md, unless /config, "Project instructions", says otherwise.',
+          imports: '- CLAUDE.md imports AGENTS.md.',
+          missing: `- CLAUDE.md does not import AGENTS.md, so Claude Code does not read it: ${install}.`,
+        }[agents.claude],
+      ].join('\n'),
     `## Checks (${CONFIG})\n\n` +
       (config
         ? (config.checks ?? []).map(c => `- ${c.name}: when ${[c.when].flat().join(', ')}`).join('\n')
         : 'None.'),
     `## Design module\n\n${
       config?.design
-        ? `On: read ${config.design.dir ?? 'design'}/index.md first; the way in is ${path.relative(root, HOME)}/playbooks/start.md.`
+        ? `On: read ${config.design.dir ?? 'design'}/index.md first; the way in for anything users see is ${path.relative(root, HOME)}/playbooks/start.md.`
         : 'Off.'
     }`,
     read(path.join(root, '.agents/ENFORCEMENT.md')).trim(),

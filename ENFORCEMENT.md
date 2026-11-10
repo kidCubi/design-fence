@@ -13,6 +13,7 @@ The last column matters most: a green check is easily read as "this complies" wh
 | A commit that changes code carries the reflect review's verdict (`Reflect:` line) | enforced | commit-msg hook; pre-push hook and CI on every pushed commit | That the review ran, or was thorough: the line is the author's word. Merge commits are not checked. |
 | The git hooks are on in every clone | advisory | `install.mjs` sets `core.hooksPath`; `design-fence rules` says when they are off; CI catches what they missed | — |
 | Never skip the hooks (`--no-verify`) | advisory | — (CI reports what a skipped hook would have refused) | — |
+| Read the playbook the work goes to, whole, before its first step | advisory | `install.mjs` writes design-fence's block into `AGENTS.md` and links the skills; `design-fence rules` says whether they are there | That an agent read the playbook: the block and the skills only put it in front of the agent |
 | One design-tool screenshot per phase | advisory | — | — |
 | Ground before writing (read the code and the catalog, never memory) | advisory | — | — |
 | "Not found" is a finding, filed as an issue | advisory | — | — |

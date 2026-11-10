@@ -111,21 +111,67 @@ test('install adds what is missing, turns the hooks on, and does nothing a secon
   const {target, output} = installed(root);
   assert.match(
     output,
-    /Wrote: CLAUDE.md, AGENTS.md, .agents\/validate.json, .agents\/ENFORCEMENT.md, .github\/workflows\/design-fence.yml/,
+    /Wrote: AGENTS.md, .agents\/validate.json, .agents\/ENFORCEMENT.md, .github\/workflows\/design-fence.yml\n/,
   );
+  assert.match(output, /Skills written to .agents\/skills\/ and .claude\/skills\/: design-fence-ship, design-fence-reflect\n/);
   assert.match(output, /Git hooks on: core.hooksPath .agents\/design-fence\/hooks/);
   assert.equal(gitRun(root, 'config', '--get', 'core.hooksPath').output.trim(), '.agents/design-fence/hooks');
   const again = execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
   assert.match(again, /nothing to write/);
-  const claude = fs.readFileSync(path.join(root, 'CLAUDE.md'), 'utf8');
-  assert.match(claude, /^@AGENTS\.md$/m);
-  assert.match(claude, /^@\.agents\/design-fence\/PROCESS\.md$/m);
-  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), new RegExp(path.basename(root)));
+  assert.doesNotMatch(again, /Skills/);
+  assert.equal(fs.existsSync(path.join(root, 'CLAUDE.md')), false);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, new RegExp(path.basename(root)));
+  assert.match(agents, /<!-- design-fence: [^\n]*-->\n\n## The process: design-fence\n/);
+  assert.match(agents, /\| `\.agents\/design-fence\/playbooks\/ship\.md` \|/);
+  assert.match(agents, /1\. \*\*Ground before writing\.\*\*/);
+  assert.doesNotMatch(agents, /figma\.md/);
+  for (const dir of ['.agents/skills', '.claude/skills']) {
+    const skill = path.join(root, dir, 'design-fence-ship');
+    assert.equal(fs.lstatSync(skill).isSymbolicLink(), true);
+    assert.match(fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf8'), /^name: design-fence-ship$/m);
+    assert.equal(fs.existsSync(path.join(root, dir, 'design-fence-design')), false);
+  }
   assert.match(
     fs.readFileSync(path.join(root, '.github/workflows/design-fence.yml'), 'utf8'),
     /\.agents\/design-fence\/bin\/design-fence\.mjs commits/,
   );
-  assert.equal(fs.existsSync(path.join(root, '.claude')), false);
+});
+
+test('install puts its block into an existing AGENTS.md once, and fixes an existing CLAUDE.md', () => {
+  const root = repository({checks: []});
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Ours\n\nWhat we are.\n\n## Commands\n\nnpm test\n');
+  fs.writeFileSync(
+    path.join(root, 'CLAUDE.md'),
+    "<!-- Claude Code reads CLAUDE.md; the rules live in AGENTS.md (read by every agent) and in design-fence's process. -->\n" +
+      '@AGENTS.md\n@.agents/design-fence/PROCESS.md\n',
+  );
+  const {target, output} = installed(root);
+  assert.match(output, /Wrote: CLAUDE.md, .agents\/ENFORCEMENT.md, .github\/workflows\/design-fence.yml, AGENTS.md\n/);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /^# Ours\n\nWhat we are\.\n\n<!-- design-fence: /);
+  assert.match(agents, /<!-- \/design-fence -->\n\n## Commands\n\nnpm test\n$/);
+  assert.equal(fs.readFileSync(path.join(root, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
+  assert.match(execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'}), /nothing to write/);
+  assert.equal(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), agents);
+});
+
+test('install elsewhere than .agents/design-fence copies the skills, with their paths', () => {
+  const root = repository({checks: []});
+  const target = path.join(root, 'tools/df');
+  fs.cpSync(HOME, target, {
+    recursive: true,
+    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
+  });
+  const run = () => execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
+  assert.match(run(), /Skills written to/);
+  const skill = path.join(root, '.agents/skills/design-fence-ship');
+  assert.equal(fs.lstatSync(skill).isSymbolicLink(), false);
+  assert.match(fs.readFileSync(path.join(skill, 'SKILL.md'), 'utf8'), /`tools\/df\/playbooks\/ship\.md`/);
+  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), /`tools\/df\/playbooks\/reflect\.md`/);
+  const again = run();
+  assert.match(again, /nothing to write/);
+  assert.doesNotMatch(again, /Skills/);
 });
 
 test('install --design adds the design module once, and keeps what the project has', () => {
@@ -135,7 +181,11 @@ test('install --design adds the design module once, and keeps what the project h
   const {target} = installed(root);
   const run = () =>
     execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
-  assert.match(run(), /Wrote: .agents\/validate.json, design\/PHILOSOPHY.md, design\/tokens.md, design\/flows.yml/);
+  const output = run();
+  assert.match(output, /Wrote: .agents\/validate.json, design\/PHILOSOPHY.md, design\/tokens.md, design\/flows.yml, AGENTS.md\n/);
+  assert.match(output, /: design-fence-start, design-fence-design, design-fence-component, design-fence-flows, design-fence-figma\n/);
+  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), /`\.agents\/design-fence\/playbooks\/figma\.md`, "Connect" first/);
+  assert.equal(fs.lstatSync(path.join(root, '.claude/skills/design-fence-figma')).isSymbolicLink(), true);
   const config = JSON.parse(fs.readFileSync(path.join(root, '.agents/validate.json'), 'utf8'));
   assert.deepEqual(config, {checks: [NO_BAD], design: {dir: 'design'}});
   assert.equal(fs.readFileSync(path.join(root, 'design/index.md'), 'utf8'), 'ours\n');
@@ -253,6 +303,9 @@ test('the command line: check reports and fails, rules says whether the hooks ar
   const rules = cli('rules').stdout;
   assert.match(rules, /The non-negotiables/);
   assert.match(rules, /## Git hooks\n\nOff: run/);
+  assert.match(rules, /## What agents load\n\n- AGENTS.md has no design-fence block: run/);
+  assert.match(rules, /- Skills: 0 of 2 in .agents\/skills\/, 0 of 2 in .claude\/skills\/: run/);
+  assert.match(rules, /- No CLAUDE.md: Claude Code \(2\.1\.277 or later\) reads AGENTS.md/);
   assert.match(rules, /- no bad: when src\/\*\*/);
   assert.match(rules, /Enforcement ledger/);
   assert.match(rules, /## Design module\n\nOff\./);

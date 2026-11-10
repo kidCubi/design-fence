@@ -36,6 +36,8 @@ How people and AI agents build software together in a project that has design-fe
 | Existing, new to design-fence | Full mode | **Adopt** first: an inventory of what exists, described as it is, its gaps filed as issues |
 | A request | Full mode | The **design loop** when something users see is new or changes; full mode directly when the component library has all it needs |
 
+Every agent loads the project's `AGENTS.md`, and design-fence's block in it (written by the installer) says which playbook each kind of work goes to; the playbooks are also skills (`.agents/skills/`, `.claude/skills/`) for the agents that load them. Read the playbook named, whole, before its first step: this file says why, the playbooks say how.
+
 ## Two modes
 
 ### Full mode (the default: anything that lands on the default branch)
