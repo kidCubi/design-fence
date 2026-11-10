@@ -138,7 +138,7 @@ Rules written as prose are summarised away when a long session is compacted, and
 - **What is pushed (pre-push hook).** Every commit being pushed has its `Reflect:` line, and the checks pass on everything since the base.
 - **CI (`.github/workflows/design-fence.yml`).** The same two on what a push or a pull request brings, for commits made where the hooks did not run.
 
-- **In the session (the agent tools' hooks).** What a commit cannot show, refused as the agent does it, in Claude Code, Codex and OpenCode: a command that skips or turns off the git hooks, a second design-tool screenshot in a phase, a `figma/` script pasted rather than run; and design-fence's block of `AGENTS.md` again after a compaction. A second tier: they can be turned off, and other tools have none, so git and CI stay what holds.
+- **In the session (the agent tools' hooks).** What a commit cannot show, refused as the agent does it, in Claude Code, Codex and OpenCode: a command that skips or turns off the git hooks, a second design-tool screenshot in a phase, a `figma/` script pasted rather than run; and design-fence's block of `AGENTS.md` again after a compaction. The project's hooks (`install.mjs`) are files the agent could change; the plugin, in each person's tool, carries its own copy and also asks the human's word before the agent changes design-fence's own files or turns the hooks off. A second tier: a person can turn them off, and other tools have none, so git and CI stay what holds.
 
 The hooks are on once `node .agents/design-fence/install.mjs` has run in the clone (it sets `core.hooksPath`; git does not share it). The same checks run by hand with `node .agents/design-fence/bin/design-fence.mjs check` (or `--all`), in any tool.
 

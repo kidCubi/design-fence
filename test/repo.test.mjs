@@ -193,6 +193,48 @@ test('install --design adds the design module once, and keeps what the project h
   assert.match(run(), /nothing to write/);
 });
 
+test('install --design declares the Figma server for each agent tool, once, keeping what is there', () => {
+  const root = repository({checks: []});
+  fs.writeFileSync(path.join(root, 'opencode.json'), JSON.stringify({model: 'x', mcp: {other: {type: 'remote', url: 'u'}}}));
+  fs.mkdirSync(path.join(root, '.codex'));
+  fs.writeFileSync(path.join(root, '.codex/config.toml'), 'model = "x"');
+  const {target} = installed(root);
+  assert.equal(fs.existsSync(path.join(root, '.mcp.json')), false, 'not without the design module');
+  const run = () =>
+    execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
+  assert.match(run(), /Figma's server \(figma-console, [^)]*\) declared in: \.mcp\.json, opencode\.json, \.codex\/config\.toml\n/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')), {
+    mcpServers: {'figma-console': {command: 'npx', args: ['-y', 'figma-console-mcp@latest']}},
+  });
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'opencode.json'), 'utf8')), {
+    model: 'x',
+    mcp: {other: {type: 'remote', url: 'u'}, 'figma-console': {type: 'local', command: ['npx', '-y', 'figma-console-mcp@latest']}},
+  });
+  const codex = fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8');
+  assert.match(codex, /^model = "x"\n\n# design-fence[^\n]*\n\[mcp_servers\.figma-console\]\ncommand = "npx"\nargs = \["-y", "figma-console-mcp@latest"\]\n$/);
+  assert.doesNotMatch(codex, /FIGMA_ACCESS_TOKEN/);
+  const again = run();
+  assert.match(again, /nothing to write/);
+  assert.doesNotMatch(again, /Figma's server/);
+  assert.equal(fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8'), codex);
+});
+
+test('install --design leaves a declared Figma server, and a file it cannot read, alone', () => {
+  const root = repository({checks: []});
+  const ours = {mcpServers: {'figma-console': {command: 'node', args: ['mine.js'], env: {A: '1'}}}};
+  fs.writeFileSync(path.join(root, '.mcp.json'), JSON.stringify(ours));
+  fs.writeFileSync(path.join(root, 'opencode.jsonc'), '{ // ours\n}');
+  fs.mkdirSync(path.join(root, '.codex'));
+  fs.writeFileSync(path.join(root, '.codex/config.toml'), '[mcp_servers."figma-console"]\ncommand = "node"\n');
+  const {target} = installed(root);
+  const output = execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
+  assert.doesNotMatch(output, /no token\) declared in/);
+  assert.match(output, /Figma's server NOT declared in opencode\.jsonc/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')), ours);
+  assert.equal(fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8'), '[mcp_servers."figma-console"]\ncommand = "node"\n');
+  assert.equal(fs.existsSync(path.join(root, 'opencode.json')), false);
+});
+
 test('install leaves another hooks path alone, and says so', () => {
   const root = repository({checks: []});
   gitRun(root, 'config', 'core.hooksPath', '.husky');
@@ -233,27 +275,6 @@ test('install merges the agent hooks into the tools\' settings once, keeping the
   assert.match(again, /nothing to write/);
   assert.doesNotMatch(again, /Agent hooks/);
   assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.claude/settings.json'), 'utf8')).hooks.PreToolUse.length, 2);
-});
-
-test('the plugin runs the project\'s design-fence, and leaves a project with its own hooks to those', () => {
-  const root = repository({checks: []});
-  const target = path.join(root, '.agents/design-fence');
-  fs.cpSync(HOME, target, {
-    recursive: true,
-    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
-  });
-  const plugin = cwd =>
-    spawnSync(process.execPath, [path.join(HOME, 'harness/plugin/hook.mjs'), 'pre-tool-use'], {
-      cwd,
-      input: JSON.stringify({hook_event_name: 'PreToolUse', cwd, tool_name: 'Bash', tool_input: {command: 'git commit --no-verify'}}),
-      encoding: 'utf8',
-    });
-  const refused = plugin(root);
-  assert.equal(refused.status, 2);
-  assert.match(refused.stderr, /git commit --no-verify/);
-  assert.equal(plugin(os.tmpdir()).status, 0, 'no design-fence: nothing');
-  execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
-  assert.equal(plugin(root).status, 0, "the project's own hooks hold");
 });
 
 test('a commit is refused while a check fails, and passes once fixed', () => {

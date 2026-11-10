@@ -14,7 +14,8 @@
  *     design-fence hook pre-commit | commit-msg <file> | pre-push   what the git hooks run
  *     design-fence agent-hook session-start | user-prompt | pre-tool-use
  *                      what the agent tools' hooks run (Claude Code, Codex: their JSON on stdin;
- *                      exit 2 refuses the tool call, with the reason on stderr; stdout is context)
+ *                      exit 2 refuses the tool call, with the reason on stderr; stdout is context,
+ *                      or Claude Code's "ask")
  *
  * Run from anywhere inside the project.
  */
@@ -24,7 +25,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 import {agentHooksState, agentsState, hooksState} from '../install.mjs';
-import {decide, fromHookInput} from '../lib/agent-hooks.mjs';
+import {runHook} from '../lib/agent-hooks.mjs';
 import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
 import {parseArgs, runInFigma, scriptCode} from '../lib/figma.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
@@ -280,45 +281,28 @@ function hook(root, [name, ...args]) {
 }
 
 /**
- * A hook of an agent tool: its JSON on stdin, the decision as exit 2 and the
- * reason on stderr (refused), or the context on stdout. Exit 2 refuses the
- * tool call, so nothing else may exit 2: outside a project, or on an error of
- * its own, it lets the call through (exit 0, or 1 with the error, which the
- * tools show without blocking). The git hooks and CI still hold.
- *
- * `--plugin`: run by Claude Code's plugin (`harness/plugin/hook.mjs`), which
- * leaves a project whose own hooks run this (`install.mjs`) to those.
+ * A hook of an agent tool, wired into the project by `install.mjs`: its JSON
+ * on stdin, the decision out (`lib/agent-hooks.mjs`, `runHook`): exit 2 with
+ * the reason on stderr refuses the tool call; stdout is context, or Claude
+ * Code's "ask". Nothing else exits 2.
  */
-function agentHook(name, plugin) {
+function agentHook(name) {
+  let input = '';
   try {
-    const input = fs.readFileSync(0, 'utf8');
-    const payload = input.trim() ? JSON.parse(input) : {};
-    const root = projectRoot(payload.cwd || process.cwd());
-    if (!root) {
-      return 0;
-    }
-    if (plugin && agentHooksState(root).claude) {
-      return 0;
-    }
-    const decision = decide(root, fromHookInput(payload, name), {home: HOME});
-    if (decision.deny) {
-      console.error(decision.deny);
-      return 2;
-    }
-    if (decision.context) {
-      console.log(decision.context);
-    }
-    return 0;
-  } catch (error) {
-    console.error(`design-fence agent-hook ${name}: ${error.message}`);
-    return 1;
+    input = fs.readFileSync(0, 'utf8');
+  } catch {
+    // No input: an empty event.
   }
+  const {code, stdout, stderr} = runHook(name, input, {home: HOME});
+  if (stdout) console.log(stdout);
+  if (stderr) console.error(stderr);
+  return code;
 }
 
 function main(argv) {
   const [command, ...args] = argv;
   if (command === 'agent-hook') {
-    return agentHook(args[0], args.includes('--plugin'));
+    return agentHook(args[0]);
   }
   const root = projectRoot(process.cwd());
   if (!root) {

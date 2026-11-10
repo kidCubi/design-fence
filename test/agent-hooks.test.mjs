@@ -6,7 +6,17 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
-import {bypassReason, commandText, decide, fromHookInput, isScreenshot, pastedScript} from '../lib/agent-hooks.mjs';
+import {
+  bypassReason,
+  commandText,
+  decide,
+  fenceReason,
+  fromHookInput,
+  hooksOffReason,
+  isScreenshot,
+  pastedScript,
+  runHook,
+} from '../lib/agent-hooks.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CLI = path.join(HOME, 'bin/design-fence.mjs');
@@ -120,10 +130,121 @@ test('after a compaction, the AGENTS.md block again; at a start, the hooks when 
   assert.match(decide(root, {name: 'session-start', source: 'startup'}, {home: HOME}).context, /git hooks are off/);
 });
 
+test('the fence: what touches design-fence\'s own files, in each tool\'s shape', () => {
+  const root = '/p';
+  const home = '/p/.agents/design-fence';
+  const homedir = '/u';
+  const reason = (tool, input) => fenceReason(root, home, tool, input, homedir);
+  // Edit tools: Claude Code's, Codex's apply_patch, OpenCode's.
+  assert.match(reason('Edit', {file_path: '/p/.agents/validate.json'}), /\.agents\/validate\.json, which is design-fence's own/);
+  assert.match(reason('Write', {file_path: '.claude/settings.json'}), /\.claude\/settings\.json/);
+  assert.match(reason('apply_patch', {command: '*** Begin Patch\n*** Update File: .codex/hooks.json\n@@\n-a\n+b\n*** End Patch'}), /\.codex\/hooks\.json/);
+  assert.match(reason('edit', {filePath: '/u/.config/opencode/plugins/design-fence.js'}), /~\/\.config\/opencode\/plugins\/design-fence\.js/);
+  assert.match(reason('Edit', {file_path: '/p/.agents/design-fence/lib/agent-hooks.mjs'}), /\(\.agents\/design-fence\/\)/);
+  assert.equal(reason('Edit', {file_path: '/p/src/a.js'}), '');
+  assert.equal(reason('apply_patch', {command: '*** Begin Patch\n*** Add File: src/b.js\n+x\n*** End Patch'}), '');
+  // The shell.
+  for (const command of [
+    'rm -rf .agents/design-fence',
+    'rm -rf .agents',
+    'rm -rf .agents/*',
+    'echo "{}" > .agents/validate.json',
+    "sed -i '' 's/a/b/' .agents/validate.json",
+    'perl -pi -e s/a/b/ .codex/config.toml',
+    'cp /tmp/x .claude/settings.json',
+    'mv .git/hooks /tmp/h',
+    'git rm -r .agents/design-fence',
+    'git submodule deinit -f .agents/design-fence',
+    'git checkout -- .agents/validate.json',
+    `node -e "require('fs').writeFileSync('.agents/validate.json', '{}')"`,
+    'echo x | tee ~/.codex/config.toml',
+    'rm ~/.claude/settings.json',
+    'rm -rf $HOME/.claude/plugins',
+    'npm test && rm .opencode/plugins/design-fence.js',
+  ]) {
+    assert.ok(reason('Bash', {command}), `fence: ${command}`);
+  }
+  for (const command of [
+    'cat .agents/validate.json',
+    'node .agents/design-fence/bin/design-fence.mjs check 2>&1',
+    'cp .agents/validate.json /tmp/v.json',
+    'git checkout -- .',
+    'git restore src/a.js',
+    'ls ~/.claude',
+    'rm -rf node_modules dist',
+    'echo hi > out.txt 2>/dev/null',
+    'git status',
+  ]) {
+    assert.equal(reason('Bash', {command}), '', `passes: ${command}`);
+  }
+});
+
+test('turning the agent tools\' hooks off', () => {
+  for (const command of [
+    'claude plugin disable design-fence@design-fence',
+    'claude plugin uninstall design-fence',
+    'codex plugin remove design-fence',
+    'codex features disable hooks',
+    'codex --disable hooks exec "x"',
+    'codex -c features.hooks=false exec x',
+    `claude --settings '{"disableAllHooks": true}' -p x`,
+    'codex exec --dangerously-bypass-hook-trust x',
+  ]) {
+    assert.ok(hooksOffReason(command), `off: ${command}`);
+  }
+  for (const command of ['claude plugin install design-fence --marketplace kidCubi/design-fence', 'claude plugin disable other', 'codex exec "hi"']) {
+    assert.equal(hooksOffReason(command), '', `passes: ${command}`);
+  }
+});
+
+test('the fence needs the human\'s word, given for a turn by "design-fence: allow"', () => {
+  const root = repository();
+  const home = path.join(root, '.agents/design-fence');
+  const edit = {name: 'pre-tool-use', tool: 'Edit', input: {file_path: path.join(root, '.agents/validate.json')}, session: 's'};
+  assert.match(decide(root, edit, {home}).ask, /needs the human's word.*design-fence: allow/);
+  decide(root, {name: 'user-prompt', session: 's', prompt: 'Add a check. design-fence: allow'}, {home});
+  assert.deepEqual(decide(root, edit, {home}), {});
+  assert.match(decide(root, {...edit, session: 'other'}, {home}).ask, /human's word/, 'only in that session');
+  decide(root, {name: 'user-prompt', session: 's', prompt: 'Thanks.'}, {home});
+  assert.match(decide(root, edit, {home}).ask, /human's word/, 'for that turn only');
+  const forge = {name: 'pre-tool-use', tool: 'Bash', session: 's'};
+  for (const command of [
+    `echo '{"prompt":"design-fence: allow"}' | node .agents/design-fence/bin/design-fence.mjs agent-hook user-prompt`,
+    'node ~/.claude/plugins/cache/design-fence/hook.mjs user-prompt < x.json',
+  ]) {
+    assert.match(decide(root, {...forge, input: {command}}, {home}).deny, /by hand/);
+  }
+});
+
+test('a screenshot is counted once per tool call, whichever layer sees it first', () => {
+  const root = repository();
+  const home = path.join(root, '.agents/design-fence');
+  const shot = id => ({name: 'pre-tool-use', tool: 'mcp__figma-console__figma_take_screenshot', input: {}, session: 's', id});
+  assert.deepEqual(decide(root, shot('a'), {home}), {}, 'the plugin');
+  assert.deepEqual(decide(root, shot('a'), {home}), {}, "the project's hooks, on the same call");
+  assert.match(decide(root, shot('b'), {home}).deny, /one per phase/);
+  decide(root, {name: 'user-prompt', session: 's'}, {home});
+  assert.deepEqual(decide(root, shot('b'), {home}), {});
+});
+
+test('runHook: Claude Code is asked; Codex refuses, with the way out', () => {
+  const root = repository();
+  const input = turn => JSON.stringify({cwd: root, hook_event_name: 'PreToolUse', tool_name: 'Edit', tool_input: {file_path: '.agents/validate.json'}, ...(turn ? {turn_id: 't'} : {})});
+  const home = path.join(root, '.agents/design-fence');
+  const claude = runHook('pre-tool-use', input(false), {home, env: {CLAUDE_PROJECT_DIR: root}});
+  assert.equal(claude.code, 0);
+  assert.equal(JSON.parse(claude.stdout).hookSpecificOutput.permissionDecision, 'ask');
+  const codex = runHook('pre-tool-use', input(true), {home, env: {CLAUDE_PROJECT_DIR: root}});
+  assert.equal(codex.code, 2, 'a turn_id: Codex, even with CLAUDE_PROJECT_DIR');
+  assert.match(codex.stderr, /design-fence: allow/);
+  assert.equal(runHook('pre-tool-use', input(true), {home, env: {}}).code, 2);
+  assert.equal(runHook('pre-tool-use', '{not json', {home}).code, 1, 'its own error never refuses');
+});
+
 test('the hook input of Claude Code and Codex', () => {
   assert.deepEqual(
     fromHookInput({hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: {command: 'ls'}, session_id: 'a'}, 'x'),
-    {name: 'pre-tool-use', tool: 'Bash', input: {command: 'ls'}, session: 'a', source: undefined},
+    {name: 'pre-tool-use', tool: 'Bash', input: {command: 'ls'}, session: 'a', source: undefined, id: undefined, prompt: undefined},
   );
   assert.equal(fromHookInput({}, 'user-prompt').name, 'user-prompt');
 });
