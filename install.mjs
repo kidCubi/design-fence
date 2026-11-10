@@ -23,44 +23,44 @@
  * - in an existing `CLAUDE.md` (Claude Code reads it instead of `AGENTS.md`):
  *   `@AGENTS.md`, and no import of `PROCESS.md`. No `CLAUDE.md` is created:
  *   without one, Claude Code reads `AGENTS.md`;
+ * - the agent tools' hooks (`lib/agent-hooks.mjs`, what the git hooks cannot
+ *   see between two commits): in `.claude/settings.json` (Claude Code) and
+ *   `.codex/hooks.json` (Codex), merged with what is there, and as
+ *   `.opencode/plugins/design-fence.js` (OpenCode);
  * - with `--design`, the design module (PROCESS.md, "The design module"): a
  *   `design` section in `.agents/validate.json` if it has none, the `design/`
- *   templates the project does not have, and the design playbooks' skills.
+ *   templates the project does not have, the design playbooks' skills, and
+ *   the Figma server (figma-console, over its Desktop Bridge: no token) in
+ *   `.mcp.json`, `.codex/config.toml` and `opencode.json`, unless declared.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+import {
+  AGENT_FILES,
+  BLOCK_END,
+  BLOCK_START,
+  CONVENTION,
+  agentHooksState,
+  blockIn,
+  hooksState as hooksStateAt,
+  isBlockStart,
+  readText,
+  relativeTo,
+} from './lib/fence.mjs';
 import {git, projectRoot} from './lib/git.mjs';
 import {section} from './lib/markdown.mjs';
 
+export {AGENT_FILES, agentHooksState, blockIn};
+
 const HOME = path.dirname(fileURLToPath(import.meta.url));
 
-/** Where design-fence is installed by convention: the paths its files name. */
-const CONVENTION = '.agents/design-fence';
+const read = readText;
 
-/** `path` relative to `root`, with `/` separators. */
-const relativeTo = (root, file) => path.relative(root, file).split(path.sep).join('/');
-
-const read = file => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
-
-/**
- * Whether the project's git hooks are design-fence's: `{state, current,
- * wanted}`, the state `on`, `off` (no hooks path set) or `other` (set to
- * another directory, left alone).
- */
-export function hooksState(root, home = HOME) {
-  const wanted = relativeTo(root, path.join(home, 'hooks'));
-  let current = '';
-  try {
-    current = git(root, ['config', '--get', 'core.hooksPath']).trim();
-  } catch {
-    // Not set.
-  }
-  const state = !current ? 'off' : path.resolve(root, current) === path.resolve(root, wanted) ? 'on' : 'other';
-  return {state, current, wanted};
-}
+/** Whether the project's git hooks are design-fence's (`lib/fence.mjs`), by default this design-fence's. */
+export const hooksState = (root, home = HOME) => hooksStateAt(root, home);
 
 /** The playbooks installed as skills (`skills/design-fence-<name>`): always, and with the design module. */
 const SKILLS = ['ship', 'reflect'];
@@ -71,10 +71,6 @@ const SKILL_DIRS = ['.agents/skills', '.claude/skills'];
 
 const skillNames = design => (design ? [...SKILLS, ...DESIGN_SKILLS] : SKILLS);
 
-/** The markers around design-fence's block in `AGENTS.md`; the start marker is matched by its prefix. */
-const BLOCK_START = '<!-- design-fence: written by install.mjs and replaced each time it runs; edit outside these markers -->';
-const BLOCK_END = '<!-- /design-fence -->';
-const isBlockStart = line => /^<!-- design-fence\b/.test(line.trim());
 
 /** design-fence's block for `AGENTS.md`, its paths relative to the project's root. */
 export function agentsBlock(relative, design, home = HOME) {
@@ -118,6 +114,146 @@ export function withBlock(text, block) {
   while (at < lines.length && lines[at].trim()) at++;
   const rest = lines.slice(at);
   return [...lines.slice(0, at), '', ...wrapped, ...(rest.length ? rest : [''])].join('\n');
+}
+
+/**
+ * The agent tools' hooks: the events `design-fence agent-hook` takes, and the
+ * tool calls it looks at (the shell, the edit tools: Claude Code's, Codex's
+ * apply_patch; the MCP servers'); the files they go in (`AGENT_FILES`); and
+ * the command each tool runs, from the project's root (`$CLAUDE_PROJECT_DIR`
+ * in Claude Code; Codex runs hooks in the session's directory). The plugin's
+ * `harness/plugin/hooks/hooks.json` has the same matcher.
+ */
+export const PRE_TOOL_MATCHER = 'Bash|Edit|Write|MultiEdit|NotebookEdit|apply_patch|mcp__.*';
+const AGENT_EVENTS = [
+  ['SessionStart', 'session-start'],
+  ['UserPromptSubmit', 'user-prompt'],
+  ['PreToolUse', 'pre-tool-use', PRE_TOOL_MATCHER],
+];
+const agentCommands = relative => ({
+  claude: name => `node "$CLAUDE_PROJECT_DIR/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
+  codex: name => `node "$(git rev-parse --show-toplevel)/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
+});
+const isAgentHook = hook => /design-fence\.mjs" agent-hook /.test(hook?.command ?? '');
+
+/**
+ * A tool's settings (`{hooks: {<event>: [{matcher, hooks: [{type,
+ * command}]}]}}`, Claude Code's and Codex's shape) with design-fence's agent
+ * hooks: its own taken out wherever they are, then added, one group per
+ * event. Everything else stays as it was.
+ */
+export function withAgentHooks(settings, command) {
+  const hooks = {...(settings.hooks ?? {})};
+  for (const [event, name, matcher] of AGENT_EVENTS) {
+    const others = (hooks[event] ?? [])
+      .map(group => ({...group, hooks: (group.hooks ?? []).filter(hook => !isAgentHook(hook))}))
+      .filter(group => group.hooks.length > 0);
+    const ours = {...(matcher ? {matcher} : {}), hooks: [{type: 'command', command: command(name), timeout: 30}]};
+    hooks[event] = [...others, ours];
+  }
+  return {...settings, hooks};
+}
+
+/**
+ * The agent tools' hooks, into the project: merged into the tools' settings
+ * (a file that is not JSON is left alone, and named in `skipped`), and
+ * OpenCode's plugin copied. Returns `{written, skipped}`.
+ */
+function installAgentHooks(root, relative, write) {
+  const written = [];
+  const skipped = [];
+  for (const [tool, command] of Object.entries(agentCommands(relative))) {
+    const file = AGENT_FILES[tool];
+    const text = read(path.join(root, file));
+    let settings;
+    try {
+      settings = text.trim() ? JSON.parse(text) : {};
+    } catch {
+      skipped.push(file);
+      continue;
+    }
+    const next = `${JSON.stringify(withAgentHooks(settings, command), null, 2)}\n`;
+    if (next !== text) {
+      write(file, next);
+      written.push(file);
+    }
+  }
+  const plugin = read(path.join(HOME, 'harness/opencode/design-fence.js'));
+  if (read(path.join(root, AGENT_FILES.opencode)) !== plugin) {
+    write(AGENT_FILES.opencode, plugin);
+    written.push(AGENT_FILES.opencode);
+  }
+  return {written, skipped};
+}
+
+/**
+ * The design module's Figma server, figma-console (`playbooks/figma.md`):
+ * over its Desktop Bridge it needs no token (only its REST tools do, which
+ * design-fence does not use), so nothing personal goes into the repository.
+ * Declared for each agent tool, in the project's own file for it.
+ */
+const FIGMA_SERVER = {name: 'figma-console', command: 'npx', args: ['-y', 'figma-console-mcp@latest']};
+export const MCP_FILES = {claude: '.mcp.json', codex: '.codex/config.toml', opencode: 'opencode.json'};
+const CODEX_FIGMA = [
+  '',
+  "# design-fence's design module: Figma through figma-console's Desktop Bridge (no token needed).",
+  `[mcp_servers.${FIGMA_SERVER.name}]`,
+  `command = "${FIGMA_SERVER.command}"`,
+  `args = [${FIGMA_SERVER.args.map(arg => `"${arg}"`).join(', ')}]`,
+  '',
+].join('\n');
+
+/**
+ * figma-console, declared where a project's agent tools look for their MCP
+ * servers, unless the file already declares it: `.mcp.json` (Claude Code),
+ * `.codex/config.toml` (Codex), `opencode.json` (OpenCode). A file that
+ * cannot be read as JSON (or an `opencode.jsonc`) is left alone, and named in
+ * `skipped`. Returns `{written, skipped}`.
+ */
+function installFigmaServer(root, write) {
+  const written = [];
+  const skipped = [];
+  const json = (file, add) => {
+    const text = read(path.join(root, file));
+    let settings;
+    try {
+      settings = text.trim() ? JSON.parse(text) : null;
+    } catch {
+      skipped.push(file);
+      return;
+    }
+    const next = add(settings);
+    if (next) {
+      write(file, `${JSON.stringify(next, null, 2)}\n`);
+      written.push(file);
+    }
+  };
+  json(MCP_FILES.claude, settings =>
+    settings?.mcpServers?.[FIGMA_SERVER.name]
+      ? null
+      : {
+          ...settings,
+          mcpServers: {...settings?.mcpServers, [FIGMA_SERVER.name]: {command: FIGMA_SERVER.command, args: FIGMA_SERVER.args}},
+        },
+  );
+  if (fs.existsSync(path.join(root, 'opencode.jsonc'))) {
+    skipped.push('opencode.jsonc');
+  } else {
+    json(MCP_FILES.opencode, settings =>
+      settings?.mcp?.[FIGMA_SERVER.name]
+        ? null
+        : {
+            ...(settings ?? {$schema: 'https://opencode.ai/config.json'}),
+            mcp: {...settings?.mcp, [FIGMA_SERVER.name]: {type: 'local', command: [FIGMA_SERVER.command, ...FIGMA_SERVER.args]}},
+          },
+    );
+  }
+  const codex = read(path.join(root, MCP_FILES.codex));
+  if (!new RegExp(`^\\s*\\[mcp_servers\\.("?)${FIGMA_SERVER.name}\\1\\]`, 'm').test(codex)) {
+    write(MCP_FILES.codex, `${codex}${codex && !codex.endsWith('\n') ? '\n' : ''}${codex ? CODEX_FIGMA : CODEX_FIGMA.slice(1)}`);
+    written.push(MCP_FILES.codex);
+  }
+  return {written, skipped};
 }
 
 /** The comment design-fence's `CLAUDE.md` template had, dropped with its import of `PROCESS.md`. */
@@ -289,11 +425,14 @@ function install(root, {design = false} = {}) {
     path.basename(file),
   );
 
+  const agentHooks = installAgentHooks(root, relative, write);
+  const figmaServer = config.design ? installFigmaServer(root, write) : {written: [], skipped: []};
+
   const hooks = hooksState(root);
   if (hooks.state === 'off') {
     git(root, ['config', 'core.hooksPath', hooks.wanted]);
   }
-  return {done, skills: [...new Set(skills)], hooks};
+  return {done, skills: [...new Set(skills)], agentHooks, figmaServer, hooks};
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -302,11 +441,24 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     console.error('Run this inside the project (a git repository).');
     process.exit(2);
   }
-  const {done, skills, hooks} = install(root, {design: process.argv.includes('--design')});
-  const wrote = done.filter(file => !SKILL_DIRS.some(dir => file.startsWith(`${dir}/`)));
+  const {done, skills, agentHooks, figmaServer, hooks} = install(root, {design: process.argv.includes('--design')});
+  const own = [...Object.values(AGENT_FILES), ...figmaServer.written];
+  const wrote = done.filter(file => !SKILL_DIRS.some(dir => file.startsWith(`${dir}/`)) && !own.includes(file));
   console.log(wrote.length ? `Wrote: ${wrote.join(', ')}` : 'The project files are there: nothing to write.');
   if (skills.length) {
     console.log(`Skills written to ${SKILL_DIRS.join('/ and ')}/: ${skills.join(', ')}`);
+  }
+  if (agentHooks.written.length) {
+    console.log(`Agent hooks written to: ${agentHooks.written.join(', ')}`);
+  }
+  for (const file of agentHooks.skipped) {
+    console.log(`Agent hooks NOT in ${file}: it is not JSON. Fix it and run this again.`);
+  }
+  if (figmaServer.written.length) {
+    console.log(`Figma's server (figma-console, over the Desktop Bridge, no token) declared in: ${figmaServer.written.join(', ')}`);
+  }
+  for (const file of figmaServer.skipped) {
+    console.log(`Figma's server NOT declared in ${file}: it is not plain JSON. Add figma-console there by hand (npx -y figma-console-mcp@latest).`);
   }
   if (hooks.state === 'other') {
     console.log(

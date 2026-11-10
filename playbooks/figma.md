@@ -6,6 +6,8 @@ The project's `AGENTS.md` names the file (file key, pages), the tokens file and 
 
 ## Connect first, over the bridge only
 
+The server is figma-console, which `install.mjs --design` declares for Claude Code (`.mcp.json`), Codex (`.codex/config.toml`) and OpenCode (`opencode.json`); its Desktop Bridge needs no token. Not among the agent's tools: the human approves it (Claude Code asks at the start of a session; Codex once the project is trusted) and starts a new session.
+
 1. Call `figma_get_status` with `probe: true` before the first Figma call of the session, and again only when a call fails.
 2. Healthy: `setup.valid: true`, `transport.active: "websocket"`, the probe succeeds, and the connected file is the one `AGENTS.md` names. Check the file name before writing: several files may have the plugin open.
    - The plugin is current: the connected file's `pluginVersion` equals the server's `bundledPluginVersion` (`pluginUpdateAvailable` is not true). An older plugin answers the commands it does not know with "Unknown method" (creating a slot needs 1.41 or later): before any new kind of call, ask the human to re-import the manifest (step 3.3) and run the plugin again.
@@ -36,7 +38,7 @@ Every response stays in the conversation and is paid again on each later turn, a
 
 ## Screenshots: one per phase, for the human
 
-At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Take it of the section (or frame) around the work: a component set exported alone comes out on white, and light-on-dark components disappear. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. Nothing enforces it in every tool: hold to it.
+At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`, `figma_get_component_image`, `get_screenshot`) per phase of the work, at its end, to show the human. Take it of the section (or frame) around the work: a component set exported alone comes out on white, and light-on-dark components disappear. Within a phase, verify by reading properties as above, never by a loop of screenshots. This overrides the figma-console server's own advice to screenshot after every change. In Claude Code, Codex and OpenCode, design-fence's agent hooks refuse a second one until the human writes again; elsewhere nothing enforces it: hold to it.
 
 ## Plugin API: what surprises
 

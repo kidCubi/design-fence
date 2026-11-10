@@ -1,0 +1,14 @@
+{
+  "name": "design-fence",
+  "owner": {
+    "name": "kidCubi"
+  },
+  "description": "design-fence: a process for building software with AI agents, enforced by git and, in the session, by the agent tools' hooks.",
+  "plugins": [
+    {
+      "name": "design-fence",
+      "source": "./harness/plugin",
+      "description": "design-fence in the session: refuses skipping the git hooks, holds the design-tool screenshot budget and the figma/ scripts to their command, and brings the rules back after a compaction. Runs the project's own design-fence; does nothing elsewhere."
+    }
+  ]
+}

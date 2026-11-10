@@ -193,12 +193,88 @@ test('install --design adds the design module once, and keeps what the project h
   assert.match(run(), /nothing to write/);
 });
 
+test('install --design declares the Figma server for each agent tool, once, keeping what is there', () => {
+  const root = repository({checks: []});
+  fs.writeFileSync(path.join(root, 'opencode.json'), JSON.stringify({model: 'x', mcp: {other: {type: 'remote', url: 'u'}}}));
+  fs.mkdirSync(path.join(root, '.codex'));
+  fs.writeFileSync(path.join(root, '.codex/config.toml'), 'model = "x"');
+  const {target} = installed(root);
+  assert.equal(fs.existsSync(path.join(root, '.mcp.json')), false, 'not without the design module');
+  const run = () =>
+    execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
+  assert.match(run(), /Figma's server \(figma-console, [^)]*\) declared in: \.mcp\.json, opencode\.json, \.codex\/config\.toml\n/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')), {
+    mcpServers: {'figma-console': {command: 'npx', args: ['-y', 'figma-console-mcp@latest']}},
+  });
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'opencode.json'), 'utf8')), {
+    model: 'x',
+    mcp: {other: {type: 'remote', url: 'u'}, 'figma-console': {type: 'local', command: ['npx', '-y', 'figma-console-mcp@latest']}},
+  });
+  const codex = fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8');
+  assert.match(codex, /^model = "x"\n\n# design-fence[^\n]*\n\[mcp_servers\.figma-console\]\ncommand = "npx"\nargs = \["-y", "figma-console-mcp@latest"\]\n$/);
+  assert.doesNotMatch(codex, /FIGMA_ACCESS_TOKEN/);
+  const again = run();
+  assert.match(again, /nothing to write/);
+  assert.doesNotMatch(again, /Figma's server/);
+  assert.equal(fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8'), codex);
+});
+
+test('install --design leaves a declared Figma server, and a file it cannot read, alone', () => {
+  const root = repository({checks: []});
+  const ours = {mcpServers: {'figma-console': {command: 'node', args: ['mine.js'], env: {A: '1'}}}};
+  fs.writeFileSync(path.join(root, '.mcp.json'), JSON.stringify(ours));
+  fs.writeFileSync(path.join(root, 'opencode.jsonc'), '{ // ours\n}');
+  fs.mkdirSync(path.join(root, '.codex'));
+  fs.writeFileSync(path.join(root, '.codex/config.toml'), '[mcp_servers."figma-console"]\ncommand = "node"\n');
+  const {target} = installed(root);
+  const output = execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
+  assert.doesNotMatch(output, /no token\) declared in/);
+  assert.match(output, /Figma's server NOT declared in opencode\.jsonc/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')), ours);
+  assert.equal(fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8'), '[mcp_servers."figma-console"]\ncommand = "node"\n');
+  assert.equal(fs.existsSync(path.join(root, 'opencode.json')), false);
+});
+
 test('install leaves another hooks path alone, and says so', () => {
   const root = repository({checks: []});
   gitRun(root, 'config', 'core.hooksPath', '.husky');
   const {output} = installed(root);
   assert.match(output, /Git hooks NOT on: core.hooksPath is already .husky/);
   assert.equal(gitRun(root, 'config', '--get', 'core.hooksPath').output.trim(), '.husky');
+});
+
+test('install merges the agent hooks into the tools\' settings once, keeping theirs', () => {
+  const root = repository({checks: []});
+  const theirs = {matcher: 'Bash', hooks: [{type: 'command', command: 'echo theirs'}]};
+  fs.mkdirSync(path.join(root, '.claude'));
+  fs.writeFileSync(path.join(root, '.claude/settings.json'), JSON.stringify({model: 'x', hooks: {PreToolUse: [theirs]}}));
+  fs.mkdirSync(path.join(root, '.codex'));
+  fs.writeFileSync(path.join(root, '.codex/hooks.json'), '{not json');
+  const {target, output} = installed(root);
+  assert.match(output, /Agent hooks written to: \.claude\/settings\.json, \.opencode\/plugins\/design-fence\.js\n/);
+  assert.match(output, /Agent hooks NOT in \.codex\/hooks\.json: it is not JSON/);
+  const claude = JSON.parse(fs.readFileSync(path.join(root, '.claude/settings.json'), 'utf8'));
+  assert.equal(claude.model, 'x');
+  assert.deepEqual(claude.hooks.PreToolUse[0], theirs);
+  assert.equal(
+    claude.hooks.PreToolUse[1].hooks[0].command,
+    'node "$CLAUDE_PROJECT_DIR/.agents/design-fence/bin/design-fence.mjs" agent-hook pre-tool-use',
+  );
+  assert.deepEqual(Object.keys(claude.hooks), ['PreToolUse', 'SessionStart', 'UserPromptSubmit']);
+  assert.equal(
+    fs.readFileSync(path.join(root, '.opencode/plugins/design-fence.js'), 'utf8'),
+    fs.readFileSync(path.join(HOME, 'harness/opencode/design-fence.js'), 'utf8'),
+  );
+
+  fs.rmSync(path.join(root, '.codex/hooks.json'));
+  const run = () => execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
+  assert.match(run(), /Agent hooks written to: \.codex\/hooks\.json\n/);
+  const codex = JSON.parse(fs.readFileSync(path.join(root, '.codex/hooks.json'), 'utf8'));
+  assert.match(codex.hooks.SessionStart[0].hooks[0].command, /^node "\$\(git rev-parse --show-toplevel\)\/\.agents\/design-fence\/bin\/design-fence\.mjs" agent-hook session-start$/);
+  const again = run();
+  assert.match(again, /nothing to write/);
+  assert.doesNotMatch(again, /Agent hooks/);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.claude/settings.json'), 'utf8')).hooks.PreToolUse.length, 2);
 });
 
 test('a commit is refused while a check fails, and passes once fixed', () => {
