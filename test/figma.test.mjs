@@ -193,3 +193,71 @@ test('a bound paint that shows another colour than its variable is found', async
     {rule: 'stale-paint', id: '3', name: 'Focus box', prop: 'strokes', variable: 'border/focus', shows: '#000000', value: '#3b3b40'},
   ]);
 });
+
+// design-fence figma: the scripts from the command line (lib/figma.mjs), against a stand-in figma-console server.
+
+const {parseArgs, runInFigma, scriptCode} = await import('../lib/figma.mjs');
+
+test('each script ends with its call, from the command line arguments', () => {
+  const tail = (name, argv) => scriptCode(name, parseArgs(argv)).split('\n').at(-1);
+  assert.equal(tail('lint-gaps', ['12:34', '--properties', 'Label, Tone']), 'return await lintGaps("12:34", {"properties":["Label","Tone"]});');
+  assert.equal(tail('lint-gaps', ['12:34']), 'return await lintGaps("12:34", {});');
+  assert.equal(tail('sources', []), 'return await sources();');
+  assert.equal(
+    tail('tokens', ['--format', 'css', '--px', 'space/,radius/', '--hash-only', '--out', 'src/tokens.css']),
+    'return await tokens({"format":"css","px":["space/","radius/"],"ms":[],"hashOnly":true});',
+  );
+  assert.ok(scriptCode('sources', parseArgs([])).startsWith(fs.readFileSync(path.join(HOME, 'figma/sources.js'), 'utf8')));
+  assert.throws(() => scriptCode('lint-gaps', parseArgs([])), /Name the node/);
+  assert.throws(() => scriptCode('nothing', parseArgs([])), /No Figma script/);
+});
+
+/** A stand-in figma-console: the bridge answers from the `connectAfter`-th status probe, on the file `key`. */
+const fakeServer = ({connectAfter = 1, key = 'FILE', fail = false} = {}) => [
+  process.execPath,
+  '-e',
+  `let probes = 0;
+  require('readline').createInterface({input: process.stdin}).on('line', line => {
+    const m = JSON.parse(line);
+    if (m.id == null) return;
+    const reply = text => console.log(JSON.stringify({jsonrpc: '2.0', id: m.id, result: {content: [{type: 'text', text: JSON.stringify(text)}]}}));
+    if (m.method === 'initialize') return console.log(JSON.stringify({jsonrpc: '2.0', id: m.id, result: {}}));
+    const {name, arguments: args} = m.params;
+    if (name === 'figma_get_status') {
+      const on = ++probes >= ${connectAfter};
+      return reply({currentFileName: 'Kit', currentFileKey: ${JSON.stringify(key)}, setup: {message: on ? 'Connected' : 'No plugin', probeResult: {success: on}}});
+    }
+    if (name === 'figma_execute') return reply(${fail} ? {success: false, error: 'boom'} : {success: true, fileContext: {fileName: 'Kit'}, result: {ran: args.code, fileKey: args.fileKey}});
+  });`,
+];
+
+test('runInFigma waits for the bridge, then runs the code on the file', async () => {
+  const {file, result} = await runInFigma('return 1;', {server: fakeServer({connectAfter: 3}), every: 10, fileKey: 'FILE'});
+  assert.equal(file, 'Kit');
+  assert.deepEqual(result, {ran: 'return 1;', fileKey: 'FILE'});
+});
+
+test('runInFigma says what failed: no bridge, another file, the script', async () => {
+  await assert.rejects(runInFigma('x', {server: fakeServer({connectAfter: 99}), every: 10, wait: 100}), /did not connect \(No plugin\)/);
+  await assert.rejects(runInFigma('x', {server: fakeServer({key: 'OTHER'}), every: 10, fileKey: 'FILE'}), /on "Kit" \(OTHER\), not FILE/);
+  await assert.rejects(runInFigma('x', {server: fakeServer({fail: true}), every: 10}), /failed in Figma: boom/);
+});
+
+test('runInFigma fails at once when the server stops, with what it said', async () => {
+  const dies = [process.execPath, '-e', "console.error('npm error network: request to registry failed'); process.exit(1)"];
+  await assert.rejects(runInFigma('x', {server: dies}), /figma-console stopped \(exit 1\): npm error network/);
+  await assert.rejects(runInFigma('x', {server: ['no-such-command-design-fence']}), /did not start/);
+});
+
+test('figmaServer: the variable, else the newest figma-console npx has fetched, else npx', async () => {
+  const {figmaServer} = await import('../lib/figma.mjs');
+  const cache = fs.mkdtempSync(path.join((await import('node:os')).tmpdir(), 'npx-'));
+  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', 'figma-console-mcp@latest']);
+  for (const [dir, version] of [['a', '1.9.0'], ['b', '1.10.2']]) {
+    const pkg = path.join(cache, dir, 'node_modules/figma-console-mcp');
+    fs.mkdirSync(pkg, {recursive: true});
+    fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({version, bin: {'figma-console-mcp': './dist/local.js'}}));
+  }
+  assert.deepEqual(figmaServer({}, cache), [process.execPath, path.join(cache, 'b/node_modules/figma-console-mcp/dist/local.js')]);
+  assert.deepEqual(figmaServer({DESIGN_FENCE_FIGMA_SERVER: 'node server.js'}, cache), ['node', 'server.js']);
+});

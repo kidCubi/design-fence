@@ -17,7 +17,7 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 | `playbooks/reflect.md` | A review of the work just done against the project's bar; its verdict goes into each commit as a `Reflect:` line |
 | `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge |
 | `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
-| `bin/design-fence.mjs` | `check`, `commits`, `rules`, `specs` (the design specs against Storybook), `hash` (a file's FNV-1a, against Figma's), and `hook` for the git hooks |
+| `bin/design-fence.mjs` | `check`, `commits`, `rules`, `specs` (the design specs against Storybook), `hash` (a file's FNV-1a, against Figma's), `figma` (the scripts of `figma/` through the Desktop Bridge, their text out of the agent's context), and `hook` for the git hooks |
 | `figma/lint-gaps.js` | Design module: the Figma lint `figma_lint_design` does not make (unbound spacing, radius, stroke; default names; invisible borders; stale paints; descriptions; properties against the spec), run through the bridge |
 | `figma/tokens.js` | Design module: Figma's variables as the project's tokens file (W3C design tokens or CSS), or only its hash, run through the bridge |
 | `figma/sources.js` | Design module: what a Figma file's design system is made of (local components, library components in use with their keys, variables), for `design/index.md`, run once through the bridge |
@@ -82,12 +82,13 @@ What happens in Figma stays advisory: see the ledger.
 
 ## Use
 
-- With the design module, start from `.agents/design-fence/playbooks/start.md`: it says which playbook a request needs.
+- With the design module, a request for something users see goes to `.agents/design-fence/playbooks/design.md`; `start.md` lays the foundation or adopts the project first, and says which playbook a request needs when it is unclear.
 - Ask the agent to follow `.agents/design-fence/playbooks/ship.md` for a request or an issue ("quick" for a prototype, "status" for the audit), or `reflect.md` to review the work just done.
 - Commit as usual: the hooks run the checks and ask for the `Reflect:` line.
 - `node .agents/design-fence/bin/design-fence.mjs check` (`--all`, `--no-cache`, `--base <ref>`): the checks, by hand.
 - `node .agents/design-fence/bin/design-fence.mjs commits origin/main..HEAD`: the commits that change code without a `Reflect:` line.
 - `node .agents/design-fence/bin/design-fence.mjs rules`: the rules, and whether the hooks are on, for an agent that did not load `AGENTS.md`.
+- `node .agents/design-fence/bin/design-fence.mjs figma lint-gaps <node id>` (or `sources`, or `tokens --format css --out <file>`): design-fence's Figma scripts, run through figma-console's Desktop Bridge from the command line.
 
 ## Update
 
