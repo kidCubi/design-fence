@@ -1,0 +1,8 @@
+{
+  "name": "design-fence",
+  "description": "design-fence in the session: refuses skipping the git hooks, holds the design-tool screenshot budget and the figma/ scripts to their command, and brings the rules back after a compaction. Runs the project's own design-fence; does nothing elsewhere.",
+  "repository": "https://github.com/kidCubi/design-fence",
+  "author": {
+    "name": "kidCubi"
+  }
+}

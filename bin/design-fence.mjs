@@ -12,6 +12,9 @@
  *     design-fence figma tokens [--format dtcg|css] [--px <prefix,…>] [--ms <prefix,…>] [--hash-only] [--out <file>]
  *                      (each takes --key <file key>: refuse to run on another file)
  *     design-fence hook pre-commit | commit-msg <file> | pre-push   what the git hooks run
+ *     design-fence agent-hook session-start | user-prompt | pre-tool-use
+ *                      what the agent tools' hooks run (Claude Code, Codex: their JSON on stdin;
+ *                      exit 2 refuses the tool call, with the reason on stderr; stdout is context)
  *
  * Run from anywhere inside the project.
  */
@@ -20,7 +23,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-import {agentsState, hooksState} from '../install.mjs';
+import {agentHooksState, agentsState, hooksState} from '../install.mjs';
+import {decide, fromHookInput} from '../lib/agent-hooks.mjs';
 import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
 import {parseArgs, runInFigma, scriptCode} from '../lib/figma.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
@@ -113,6 +117,14 @@ function rules(root) {
           ? "- AGENTS.md has design-fence's block (which playbook for which work)."
           : `- AGENTS.md has no design-fence block: ${install}.`,
         `- Skills: ${skills}${Object.values(agents.skills).every(n => n === agents.wanted) ? '.' : `: ${install}.`}`,
+        (() => {
+          const wired = agentHooksState(root);
+          const names = {claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode'};
+          const off = Object.keys(names).filter(tool => !wired[tool]);
+          return off.length
+            ? `- Agent hooks (what the git hooks cannot see between commits): not in ${off.map(t => names[t]).join(', ')}: ${install}.`
+            : '- Agent hooks in Claude Code, Codex and OpenCode (Codex asks to trust them once, in /hooks).';
+        })(),
         {
           none: '- No CLAUDE.md: Claude Code (2.1.277 or later) reads AGENTS.md, unless /config, "Project instructions", says otherwise.',
           imports: '- CLAUDE.md imports AGENTS.md.',
@@ -267,8 +279,47 @@ function hook(root, [name, ...args]) {
   }
 }
 
+/**
+ * A hook of an agent tool: its JSON on stdin, the decision as exit 2 and the
+ * reason on stderr (refused), or the context on stdout. Exit 2 refuses the
+ * tool call, so nothing else may exit 2: outside a project, or on an error of
+ * its own, it lets the call through (exit 0, or 1 with the error, which the
+ * tools show without blocking). The git hooks and CI still hold.
+ *
+ * `--plugin`: run by Claude Code's plugin (`harness/plugin/hook.mjs`), which
+ * leaves a project whose own hooks run this (`install.mjs`) to those.
+ */
+function agentHook(name, plugin) {
+  try {
+    const input = fs.readFileSync(0, 'utf8');
+    const payload = input.trim() ? JSON.parse(input) : {};
+    const root = projectRoot(payload.cwd || process.cwd());
+    if (!root) {
+      return 0;
+    }
+    if (plugin && agentHooksState(root).claude) {
+      return 0;
+    }
+    const decision = decide(root, fromHookInput(payload, name), {home: HOME});
+    if (decision.deny) {
+      console.error(decision.deny);
+      return 2;
+    }
+    if (decision.context) {
+      console.log(decision.context);
+    }
+    return 0;
+  } catch (error) {
+    console.error(`design-fence agent-hook ${name}: ${error.message}`);
+    return 1;
+  }
+}
+
 function main(argv) {
   const [command, ...args] = argv;
+  if (command === 'agent-hook') {
+    return agentHook(args[0], args.includes('--plugin'));
+  }
   const root = projectRoot(process.cwd());
   if (!root) {
     console.error('design-fence runs inside a git repository.');

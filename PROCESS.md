@@ -138,9 +138,11 @@ Rules written as prose are summarised away when a long session is compacted, and
 - **What is pushed (pre-push hook).** Every commit being pushed has its `Reflect:` line, and the checks pass on everything since the base.
 - **CI (`.github/workflows/design-fence.yml`).** The same two on what a push or a pull request brings, for commits made where the hooks did not run.
 
+- **In the session (the agent tools' hooks).** What a commit cannot show, refused as the agent does it, in Claude Code, Codex and OpenCode: a command that skips or turns off the git hooks, a second design-tool screenshot in a phase, a `figma/` script pasted rather than run; and design-fence's block of `AGENTS.md` again after a compaction. A second tier: they can be turned off, and other tools have none, so git and CI stay what holds.
+
 The hooks are on once `node .agents/design-fence/install.mjs` has run in the clone (it sets `core.hooksPath`; git does not share it). The same checks run by hand with `node .agents/design-fence/bin/design-fence.mjs check` (or `--all`), in any tool.
 
-What is not enforced stays advice: the screenshot budget of `playbooks/figma.md` (one design-tool screenshot per phase, for the human), grounding, naming what ran.
+What is not enforced stays advice: grounding, naming what ran, and, in a tool without the agent hooks, the screenshot budget of `playbooks/figma.md` (one design-tool screenshot per phase, for the human).
 
 With the design module, a git hook cannot see Figma (it needs the bridge), so what it checks is in the repo: `design-fence specs` (each spec's status and what it needs, built specs against Storybook's index, the library's stories against the specs), added to `.agents/validate.json` as a check; no raw value in the code where a token exists, with the project's own linter (a stylelint rule). What happens in Figma (its lint, the tokens file matching it) is advisory in the ledger. The design gate is the human's word, recorded in the spec (`approved_by`), as the `Reflect:` line is the author's.
 

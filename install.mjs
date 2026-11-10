@@ -23,6 +23,10 @@
  * - in an existing `CLAUDE.md` (Claude Code reads it instead of `AGENTS.md`):
  *   `@AGENTS.md`, and no import of `PROCESS.md`. No `CLAUDE.md` is created:
  *   without one, Claude Code reads `AGENTS.md`;
+ * - the agent tools' hooks (`lib/agent-hooks.mjs`, what the git hooks cannot
+ *   see between two commits): in `.claude/settings.json` (Claude Code) and
+ *   `.codex/hooks.json` (Codex), merged with what is there, and as
+ *   `.opencode/plugins/design-fence.js` (OpenCode);
  * - with `--design`, the design module (PROCESS.md, "The design module"): a
  *   `design` section in `.agents/validate.json` if it has none, the `design/`
  *   templates the project does not have, and the design playbooks' skills.
@@ -118,6 +122,98 @@ export function withBlock(text, block) {
   while (at < lines.length && lines[at].trim()) at++;
   const rest = lines.slice(at);
   return [...lines.slice(0, at), '', ...wrapped, ...(rest.length ? rest : [''])].join('\n');
+}
+
+/**
+ * The agent tools' hooks: the events `design-fence agent-hook` takes, and the
+ * tool calls it looks at (the shell, and the MCP servers'); the files they go
+ * in; and the command each tool runs, from the project's root
+ * (`$CLAUDE_PROJECT_DIR` in Claude Code; Codex runs hooks in the session's
+ * directory).
+ */
+const AGENT_EVENTS = [
+  ['SessionStart', 'session-start'],
+  ['UserPromptSubmit', 'user-prompt'],
+  ['PreToolUse', 'pre-tool-use', 'Bash|mcp__.*'],
+];
+export const AGENT_FILES = {
+  claude: '.claude/settings.json',
+  codex: '.codex/hooks.json',
+  opencode: '.opencode/plugins/design-fence.js',
+};
+const agentCommands = relative => ({
+  claude: name => `node "$CLAUDE_PROJECT_DIR/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
+  codex: name => `node "$(git rev-parse --show-toplevel)/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
+});
+const isAgentHook = hook => /design-fence\.mjs" agent-hook /.test(hook?.command ?? '');
+
+/**
+ * A tool's settings (`{hooks: {<event>: [{matcher, hooks: [{type,
+ * command}]}]}}`, Claude Code's and Codex's shape) with design-fence's agent
+ * hooks: its own taken out wherever they are, then added, one group per
+ * event. Everything else stays as it was.
+ */
+export function withAgentHooks(settings, command) {
+  const hooks = {...(settings.hooks ?? {})};
+  for (const [event, name, matcher] of AGENT_EVENTS) {
+    const others = (hooks[event] ?? [])
+      .map(group => ({...group, hooks: (group.hooks ?? []).filter(hook => !isAgentHook(hook))}))
+      .filter(group => group.hooks.length > 0);
+    const ours = {...(matcher ? {matcher} : {}), hooks: [{type: 'command', command: command(name), timeout: 30}]};
+    hooks[event] = [...others, ours];
+  }
+  return {...settings, hooks};
+}
+
+/** Whether each agent tool has design-fence's hooks in the project. */
+export function agentHooksState(root) {
+  // In the JSON, the command's quote is escaped.
+  const has = file => /design-fence\.mjs\\" agent-hook /.test(read(path.join(root, file)));
+  return {
+    claude: has(AGENT_FILES.claude),
+    codex: has(AGENT_FILES.codex),
+    opencode: fs.existsSync(path.join(root, AGENT_FILES.opencode)),
+  };
+}
+
+/**
+ * The agent tools' hooks, into the project: merged into the tools' settings
+ * (a file that is not JSON is left alone, and named in `skipped`), and
+ * OpenCode's plugin copied. Returns `{written, skipped}`.
+ */
+function installAgentHooks(root, relative, write) {
+  const written = [];
+  const skipped = [];
+  for (const [tool, command] of Object.entries(agentCommands(relative))) {
+    const file = AGENT_FILES[tool];
+    const text = read(path.join(root, file));
+    let settings;
+    try {
+      settings = text.trim() ? JSON.parse(text) : {};
+    } catch {
+      skipped.push(file);
+      continue;
+    }
+    const next = `${JSON.stringify(withAgentHooks(settings, command), null, 2)}\n`;
+    if (next !== text) {
+      write(file, next);
+      written.push(file);
+    }
+  }
+  const plugin = read(path.join(HOME, 'harness/opencode/design-fence.js'));
+  if (read(path.join(root, AGENT_FILES.opencode)) !== plugin) {
+    write(AGENT_FILES.opencode, plugin);
+    written.push(AGENT_FILES.opencode);
+  }
+  return {written, skipped};
+}
+
+/** design-fence's block in an `AGENTS.md`, between its markers (without them), or '' when it has none. */
+export function blockIn(text) {
+  const lines = text.split('\n');
+  const start = lines.findIndex(isBlockStart);
+  const end = lines.findIndex((line, i) => i > start && line.trim() === BLOCK_END);
+  return start >= 0 && end > start ? lines.slice(start + 1, end).join('\n').trim() : '';
 }
 
 /** The comment design-fence's `CLAUDE.md` template had, dropped with its import of `PROCESS.md`. */
@@ -289,11 +385,13 @@ function install(root, {design = false} = {}) {
     path.basename(file),
   );
 
+  const agentHooks = installAgentHooks(root, relative, write);
+
   const hooks = hooksState(root);
   if (hooks.state === 'off') {
     git(root, ['config', 'core.hooksPath', hooks.wanted]);
   }
-  return {done, skills: [...new Set(skills)], hooks};
+  return {done, skills: [...new Set(skills)], agentHooks, hooks};
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -302,11 +400,19 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     console.error('Run this inside the project (a git repository).');
     process.exit(2);
   }
-  const {done, skills, hooks} = install(root, {design: process.argv.includes('--design')});
-  const wrote = done.filter(file => !SKILL_DIRS.some(dir => file.startsWith(`${dir}/`)));
+  const {done, skills, agentHooks, hooks} = install(root, {design: process.argv.includes('--design')});
+  const wrote = done.filter(
+    file => !SKILL_DIRS.some(dir => file.startsWith(`${dir}/`)) && !Object.values(AGENT_FILES).includes(file),
+  );
   console.log(wrote.length ? `Wrote: ${wrote.join(', ')}` : 'The project files are there: nothing to write.');
   if (skills.length) {
     console.log(`Skills written to ${SKILL_DIRS.join('/ and ')}/: ${skills.join(', ')}`);
+  }
+  if (agentHooks.written.length) {
+    console.log(`Agent hooks written to: ${agentHooks.written.join(', ')}`);
+  }
+  for (const file of agentHooks.skipped) {
+    console.log(`Agent hooks NOT in ${file}: it is not JSON. Fix it and run this again.`);
   }
   if (hooks.state === 'other') {
     console.log(

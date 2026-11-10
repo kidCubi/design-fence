@@ -201,6 +201,61 @@ test('install leaves another hooks path alone, and says so', () => {
   assert.equal(gitRun(root, 'config', '--get', 'core.hooksPath').output.trim(), '.husky');
 });
 
+test('install merges the agent hooks into the tools\' settings once, keeping theirs', () => {
+  const root = repository({checks: []});
+  const theirs = {matcher: 'Bash', hooks: [{type: 'command', command: 'echo theirs'}]};
+  fs.mkdirSync(path.join(root, '.claude'));
+  fs.writeFileSync(path.join(root, '.claude/settings.json'), JSON.stringify({model: 'x', hooks: {PreToolUse: [theirs]}}));
+  fs.mkdirSync(path.join(root, '.codex'));
+  fs.writeFileSync(path.join(root, '.codex/hooks.json'), '{not json');
+  const {target, output} = installed(root);
+  assert.match(output, /Agent hooks written to: \.claude\/settings\.json, \.opencode\/plugins\/design-fence\.js\n/);
+  assert.match(output, /Agent hooks NOT in \.codex\/hooks\.json: it is not JSON/);
+  const claude = JSON.parse(fs.readFileSync(path.join(root, '.claude/settings.json'), 'utf8'));
+  assert.equal(claude.model, 'x');
+  assert.deepEqual(claude.hooks.PreToolUse[0], theirs);
+  assert.equal(
+    claude.hooks.PreToolUse[1].hooks[0].command,
+    'node "$CLAUDE_PROJECT_DIR/.agents/design-fence/bin/design-fence.mjs" agent-hook pre-tool-use',
+  );
+  assert.deepEqual(Object.keys(claude.hooks), ['PreToolUse', 'SessionStart', 'UserPromptSubmit']);
+  assert.equal(
+    fs.readFileSync(path.join(root, '.opencode/plugins/design-fence.js'), 'utf8'),
+    fs.readFileSync(path.join(HOME, 'harness/opencode/design-fence.js'), 'utf8'),
+  );
+
+  fs.rmSync(path.join(root, '.codex/hooks.json'));
+  const run = () => execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
+  assert.match(run(), /Agent hooks written to: \.codex\/hooks\.json\n/);
+  const codex = JSON.parse(fs.readFileSync(path.join(root, '.codex/hooks.json'), 'utf8'));
+  assert.match(codex.hooks.SessionStart[0].hooks[0].command, /^node "\$\(git rev-parse --show-toplevel\)\/\.agents\/design-fence\/bin\/design-fence\.mjs" agent-hook session-start$/);
+  const again = run();
+  assert.match(again, /nothing to write/);
+  assert.doesNotMatch(again, /Agent hooks/);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.claude/settings.json'), 'utf8')).hooks.PreToolUse.length, 2);
+});
+
+test('the plugin runs the project\'s design-fence, and leaves a project with its own hooks to those', () => {
+  const root = repository({checks: []});
+  const target = path.join(root, '.agents/design-fence');
+  fs.cpSync(HOME, target, {
+    recursive: true,
+    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
+  });
+  const plugin = cwd =>
+    spawnSync(process.execPath, [path.join(HOME, 'harness/plugin/hook.mjs'), 'pre-tool-use'], {
+      cwd,
+      input: JSON.stringify({hook_event_name: 'PreToolUse', cwd, tool_name: 'Bash', tool_input: {command: 'git commit --no-verify'}}),
+      encoding: 'utf8',
+    });
+  const refused = plugin(root);
+  assert.equal(refused.status, 2);
+  assert.match(refused.stderr, /git commit --no-verify/);
+  assert.equal(plugin(os.tmpdir()).status, 0, 'no design-fence: nothing');
+  execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
+  assert.equal(plugin(root).status, 0, "the project's own hooks hold");
+});
+
 test('a commit is refused while a check fails, and passes once fixed', () => {
   const root = repository({checks: [NO_BAD]});
   installed(root);
