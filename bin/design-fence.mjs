@@ -7,6 +7,10 @@
  *     design-fence rules                                       the rules, the checks, the ledger, the hooks
  *     design-fence specs                                       the design specs against Storybook's index
  *     design-fence hash <file>                                 a file's FNV-1a, to compare with figma/tokens.js
+ *     design-fence figma lint-gaps <node id> [--properties <name,…>]   figma/*.js through the Desktop Bridge,
+ *     design-fence figma sources                                       so their text stays out of the agent's
+ *     design-fence figma tokens [--format dtcg|css] [--px <prefix,…>] [--ms <prefix,…>] [--hash-only] [--out <file>]
+ *                      (each takes --key <file key>: refuse to run on another file)
  *     design-fence hook pre-commit | commit-msg <file> | pre-push   what the git hooks run
  *
  * Run from anywhere inside the project.
@@ -18,6 +22,7 @@ import {fileURLToPath} from 'node:url';
 
 import {agentsState, hooksState} from '../install.mjs';
 import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
+import {parseArgs, runInFigma, scriptCode} from '../lib/figma.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
 import {section} from '../lib/markdown.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
@@ -120,7 +125,7 @@ function rules(root) {
         : 'None.'),
     `## Design module\n\n${
       config?.design
-        ? `On: read ${config.design.dir ?? 'design'}/index.md first; the way in for anything users see is ${path.relative(root, HOME)}/playbooks/start.md.`
+        ? `On: read ${config.design.dir ?? 'design'}/index.md first. Anything users see goes through ${path.relative(root, HOME)}/playbooks/design.md, or start.md while the index lists nothing yet.`
         : 'Off.'
     }`,
     read(path.join(root, '.agents/ENFORCEMENT.md')).trim(),
@@ -155,6 +160,24 @@ export function fnv1a(text) {
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash.toString(16).padStart(8, '0');
+}
+
+/**
+ * A script of figma/ run through the bridge; its result printed as one line
+ * of JSON. A tokens export with --out goes to the file, not to the output.
+ */
+async function figmaScript([name, ...argv]) {
+  const parsed = parseArgs(argv);
+  const {file, result} = await runInFigma(scriptCode(name, parsed), {fileKey: parsed.options.key});
+  const out = parsed.options.out;
+  if (name === 'tokens' && typeof out === 'string' && typeof result?.text === 'string') {
+    fs.writeFileSync(path.resolve(process.cwd(), out), result.text);
+    const {text, ...rest} = result;
+    console.log(JSON.stringify({file, written: out, ...rest}));
+    return 0;
+  }
+  console.log(JSON.stringify({file, ...result}));
+  return 0;
 }
 
 const NEVER_SKIP = 'Fix the cause, not the check, and never skip the hooks (--no-verify).';
@@ -263,6 +286,8 @@ function main(argv) {
     case 'hash':
       console.log(fnv1a(fs.readFileSync(path.resolve(process.cwd(), args[0]), 'utf8')));
       return 0;
+    case 'figma':
+      return figmaScript(args);
     case 'hook':
       return hook(root, args);
     default:
@@ -282,7 +307,7 @@ function main(argv) {
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    process.exitCode = main(process.argv.slice(2));
+    process.exitCode = await main(process.argv.slice(2));
   } catch (error) {
     console.error(error.message);
     process.exitCode = 2;
