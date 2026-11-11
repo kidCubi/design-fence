@@ -2,7 +2,7 @@
 
 A playbook for any agent or person, with the design module on: phases D1 to D5 of the design loop (`PROCESS.md`). Take a request for something users see, write or amend its spec, build it in Figma, bring it to the human's gate, and record it in the repo once approved (the spec, and the tokens file when a variable changed). Use it for a new component, a change to one (a variant, a state, its layout), a new or changed token, or a view's design. `component.md` takes it to Storybook after.
 
-`AGENTS.md` names the Figma file, its pages (where work in progress goes), the tokens file and its format; `playbooks/figma.md` is how to work in Figma.
+`AGENTS.md` names the Figma file, its pages (where work in progress goes), the tokens file and its format; `playbooks/figma.md` is how to work in Figma. `design-fence …` below is `node .agents/design-fence/bin/design-fence.mjs …`, run from the project.
 
 ## 1. Ground
 

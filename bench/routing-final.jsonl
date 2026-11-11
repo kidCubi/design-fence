@@ -1,0 +1,41 @@
+{"request": "The outline prints nothing when the copy has Windows line endings", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Speed up the CI by caching node_modules", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Add an npm script for the outline", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Stop the anchor helper from stripping digits", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Write a migration note for the renamed tool", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Make the unit tests run in watch mode", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Le script outline plante sans argument, répare-le", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Handle headings that end with a colon in the outline", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Turn on strict mode in the lint config", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Sort the outline alphabetically behind an option", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Quick spike: can the outline come from index.html instead?", "project": "fixture", "way": "ship", "mode": "quick"}
+{"request": "Ticket for later: outline should support third-level headings", "project": "fixture", "way": "ship", "mode": "ticket"}
+{"request": "Give the diff a hard review", "project": "fixture", "way": "reflect"}
+{"request": "Before I commit this, reflect on it", "project": "fixture", "way": "reflect"}
+{"request": "Revois ton travail", "project": "fixture", "way": "reflect"}
+{"request": "Review what changed in tools/ since main", "project": "fixture", "way": "reflect"}
+{"request": "Buttons should have a pressed animation", "project": "fixture", "way": "design"}
+{"request": "Make the top bar transparent until the user scrolls", "project": "fixture", "way": "design"}
+{"request": "Add a caption style under sections", "project": "fixture", "way": "design"}
+{"request": "The Link underline is too heavy", "project": "fixture", "way": "design"}
+{"request": "Introduce an accent colour for calls to action", "project": "fixture", "way": "design"}
+{"request": "Add a small arrow icon after external links", "project": "fixture", "way": "design"}
+{"request": "Reduce the padding inside the Button on phones", "project": "fixture", "way": "design"}
+{"request": "Use sentence case for every heading on the page", "project": "fixture", "way": "design"}
+{"request": "The page feels dense, give it more breathing room", "project": "fixture", "way": "design"}
+{"request": "Ajoute une variante compacte à la Section", "project": "fixture", "way": "design"}
+{"request": "Add a 'copied' checkmark to the Button", "project": "fixture", "way": "design"}
+{"request": "Set surface/raised a shade lighter", "project": "fixture", "way": "design"}
+{"request": "Make the Command text wrap instead of scrolling", "project": "fixture", "way": "design"}
+{"request": "Add skeleton placeholders while the page loads", "project": "fixture", "way": "design"}
+{"request": "Let the Section take an optional eyebrow above its title", "project": "fixture", "way": "design"}
+{"request": "Design a stepper component for the process", "project": "fixture", "way": "design"}
+{"request": "Implement the approved Command component with its stories", "project": "fixture", "way": "component"}
+{"request": "Command's design passed the gate, build it", "project": "fixture", "way": "component"}
+{"request": "Add a changelog page", "project": "fixture", "way": "flows"}
+{"request": "Create a new screen for comparing plans", "project": "fixture", "way": "flows"}
+{"request": "We need a dialog that confirms the copy action on a new route", "project": "fixture", "way": "flows"}
+{"request": "Rename the landing view to home", "project": "fixture", "way": "flows"}
+{"request": "sure", "project": "fixture", "way": "none"}
+{"request": "great", "project": "fixture", "way": "none"}
+{"request": "c'est bon", "project": "fixture", "way": "none"}

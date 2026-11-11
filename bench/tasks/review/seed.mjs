@@ -1,5 +1,7 @@
-// The change to review, left uncommitted: a third kind of Button nobody designed, with values written raw, an
-// animation that ignores reduced motion, and a story for it.
+// The change to review, left uncommitted: a third kind of Button nobody designed. It mostly looks right (tokens,
+// the file's own style). What is wrong with it: the kind is in no spec and no approved design; a colour is a
+// primitive where a role belongs (design/tokens.md, rule 2); one padding is written raw; its transition ignores
+// reduced motion (AGENTS.md, "Code style"); and its label has an exclamation mark and a superlative (the voice).
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -8,18 +10,16 @@ export default function seed({dir}) {
   edit('src/components/button/button.css', css =>
     css.replace(
       '.status[hidden],',
-      `/* Tertiary: for the pricing teaser. */
+      `/* Tertiary: quieter than a Secondary, for the pricing teaser. */
 :host([tertiary]) .control {
-  padding: 10px 18px;
-  border-radius: 6px;
-  background: #ff5a36;
+  padding: var(--space-2) 18px;
   box-shadow: none;
-  color: #141414;
-  transition: transform 200ms ease-out;
+  color: var(--mono-60);
+  transition: color calc(var(--duration-fast) * 1ms) ease-out;
 }
 
 :host([tertiary]) .control:hover {
-  transform: scale(1.04);
+  color: var(--text-default);
 }
 
 .status[hidden],`,
@@ -30,6 +30,6 @@ export default function seed({dir}) {
       .replace("args: {label: 'Copy the commands', secondary: false, href: ''},", "args: {label: 'Copy the commands', secondary: false, tertiary: false, href: ''},")
       .replace('render: ({label, secondary, href}) => {', 'render: ({label, secondary, tertiary, href}) => {')
       .replace("if (secondary) button.setAttribute('secondary', '');", "if (secondary) button.setAttribute('secondary', '');\n    if (tertiary) button.setAttribute('tertiary', '');") +
-      "\nexport const Tertiary = {args: {label: 'See pricing', tertiary: true}};\n",
+      "\n/** Kind Tertiary: the label alone, muted. */\nexport const Tertiary = {args: {label: 'See our best pricing!', tertiary: true}};\n",
   );
 }

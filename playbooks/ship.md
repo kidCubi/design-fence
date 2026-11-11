@@ -2,7 +2,7 @@
 
 A playbook for any agent or person: take a piece of work from a request to the default branch, through the phases of `PROCESS.md` (ground, ticket, build, validate, visual check, human review, land, close). Use it to do a request or an issue end to end, to turn a request into a ticket only, to land and close finished work, for a quick (prototype) run, or to audit that issues match what is on the default branch.
 
-The project's `AGENTS.md` gives everything specific: the repository, the default branch, the tracker (`PROCESS.md`, "The tracker"), commands, the design system and how to read it. Read both before starting if they are not already in context; if unsure they were loaded, run `node .agents/design-fence/bin/design-fence.mjs rules`, which also says whether the git hooks are on.
+The project's `AGENTS.md` gives everything specific: the repository, the default branch, the tracker, commands, the design system and how to read it. It is the one file to have read before starting; `PROCESS.md` says why the process is as it is and is not needed to follow this playbook. If unsure `AGENTS.md` was loaded, run `node .agents/design-fence/bin/design-fence.mjs rules`, which also says whether the git hooks are on.
 
 ## What to run
 
@@ -10,9 +10,9 @@ The request says which:
 
 - a request or an issue's id: full mode, from wherever the work is to landed and closed;
 - "ticket" and a request: phases 1 to 3 only;
-- "quick" and a request: quick mode (below);
-- "land": phase 8 for finished work on the current branch;
-- "status": the audit at the end.
+- "quick" and a request: quick mode (`ship-more.md`);
+- "land": phase 8 (`ship-more.md`) for finished work on the current branch;
+- "status": the audit (`ship-more.md`).
 
 Stance: run without stopping for approval between phases. Ask only when a wrong guess is expensive (`PROCESS.md`, non-negotiable 7). Otherwise choose, write the choice where it will be read (the issue's "Open questions"), and go on. One summary at the end.
 
@@ -32,7 +32,7 @@ Stance: run without stopping for approval between phases. Ask only when a wrong 
 
 ## 3. Ticket
 
-An issue in the project's tracker (`PROCESS.md`, "The tracker", also for when it cannot be reached), title prefixed as `AGENTS.md` says, sections in this order:
+An issue in the project's tracker (as `AGENTS.md` names it; `PROCESS.md`, "The tracker", for when it cannot be reached), title prefixed as `AGENTS.md` says, sections in this order:
 
 - `## Problem`
 - `## What the code does today`: from having read it, with file and function names.
@@ -65,19 +65,4 @@ Show the human what changed and the screenshots, and wait for their word: good, 
 
 ## 8. Land and close
 
-1. Commit on the ticket branch: conventional prefix, the issue's id in brackets (`(#12)`, `(ENG-123)`), a body saying what changed and why, the `Reflect:` line with the review's verdict, and the session's attribution line if the tool adds one. One ticket may be several commits; never mix tickets in one. The commit-msg hook refuses a commit that changes code without its `Reflect:` line.
-2. `git fetch --prune`. If the default branch moved, rebase the ticket's own unpushed commits on it and validate again.
-3. Land as `AGENTS.md` says (a fast-forward push, or a pull request). The pre-push hook checks every pushed commit for its `Reflect:` line and runs the checks again. **Never force-push or rewrite the default branch.** If the push is refused, fetch and re-apply on top; if the branch was rewritten (the old tip is no longer an ancestor), stop and tell the user. If the tool's permissions refuse the push, tell the user what to allow; do not look for another way in.
-4. **Verify by content** on the remote default branch (`git cat-file -e origin/<branch>:<path>`, `git grep` for a function or a string). A hash or a "merged" label is not proof.
-5. **Close the issue** in the tracker with a comment: the commit, and anything done differently from the ticket (on GitHub, `gh issue close <n> --comment "…"`).
-6. **Summary**, standing on its own: what landed and where, what was checked and how (name what ran), what was not, what differs from the ticket, and the issues filed for what is left. No open offers.
-
-## Quick mode
-
-For a prototype, an exploration, a demonstration: phases 1, 4 and 5, on a `quick/<slug>` branch or a worktree, no issue unless asked, nothing landed on the default branch. The non-negotiables of `PROCESS.md` and the git hooks still hold. "Do it for real now" means full mode from phase 2 on what exists: a ticket that describes it, then build as refinement, not a rewrite.
-
-## Audit (status)
-
-1. `git fetch --prune`. List the tracker's open and recently closed issues, and what is on the remote default branch.
-2. For each issue, find the truth by content: work there → should be closed; not there → should be open.
-3. Report as a table (issue, where the work is, state before → after). Close or reopen only what is plainly wrong; list judgement calls. List closed issues whose work is **not** on the default branch first: that work was lost.
+When the human's word (phase 7) or `AGENTS.md` says to land: `ship-more.md`, "Land and close". Until then the work stops here, with a summary that stands on its own: what changed, what was checked and how (name what ran), what was not, and what is left.

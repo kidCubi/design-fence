@@ -1,0 +1,953 @@
+{
+ "round": "baseline-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "drift-probe": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01065821,
+       "min": 0.00863521,
+       "max": 0.012814550000000001
+      },
+      "tokens": {
+       "median": 341424,
+       "min": 192045,
+       "max": 452791
+      },
+      "fresh": {
+       "median": 32243,
+       "min": 30274,
+       "max": 35456
+      },
+      "calls": {
+       "median": 9,
+       "min": 6,
+       "max": 12
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 10,
+       "min": 7,
+       "max": 13
+      },
+      "seconds": {
+       "median": 28,
+       "min": 23,
+       "max": 34
+      }
+     },
+     "score": {
+      "passed": 10,
+      "of": 15,
+      "share": 0.6666666666666666,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 0,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "with": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.019074599999999997,
+       "min": 0.01632668,
+       "max": 0.03807412
+      },
+      "tokens": {
+       "median": 556041,
+       "min": 364365,
+       "max": 1524280
+      },
+      "fresh": {
+       "median": 57159,
+       "min": 53577,
+       "max": 90228
+      },
+      "calls": {
+       "median": 16,
+       "min": 13,
+       "max": 41
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 17,
+       "min": 14,
+       "max": 42
+      },
+      "seconds": {
+       "median": 50,
+       "min": 47,
+       "max": 137
+      }
+     },
+     "score": {
+      "passed": 24,
+      "of": 25,
+      "share": 0.96,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 4,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the need is written down (a spec, drafted or amended)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing approved by the agent itself": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01450816,
+       "min": 0.008670810000000001,
+       "max": 0.01864647
+      },
+      "tokens": {
+       "median": 354962,
+       "min": 154152,
+       "max": 452921
+      },
+      "fresh": {
+       "median": 45782,
+       "min": 33121,
+       "max": 59374
+      },
+      "calls": {
+       "median": 11,
+       "min": 6,
+       "max": 20
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 12,
+       "min": 7,
+       "max": 21
+      },
+      "seconds": {
+       "median": 39,
+       "min": 21,
+       "max": 52
+      }
+     },
+     "score": {
+      "passed": 24,
+      "of": 25,
+      "share": 0.96,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the need is written down (a spec, drafted or amended)": {
+        "passed": 4,
+        "of": 5
+       },
+       "nothing approved by the agent itself": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "with/without": {
+     "cost": {
+      "percent": 79,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 63,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 77,
+      "shown": true
+     },
+     "calls": {
+      "percent": 78,
+      "shown": true
+     },
+     "turns": {
+      "percent": 70,
+      "shown": true
+     },
+     "seconds": {
+      "percent": 79,
+      "shown": true
+     }
+    },
+    "next/without": {
+     "cost": {
+      "percent": 36,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 4,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 42,
+      "shown": false
+     },
+     "calls": {
+      "percent": 22,
+      "shown": false
+     },
+     "turns": {
+      "percent": 20,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 39,
+      "shown": false
+     }
+    },
+    "next/with": {
+     "cost": {
+      "percent": -24,
+      "shown": false
+     },
+     "tokens": {
+      "percent": -36,
+      "shown": false
+     },
+     "fresh": {
+      "percent": -20,
+      "shown": false
+     },
+     "calls": {
+      "percent": -31,
+      "shown": false
+     },
+     "turns": {
+      "percent": -29,
+      "shown": false
+     },
+     "seconds": {
+      "percent": -22,
+      "shown": false
+     }
+    }
+   }
+  },
+  "review": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01010458,
+       "min": 0.00973535,
+       "max": 0.01231463
+      },
+      "tokens": {
+       "median": 244920,
+       "min": 195451,
+       "max": 355852
+      },
+      "fresh": {
+       "median": 33263,
+       "min": 31514,
+       "max": 37387
+      },
+      "calls": {
+       "median": 5,
+       "min": 3,
+       "max": 7
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 6,
+       "min": 4,
+       "max": 8
+      },
+      "seconds": {
+       "median": 34,
+       "min": 30,
+       "max": 41
+      }
+     },
+     "score": {
+      "passed": 32,
+      "of": 35,
+      "share": 0.9142857142857143,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 2,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 5,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "with": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.013007270000000001,
+       "min": 0.009775490000000001,
+       "max": 0.01583863
+      },
+      "tokens": {
+       "median": 272649,
+       "min": 201255,
+       "max": 349082
+      },
+      "fresh": {
+       "median": 44380,
+       "min": 34216,
+       "max": 50789
+      },
+      "calls": {
+       "median": 5,
+       "min": 3,
+       "max": 8
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 6,
+       "min": 4,
+       "max": 9
+      },
+      "seconds": {
+       "median": 41,
+       "min": 27,
+       "max": 52
+      }
+     },
+     "score": {
+      "passed": 35,
+      "of": 35,
+      "share": 1,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 5,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01368334,
+       "min": 0.013210099999999999,
+       "max": 0.015408850000000002
+      },
+      "tokens": {
+       "median": 276799,
+       "min": 272359,
+       "max": 384343
+      },
+      "fresh": {
+       "median": 46045,
+       "min": 44714,
+       "max": 50556
+      },
+      "calls": {
+       "median": 8,
+       "min": 5,
+       "max": 10
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 9,
+       "min": 6,
+       "max": 11
+      },
+      "seconds": {
+       "median": 44,
+       "min": 40,
+       "max": 49
+      }
+     },
+     "score": {
+      "passed": 34,
+      "of": 35,
+      "share": 0.9714285714285714,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 4,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 5,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "with/without": {
+     "cost": {
+      "percent": 29,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 11,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 33,
+      "shown": false
+     },
+     "calls": {
+      "percent": 0,
+      "shown": false
+     },
+     "turns": {
+      "percent": 0,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 21,
+      "shown": false
+     }
+    },
+    "next/without": {
+     "cost": {
+      "percent": 35,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 13,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 38,
+      "shown": true
+     },
+     "calls": {
+      "percent": 60,
+      "shown": false
+     },
+     "turns": {
+      "percent": 50,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 29,
+      "shown": false
+     }
+    },
+    "next/with": {
+     "cost": {
+      "percent": 5,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 2,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 4,
+      "shown": false
+     },
+     "calls": {
+      "percent": 60,
+      "shown": false
+     },
+     "turns": {
+      "percent": 50,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 7,
+      "shown": false
+     }
+    }
+   }
+  },
+  "ship-issue": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01104225,
+       "min": 0.01031153,
+       "max": 0.01197785
+      },
+      "tokens": {
+       "median": 387378,
+       "min": 337359,
+       "max": 442002
+      },
+      "fresh": {
+       "median": 31643,
+       "min": 30489,
+       "max": 33027
+      },
+      "calls": {
+       "median": 10,
+       "min": 8,
+       "max": 12
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 11,
+       "min": 9,
+       "max": 13
+      },
+      "seconds": {
+       "median": 29,
+       "min": 27,
+       "max": 32
+      }
+     },
+     "score": {
+      "passed": 35,
+      "of": 35,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the issue is closed in the issues file": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "with": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.016668370000000002,
+       "min": 0.0146439,
+       "max": 0.01930548
+      },
+      "tokens": {
+       "median": 605613,
+       "min": 446770,
+       "max": 791775
+      },
+      "fresh": {
+       "median": 45374,
+       "min": 43926,
+       "max": 54130
+      },
+      "calls": {
+       "median": 11,
+       "min": 10,
+       "max": 13
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 12,
+       "min": 11,
+       "max": 14
+      },
+      "seconds": {
+       "median": 50,
+       "min": 42,
+       "max": 61
+      }
+     },
+     "score": {
+      "passed": 32,
+      "of": 35,
+      "share": 0.9142857142857143,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the issue is closed in the issues file": {
+        "passed": 2,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01655233,
+       "min": 0.014392289999999999,
+       "max": 0.02053485
+      },
+      "tokens": {
+       "median": 611322,
+       "min": 430995,
+       "max": 784490
+      },
+      "fresh": {
+       "median": 45595,
+       "min": 43316,
+       "max": 53575
+      },
+      "calls": {
+       "median": 13,
+       "min": 10,
+       "max": 16
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 14,
+       "min": 11,
+       "max": 17
+      },
+      "seconds": {
+       "median": 49,
+       "min": 40,
+       "max": 57
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "with/without": {
+     "cost": {
+      "percent": 51,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 56,
+      "shown": true
+     },
+     "fresh": {
+      "percent": 43,
+      "shown": true
+     },
+     "calls": {
+      "percent": 10,
+      "shown": false
+     },
+     "turns": {
+      "percent": 9,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 72,
+      "shown": true
+     }
+    },
+    "next/without": {
+     "cost": {
+      "percent": 50,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 58,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 44,
+      "shown": true
+     },
+     "calls": {
+      "percent": 30,
+      "shown": false
+     },
+     "turns": {
+      "percent": 27,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 69,
+      "shown": true
+     }
+    },
+    "next/with": {
+     "cost": {
+      "percent": -1,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 1,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 0,
+      "shown": false
+     },
+     "calls": {
+      "percent": 18,
+      "shown": false
+     },
+     "turns": {
+      "percent": 17,
+      "shown": false
+     },
+     "seconds": {
+      "percent": -2,
+      "shown": false
+     }
+    }
+   }
+  }
+ }
+}

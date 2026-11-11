@@ -6,3 +6,4 @@ bench/results/*/*.jsonl
 bench/fixture/node_modules/
 bench/fixture/package-lock.json
 bench/fixture/storybook-static/
+bench/results/*.log

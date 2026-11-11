@@ -1,0 +1,116 @@
+{"request": "Fix the open issue \"The outline keeps the copy's markers\"", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "The outline tool crashes when the copy file is empty, can you fix it?", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Add a --json flag to tools/outline.mjs", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Upgrade vite to the latest patch version", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Our tests are slow, find out why and speed them up", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Refactor outline.mjs so anchor() handles duplicate headings", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Add a CI step that runs the unit tests on Node 22", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Write unit tests for the anchor function", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "The prettier check fails on test files, sort it out", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Bump the Node version in validate.json to 22", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "There's a memory leak in the dev server watcher, investigate", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Add a script to package.json that runs format and tests together", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Corrige le bug dans tools/outline.mjs quand un titre est vide", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Ajoute un test pour les ancres en double", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Remove the unused dependency from package.json", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Rename tools/outline.mjs to tools/toc.mjs and update its imports", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Make the outline tool read the file path from an environment variable", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Issue 12", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Do the next open issue in the issues file", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Set up a pre-push script that runs the test suite", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Ticket: the outline should skip headings inside code blocks", "project": "fixture", "way": "ship", "mode": "ticket"}
+{"request": "Write a ticket for the flaky anchor test", "project": "fixture", "way": "ship", "mode": "ticket"}
+{"request": "File an issue for the missing error handling in outline.mjs", "project": "fixture", "way": "ship", "mode": "ticket"}
+{"request": "Quick: try caching the outline between runs", "project": "fixture", "way": "ship", "mode": "quick"}
+{"request": "Quick prototype of a markdown link checker for the copy file", "project": "fixture", "way": "ship", "mode": "quick"}
+{"request": "Fais un proto rapide d'un script qui vérifie les liens", "project": "fixture", "way": "ship", "mode": "quick"}
+{"request": "land", "project": "fixture", "way": "ship", "mode": "land"}
+{"request": "Land it", "project": "fixture", "way": "ship", "mode": "land"}
+{"request": "Land the work on this branch", "project": "fixture", "way": "ship", "mode": "land"}
+{"request": "status", "project": "fixture", "way": "ship", "mode": "status"}
+{"request": "What's the status of the issues against main?", "project": "fixture", "way": "ship", "mode": "status"}
+{"request": "Audit the issues", "project": "fixture", "way": "ship", "mode": "status"}
+{"request": "Review my work before I commit", "project": "fixture", "way": "reflect"}
+{"request": "Review the uncommitted change to the Button and tell me if it can be committed", "project": "fixture", "way": "reflect"}
+{"request": "Reflect on what you just implemented", "project": "fixture", "way": "reflect"}
+{"request": "Can you look over the diff on this branch?", "project": "fixture", "way": "reflect"}
+{"request": "A colleague changed the Button and left the change uncommitted. Review it before it is committed: tell me whether it can be committed as it is, and list what must change, most important first. Do not fix anything, and do not commit.", "project": "fixture", "way": "reflect"}
+{"request": "Critique the last change, be harsh", "project": "fixture", "way": "reflect"}
+{"request": "Relis ce que tu viens de faire avant de committer", "project": "fixture", "way": "reflect"}
+{"request": "Fais une revue du diff", "project": "fixture", "way": "reflect"}
+{"request": "Review the changes in src/components/link", "project": "fixture", "way": "reflect"}
+{"request": "Before committing, review it", "project": "fixture", "way": "reflect"}
+{"request": "Add a small \"Beta\" label next to the wordmark in the top bar.", "project": "fixture", "way": "design"}
+{"request": "Make the button's corners rounded", "project": "fixture", "way": "design"}
+{"request": "The Button needs a disabled state", "project": "fixture", "way": "design"}
+{"request": "Add a tertiary kind to the Button", "project": "fixture", "way": "design"}
+{"request": "Change the link's hover colour to something brighter", "project": "fixture", "way": "design"}
+{"request": "Design a Badge component for the section headings", "project": "fixture", "way": "design"}
+{"request": "Design a new component for this page, in Figma: a Badge, a short label of one or two words", "project": "fixture", "way": "design"}
+{"request": "We need a card component for pricing plans", "project": "fixture", "way": "design"}
+{"request": "Increase the spacing between sections", "project": "fixture", "way": "design"}
+{"request": "The top bar should be taller on mobile", "project": "fixture", "way": "design"}
+{"request": "Add an icon to the Button", "project": "fixture", "way": "design"}
+{"request": "Make the page's background slightly lighter", "project": "fixture", "way": "design"}
+{"request": "Change line/frame to mono-60", "project": "fixture", "way": "design"}
+{"request": "Add a new token for a success colour", "project": "fixture", "way": "design"}
+{"request": "The heading font feels too thin, try a heavier weight", "project": "fixture", "way": "design"}
+{"request": "Add a dark mode toggle to the top bar", "project": "fixture", "way": "design"}
+{"request": "Rewrite the copy of the \"How it works\" section to be shorter", "project": "fixture", "way": "design"}
+{"request": "Change the wordmark to say design-fence docs", "project": "fixture", "way": "design"}
+{"request": "The Section title should animate in from the left", "project": "fixture", "way": "design"}
+{"request": "Add a tooltip to the copy button", "project": "fixture", "way": "design"}
+{"request": "Give df-link an external-link variant with an arrow", "project": "fixture", "way": "design"}
+{"request": "Le bouton devrait avoir un état désactivé", "project": "fixture", "way": "design"}
+{"request": "Change la couleur du lien au survol", "project": "fixture", "way": "design"}
+{"request": "Ajoute un composant Badge", "project": "fixture", "way": "design"}
+{"request": "The section looks cramped on tablet, fix the layout", "project": "fixture", "way": "design"}
+{"request": "Add a footer with links to GitHub and the process", "project": "fixture", "way": "design"}
+{"request": "Make the Command block show a title above the code", "project": "fixture", "way": "design"}
+{"request": "Put a subtle border under the top bar when the page scrolls", "project": "fixture", "way": "design"}
+{"request": "I want a banner at the top announcing the new release", "project": "fixture", "way": "design"}
+{"request": "Update the Figma design of the Link so its underline is thicker", "project": "fixture", "way": "design"}
+{"request": "Add a loading state to the button", "project": "fixture", "way": "design"}
+{"request": "Try a different typeface for body text", "project": "fixture", "way": "design"}
+{"request": "Make the top bar's link a Button instead", "project": "fixture", "way": "design"}
+{"request": "The Button label should truncate when it's too long", "project": "fixture", "way": "design"}
+{"request": "Add an empty state illustration to the landing", "project": "fixture", "way": "design"}
+{"request": "Design the hover state for cards", "project": "fixture", "way": "design"}
+{"request": "Build the Command component in Storybook, its design is approved", "project": "fixture", "way": "component"}
+{"request": "The Command component's design is approved in Figma: node 4:568 in the file \"Design fence landing\". Build it in the component library, as the element df-command, with its stories in Storybook. Change nothing in Figma.", "project": "fixture", "way": "component"}
+{"request": "Implement Command from its spec", "project": "fixture", "way": "component"}
+{"request": "Command is approved, bring it into the library with stories", "project": "fixture", "way": "component"}
+{"request": "Construis le composant Command dans Storybook", "project": "fixture", "way": "component"}
+{"request": "Add a pricing page", "project": "fixture", "way": "flows"}
+{"request": "Create a new view for the changelog at /changelog", "project": "fixture", "way": "flows"}
+{"request": "We need an onboarding flow: three screens after sign-up", "project": "fixture", "way": "flows"}
+{"request": "Move the process documentation to its own route", "project": "fixture", "way": "flows"}
+{"request": "Add a settings screen", "project": "fixture", "way": "flows"}
+{"request": "Add a 404 page", "project": "fixture", "way": "flows"}
+{"request": "Ajoute une nouvelle page de tarifs", "project": "fixture", "way": "flows"}
+{"request": "Add a modal that asks for an email before copying the prompt", "project": "fixture", "way": "flows"}
+{"request": "Split the landing into two pages: overview and get started", "project": "fixture", "way": "flows"}
+{"request": "Rename the route / to /home and add a new landing", "project": "fixture", "way": "flows"}
+{"request": "thanks", "project": "fixture", "way": "none"}
+{"request": "ok", "project": "fixture", "way": "none"}
+{"request": "yes", "project": "fixture", "way": "none"}
+{"request": "go ahead", "project": "fixture", "way": "none"}
+{"request": "looks good", "project": "fixture", "way": "none"}
+{"request": "continue", "project": "fixture", "way": "none"}
+{"request": "design-fence: allow", "project": "fixture", "way": "none"}
+{"request": "oui", "project": "fixture", "way": "none"}
+{"request": "merci", "project": "fixture", "way": "none"}
+{"request": "Make the button's corners rounded", "project": "no-design", "way": "ship", "mode": "full"}
+{"request": "Add a pricing page", "project": "no-design", "way": "ship", "mode": "full"}
+{"request": "Fix the flaky test", "project": "no-design", "way": "ship", "mode": "full"}
+{"request": "Design a Badge component", "project": "no-design", "way": "ship", "mode": "full"}
+{"request": "Review my work before I commit", "project": "no-design", "way": "reflect"}
+{"request": "Let's start the design of this product", "project": "empty-new", "way": "foundation"}
+{"request": "Add a login page", "project": "empty-new", "way": "foundation"}
+{"request": "Make a button component", "project": "empty-new", "way": "foundation"}
+{"request": "Set up the design system", "project": "empty-new", "way": "foundation"}
+{"request": "Review my work before I commit", "project": "empty-new", "way": "reflect"}
+{"request": "design-fence was just installed, where do we start?", "project": "empty-existing", "way": "adopt"}
+{"request": "Make the button's corners rounded", "project": "empty-existing", "way": "adopt"}
+{"request": "Add a pricing page", "project": "empty-existing", "way": "adopt"}
+{"request": "Bring this project under design-fence", "project": "empty-existing", "way": "adopt"}

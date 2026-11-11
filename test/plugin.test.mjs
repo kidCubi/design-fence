@@ -26,7 +26,7 @@ function project({install = false} = {}) {
   fs.writeFileSync(path.join(root, '.agents/validate.json'), '{"checks": []}\n');
   fs.cpSync(HOME, path.join(root, '.agents/design-fence'), {
     recursive: true,
-    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
+    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`) && !source.includes(`${path.sep}bench`),
   });
   if (install) {
     execFileSync(process.execPath, [path.join(root, '.agents/design-fence/install.mjs')], {cwd: root, encoding: 'utf8'});
@@ -103,8 +103,8 @@ async function opencode(root, where = temp('opencode-plugins')) {
   const file = path.join(where, 'design-fence.js');
   fs.mkdirSync(where, {recursive: true});
   fs.copyFileSync(path.join(HOME, 'harness/opencode/design-fence.js'), file);
-  const {DesignFence} = await import(`${file}?${Date.now()}`);
-  return DesignFence({directory: root, worktree: root});
+  const plugin = (await import(`${file}?${Date.now()}`)).default;
+  return plugin.server({directory: root, worktree: root});
 }
 const refuses = async (hooks, tool, args, callID = 'c') => {
   try {
@@ -152,4 +152,40 @@ test("the plugin's hooks look at the same tool calls as the project's", async ()
   const hooks = JSON.parse(fs.readFileSync(path.join(HOME, 'harness/plugin/hooks/hooks.json'), 'utf8')).hooks;
   assert.equal(hooks.PreToolUse[0].matcher, PRE_TOOL_MATCHER);
   assert.deepEqual(Object.keys(hooks).sort(), ['PreToolUse', 'SessionStart', 'UserPromptSubmit']);
+});
+
+test("OpenCode 2's plugin API: one default export with an id and a setup, whose hooks refuse and allow", async () => {
+  const root = project();
+  const where = temp('opencode-plugins');
+  fs.copyFileSync(path.join(HOME, 'harness/opencode/design-fence.js'), path.join(where, 'design-fence.js'));
+  const module = await import(`${path.join(where, 'design-fence.js')}?${Date.now()}`);
+  assert.deepEqual(Object.keys(module), ['default'], 'OpenCode loads the default export (1.x would load any other as well)');
+  assert.equal(module.default.id, 'design-fence');
+  // OpenCode 2's context, as far as the plugin uses it: hooks registered by name.
+  const registered = {};
+  const hook = domain => async (name, callback) => {
+    registered[`${domain}.${name}`] = callback;
+  };
+  await module.default.setup({location: {directory: root}, tool: {hook: hook('tool')}, session: {hook: hook('session')}});
+  assert.deepEqual(Object.keys(registered).sort(), ['session.compaction', 'session.context', 'session.prompt', 'tool.execute.before']);
+  const before = async (tool, input, id = 'c') => {
+    try {
+      await registered['tool.execute.before']({tool, sessionID: 'v2', id, input});
+      return '';
+    } catch (error) {
+      return error.message;
+    }
+  };
+  assert.match(await before('shell', {command: 'git -c core.hooksPath=/dev/null status'}), /core\.hooksPath/);
+  assert.match(await before('edit', {path: '.agents/validate.json'}), /design-fence: allow/);
+  await registered['session.prompt']({sessionID: 'v2', prompt: {text: 'design-fence: allow'}});
+  assert.equal(await before('edit', {path: '.agents/validate.json'}), '');
+  const event = {sessionID: 'v2', system: []};
+  await registered['session.context'](event);
+  assert.match(event.system[0]?.text ?? '', /git hooks are off/, 'the warning, as a system part');
+  const elsewhere = temp('plain');
+  execFileSync('git', ['-C', elsewhere, 'init', '-q']);
+  const none = {};
+  await module.default.setup({location: {directory: elsewhere}, tool: {hook: async (n, c) => (none[n] = c)}, session: {hook: async (n, c) => (none[n] = c)}});
+  assert.deepEqual(none, {}, 'no design-fence: no hooks');
 });

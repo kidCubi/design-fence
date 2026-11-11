@@ -2,14 +2,14 @@
 
 A playbook for any agent or person, with the design module on: phase D6 of the design loop (`PROCESS.md`). Build an approved component in the component library, from its spec and its approved Figma node, with a story for each variant and state, and check it against both. Use it after `design.md` has recorded a component as approved, or to bring an `approved` component that has no story into the library. The app work that uses it is `ship.md` after.
 
-`AGENTS.md` names the library, its Storybook (where it is, its commands, where stories go, the title they take), the tokens file and its format, the visual check, and the neighbours' style.
+`AGENTS.md` names the library, its Storybook (where it is, its commands, where stories go, the title they take), the tokens file and its format, the visual check, and the neighbours' style. `design-fence …` below is `node .agents/design-fence/bin/design-fence.mjs …`, run from the project.
 
 ## 0. Storybook, the first time
 
 Once per project, at the first component built.
 
 - **The project has none.** Storybook is the record of every built component (`PROCESS.md`, "The design module"), so it is set up now, not before: propose it to the human (where it goes, the dependency it adds) and wait for their word, then set it up with Storybook's own installer for web components (`npm create storybook@latest`, Web Components with Vite: `@storybook/web-components-vite`) and write its place, commands and the elements' prefix into `AGENTS.md`. The installer adds sample stories and `lit` at `latest`: remove the samples (no spec stands behind them) and pin `lit`, or drop it when nothing imports it.
-- **The project has one** (adoption, `start.md`): use it as it is; a Storybook of another framework renders the new web components in its stories (React 19, Vue and Angular take custom elements as they are). Its stories, decorators and title hierarchy stay; new stories follow them. `AGENTS.md` says which Storybook is the design system's when there are several, and which folder is the library (its stories have specs; page and app stories belong to the views of `flows.yml`).
+- **The project has one** (adoption, `adopt.md`): use it as it is; a Storybook of another framework renders the new web components in its stories (React 19, Vue and Angular take custom elements as they are). Its stories, decorators and title hierarchy stay; new stories follow them. `AGENTS.md` says which Storybook is the design system's when there are several, and which folder is the library (its stories have specs; page and app stories belong to the views of `flows.yml`).
 
 Then `.agents/validate.json`'s `design` section names Storybook's index (`storybookIndex`, the `index.json` of a build or of the dev server) and the library's folder (`library`), and its checks run `design-fence specs` on the specs and the stories.
 

@@ -9,28 +9,50 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 | | |
 |---|---|
 | `PROCESS.md` | The layers (project > process > personal), the non-negotiables, where to start, full and quick modes and their phases, what the process asks of the tracker, the design module, what is enforced |
-| `playbooks/start.md` | Which way in: the foundation of a new project, the adoption of an existing one, or which playbook a request needs |
+| `playbooks/start.md` | Which way in: the foundation of a new project (`foundation.md`), the adoption of an existing one (`adopt.md`), or which playbook a request needs |
 | `playbooks/design.md` | Design module: from a spec to a design approved by the human in Figma, exported to the repo |
 | `playbooks/component.md` | Design module: from an approved design to the component library and its stories |
 | `playbooks/flows.md` | Design module: the UX map (`design/flows.yml`): views, actions, paths, and the diagrams drawn from it |
-| `playbooks/ship.md` | Runs the phases: ground, ticket (in the project's tracker), build, validate, visual check, human review, land, close; quick mode; an audit |
+| `playbooks/ship.md` | Runs the phases: ground, ticket (in the project's tracker), build, validate, visual check, human review; `ship-more.md`: land and close, quick mode, an audit |
 | `playbooks/reflect.md` | A review of the work just done against the project's bar; its verdict goes into each commit as a `Reflect:` line |
-| `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge |
+| `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge; `figma-more.md`: fixing a connection, images, capturing HTML |
+| `lib/route.mjs` | `design-fence route "<request>"`: which playbook a request needs and the project's files it touches, from the repository's own names, without a model; the agent tools' prompt hook gives it to the agent. It says when it is unsure (`bench/routing*.jsonl` measure it) |
 | `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
 | `bin/design-fence.mjs` | `check`, `commits`, `rules`, `specs` (the design specs against Storybook), `hash` (a file's FNV-1a, against Figma's), `figma` (the scripts of `figma/` through the Desktop Bridge, their text out of the agent's context), and `hook` for the git hooks |
 | `figma/lint-gaps.js` | Design module: the Figma lint `figma_lint_design` does not make (unbound spacing, radius, stroke; default names; invisible borders; stale paints; descriptions; properties against the spec), run through the bridge |
 | `figma/tokens.js` | Design module: Figma's variables as the project's tokens file (W3C design tokens or CSS), or only its hash, run through the bridge |
 | `figma/sources.js` | Design module: what a Figma file's design system is made of (local components, library components in use with their keys, variables), for `design/index.md`, run once through the bridge |
 | `lib/agent-hooks.mjs`, `lib/fence.mjs`, `harness/` | The agent tools' hooks: what the git hooks cannot see between two commits, refused in the session (a hook skipped or turned off, a second design-tool screenshot in a phase, a `figma/` script pasted rather than run); design-fence's own files changed only with the human's word; the rules again after a compaction. `harness/plugin/`: the plugin for Claude Code and Codex; `harness/opencode/`: OpenCode's; both generated with `lib/` inside (`node harness/build.mjs`) |
+| `bin/setup.mjs`, `lib/prompt.mjs`, `package.json` | `npx github:kidCubi/design-fence`: the installer for a person (a menu in the terminal) or their agent (flags), from the requirements to the plugin in each tool |
 | `skills/` | The playbooks as skills (`design-fence-<playbook>/SKILL.md`: when to use it, and the playbook to read), linked into the project's skills folders by the installer |
 | `templates/` | `AGENTS.md`, design-fence's block in it (`agents-block.md`), `validate.json`, the CI workflow `design-fence.yml`; `design/`: the philosophy, the token rules, the index, the flows map and the component spec |
 | `ENFORCEMENT.md` | The ledger template: which rules are enforced, by what, and what green does not mean |
 
 ## Install in a project
 
+In the project's folder:
+
+```sh
+npx github:kidCubi/design-fence
+```
+
+It asks which agents you use (those on your machine are ticked) and whether you design in Figma, then does all design-fence needs, and says what it did:
+
+1. checks Node (20 or newer) and git, and that the folder is a git repository (it offers to make it one);
+2. adds design-fence as a git submodule at `.agents/design-fence`, or checks it out in a fresh clone of a project that has it;
+3. runs that submodule's installer (below): git hooks, `AGENTS.md`, skills, CI, the agent tools' hooks, and with the design module its templates and Figma's server;
+4. installs design-fence's plugin in each of your tools, outside the project (below): Claude Code and Codex from this repository's marketplace, OpenCode's file in `~/.config/opencode/plugins/`;
+5. with the design module, prepares Figma's Desktop Bridge plugin for Figma Desktop to import.
+
+It never commits: it ends with the commands to commit the install, and what is left for you in your tools (open them again, trust Codex's hooks, import the bridge in Figma). Running it again changes nothing that is there. Each teammate runs it once in their clone: git does not share the hooks' setting, and the plugin goes into each person's tools.
+
+For an agent or a script, the answers are flags: `--yes --agents claude,codex,opencode,other --design` (`--help` lists them all). `--git-init` makes the folder a git repository, `--no-plugin` skips the plugins.
+
+### By hand
+
 ```sh
 git submodule add https://github.com/kidCubi/design-fence.git .agents/design-fence
-node .agents/design-fence/install.mjs
+node .agents/design-fence/install.mjs [--design] [--agents claude,codex,opencode]
 ```
 
 The installer only adds what is missing and refreshes what is its own (running it again changes nothing):
@@ -39,7 +61,7 @@ The installer only adds what is missing and refreshes what is its own (running i
 - `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md`, `.github/workflows/design-fence.yml`: templates to fill in, if the project has none.
 - design-fence's block in `AGENTS.md`, between its markers: which playbook for which work, and the process's non-negotiables. It is added to an `AGENTS.md` the project already has, and replaced each time the installer runs; edit outside the markers.
 - the playbooks as skills: `.agents/skills/design-fence-*` (Codex) and `.claude/skills/design-fence-*` (Claude Code), links into `skills/`, so an agent that loads skills reads the right playbook when the work matches it. Copies instead of links when design-fence is not at `.agents/design-fence`, or where links fail.
-- the agent tools' hooks (`design-fence agent-hook`): merged into `.claude/settings.json` (Claude Code) and `.codex/hooks.json` (Codex), keeping the project's own hooks, and OpenCode's plugin as `.opencode/plugins/design-fence.js`. They refuse in the session what the git hooks would only catch at the commit, or not at all: `--no-verify`, `-c core.hooksPath=…` and changing `core.hooksPath`; a second design-tool screenshot in a phase (a phase ends when the human writes); one of `figma/*.js` pasted into `figma_execute`. After a compaction they give the agent design-fence's block of `AGENTS.md` again. Codex runs them once someone has trusted them (`/hooks`), and only in a trusted project.
+- the agent tools' hooks (`design-fence agent-hook`): merged into `.claude/settings.json` (Claude Code) and `.codex/hooks.json` (Codex), keeping the project's own hooks, and OpenCode's plugin as `.opencode/plugins/design-fence.js`. They refuse in the session what the git hooks would only catch at the commit, or not at all: `--no-verify`, `-c core.hooksPath=…` and changing `core.hooksPath`; a second design-tool screenshot in a phase (a phase ends when the human writes); one of `figma/*.js` pasted into `figma_execute`. After a compaction they give the agent design-fence's block of `AGENTS.md` again. Codex runs them once someone has trusted them (`/hooks`), and only in a trusted project. They go to the project's agent tools: `"agents"` in `.agents/validate.json`, which `--agents` adds to (`other`: none of the three; where there is no list yet, to the tools wired already); without either, all three.
 - no `CLAUDE.md`: Claude Code reads `AGENTS.md` when there is none (2.1.277 or later). In a `CLAUDE.md` the project has, the installer adds `@AGENTS.md` (Claude Code reads `CLAUDE.md` instead of `AGENTS.md`) and removes the import of `PROCESS.md` that earlier versions added.
 
 Nothing to install per agent: every agent loads `AGENTS.md`, which says which playbook to read, and every commit it makes goes through the hooks. Another tool that reads only its own file gets one line in it pointing to `AGENTS.md`.
@@ -54,11 +76,13 @@ Everything above lives in the repository, where the agent works: it can edit `.a
 
 The project keeps its rules, its git hooks and CI; the plugin keeps the agent from undoing them. Only what is off the machine is out of the agent's reach entirely: CI on a protected `main` (and, for a company, managed settings, below).
 
+`npx github:kidCubi/design-fence` installs it in the tools you pick. By hand:
+
 In Claude Code: `claude plugin install design-fence --marketplace kidCubi/design-fence` (or `/plugin marketplace add kidCubi/design-fence`, then `/plugin install design-fence@design-fence`).
 
 In Codex: `codex plugin marketplace add kidCubi/design-fence`, then install design-fence from `/plugins`, and trust its three hooks in `/hooks`. Codex reads the same marketplace and plugin. After an update, Codex marks the hooks "modified": trust them again.
 
-In OpenCode: copy `harness/opencode/design-fence.js` into `~/.config/opencode/plugins/`. `install.mjs` also puts a copy in the project (`.opencode/plugins/`), for whoever has not got one; the person's copy is the fence.
+In OpenCode (1.18.29 or later, and 2.x): copy `harness/opencode/design-fence.js` into `~/.config/opencode/plugins/`. `install.mjs` also puts a copy in the project (`.opencode/plugins/`), for whoever has not got one; the person's copy is the fence.
 
 For a company, managed settings put the plugin out of everyone's reach: Claude Code's `managed-settings.json` can force-enable it with `allowManagedHooksOnly`, and Codex has `requirements.toml`. Not tried here: see their documentation.
 
@@ -80,40 +104,26 @@ What happens in Figma stays advisory: see the ledger.
 
 ### Install by asking your agent
 
-For someone who would rather not run the commands: paste this into the agent, in the project's folder, with the agent's lines in place of `{{plugin}}` and `{{you}}`. Everything else is the same in every tool, since the installer writes each tool's files.
+For someone who would rather not run the command: paste this into the agent, in the project's folder, with the agent's name in place of `{{agent}}`: `claude`, `codex`, `opencode`, or `other` for any other agent. The agent runs the same installer, with its answers as flags.
 
 ```text
 Install design-fence in this project, with its design module. I'm a designer:
 explain each step in one plain sentence, and ask me before anything you can't undo.
 
-1. Check that we're at the root of a git repository and that Node 20 or newer is
-   installed. If not, stop, and tell me what's missing and how to get it.
-2. Run:
-   git submodule add https://github.com/kidCubi/design-fence.git .agents/design-fence
-   node .agents/design-fence/install.mjs --design
-   They write into .agents, .codex, .claude and .git: if your sandbox protects any
-   of them, ask me to approve running these two commands outside it.
-3. Tell me, in plain words, what the installer added: its output lists it.
-4. Don't commit. List the files to commit and a commit message, and let me decide.
-   The commit message ends with the line "Reflect: design-fence's files, installed
-   as they come": design-fence's git hook refuses a commit without a Reflect line.
-5. Install design-fence's plugin in your own tool, so you cannot change design-fence
-   yourself without my word: {{plugin}}
-6. Read .agents/design-fence/playbooks/start.md, and tell me the first step it
-   suggests for this project.
-7. Last, tell me what I have to do myself, in this order:
-   - {{you}}
-   - In Figma Desktop, with my file open: Plugins → Development → Import plugin
-     from manifest → ~/.figma-console-mcp/plugin/manifest.json (on a Mac, press
-     Cmd+Shift+G in the dialog to type the path), then run "Figma Desktop Bridge".
+1. Run, in this project's folder:
+   npx -y github:kidCubi/design-fence --yes --design --agents {{agent}}
+   It needs the network, and writes into this project (.agents, .claude, .codex,
+   .git…) and into your own settings, to install design-fence's plugin there: if
+   your sandbox stops any of that, ask me to approve running it outside.
+2. If it stops because something is missing (Node, git), tell me in plain words
+   what, and how to get it. If this folder is not a git repository, ask me whether
+   to make it one; if I agree, run the command again with --git-init.
+3. Tell me, in plain words, what it did: its output lists it.
+4. Don't commit. Show me the commit it suggests, and let me decide.
+5. Tell me what is left for me to do: its "Left for you" list, in its order, in
+   plain words. Its last item is for you: read the playbook it names, and tell me
+   the first step it suggests for this project.
 ```
-
-| Agent | `{{plugin}}` | `{{you}}` |
-|---|---|---|
-| Claude Code | run `claude plugin install design-fence --marketplace kidCubi/design-fence`. | Quit Claude Code and open it again in this folder. When it asks, approve the project's MCP server, figma-console. |
-| Codex | run `codex plugin marketplace add kidCubi/design-fence`. | Quit Codex and open it again in this folder, and trust the project when it asks. Type /plugins and install design-fence. Then type /hooks and trust design-fence's hooks (the project's and the plugin's). |
-| OpenCode | copy `.agents/design-fence/harness/opencode/design-fence.js` into `~/.config/opencode/plugins/`; it is outside this project, so ask me first. | Quit OpenCode and open it again in this folder. |
-| Any other | there is none for your tool: say so, and go on. | Add the MCP server figma-console (command: npx -y figma-console-mcp@latest) to your agent's settings. If your agent does not read AGENTS.md, add one line to its own instructions file: "Read AGENTS.md first." |
 
 ## What the project provides
 
@@ -166,4 +176,4 @@ Changes to how to work anywhere go here, as a change to this repository; what is
 
 ## Develop
 
-`node --test test/*.test.mjs` (Node 20 or newer). After a change to `lib/` or `harness/src/`, `node harness/build.mjs` makes the plugins again (a test fails while they differ).
+`node --test test/*.test.mjs` (Node 20 or newer). `package.json` makes `npx github:kidCubi/design-fence` run `bin/setup.mjs` (and `npx design-fence`, once published to npm); it has no dependencies. After a change to `lib/` or `harness/src/`, `node harness/build.mjs` makes the plugins again (a test fails while they differ).

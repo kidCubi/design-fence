@@ -5,12 +5,17 @@
  *     design-fence check [--all] [--no-cache] [--base <ref>]   the project's checks on what changed
  *     design-fence commits <revs…>                             commits changing code with no Reflect line
  *     design-fence rules                                       the rules, the checks, the ledger, the hooks
+ *     design-fence route "<request>"                           which playbook a request needs, and the project's files it touches
  *     design-fence specs                                       the design specs against Storybook's index
+ *     design-fence spec <component>                            one spec's status, Figma node, version, story and properties
  *     design-fence hash <file>                                 a file's FNV-1a, to compare with figma/tokens.js
  *     design-fence figma lint-gaps <node id> [--properties <name,…>]   figma/*.js through the Desktop Bridge,
  *     design-fence figma sources                                       so their text stays out of the agent's
  *     design-fence figma tokens [--format dtcg|css] [--px <prefix,…>] [--ms <prefix,…>] [--hash-only] [--out <file>]
- *                      (each takes --key <file key>: refuse to run on another file)
+ *                      (each takes --key <file key>: refuse to run on another file. From validate.json's `design`,
+ *                      when it has them: the key (`fileKey`), the tokens' format, prefixes and file (`tokens`;
+ *                      `--out` alone writes there); `lint-gaps --spec <component>` takes the node and the
+ *                      properties from its spec)
  *     design-fence hook pre-commit | commit-msg <file> | pre-push   what the git hooks run
  *     design-fence agent-hook session-start | user-prompt | pre-tool-use
  *                      what the agent tools' hooks run (Claude Code, Codex: their JSON on stdin;
@@ -30,8 +35,9 @@ import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
 import {parseArgs, runInFigma, scriptCode} from '../lib/figma.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
 import {section} from '../lib/markdown.mjs';
+import {route, routeText} from '../lib/route.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
-import {checkSpecs, readSpecs, readStories} from '../lib/specs.mjs';
+import {checkSpecs, findSpec, readSpecs, readStories} from '../lib/specs.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ZERO = /^0+$/;
@@ -179,9 +185,26 @@ export function fnv1a(text) {
  * A script of figma/ run through the bridge; its result printed as one line
  * of JSON. A tokens export with --out goes to the file, not to the output.
  */
-async function figmaScript([name, ...argv]) {
+async function figmaScript(root, [name, ...argv]) {
   const parsed = parseArgs(argv);
-  const {file, result} = await runInFigma(scriptCode(name, parsed), {fileKey: parsed.options.key});
+  // What the project's config already says is not asked again: the file, the tokens file and its format, a
+  // component's properties from its spec (`design` in validate.json; README, "The design module").
+  const design = loadConfig(root)?.design ?? {};
+  const options = parsed.options;
+  options.key ??= design.fileKey;
+  if (name === 'tokens' && design.tokens) {
+    options.format ??= design.tokens.format;
+    options.px ??= design.tokens.px?.join(',');
+    options.ms ??= design.tokens.ms?.join(',');
+    if (options.out === true) options.out = design.tokens.file;
+  }
+  if (name === 'lint-gaps' && typeof options.spec === 'string') {
+    const spec = findSpec(root, design, options.spec);
+    if (!spec) throw new Error(`No spec "${options.spec}" in ${design.dir ?? 'design'}/components.`);
+    options.properties ??= spec.properties.join(',');
+    parsed.args[0] ??= spec.figma;
+  }
+  const {file, result} = await runInFigma(scriptCode(name, parsed), {fileKey: typeof options.key === 'string' ? options.key : undefined});
   const out = parsed.options.out;
   if (name === 'tokens' && typeof out === 'string' && typeof result?.text === 'string') {
     fs.writeFileSync(path.resolve(process.cwd(), out), result.text);
@@ -318,11 +341,22 @@ function main(argv) {
       return rules(root);
     case 'specs':
       return specs(root);
+    case 'spec': {
+      const design = loadConfig(root)?.design;
+      const spec = design && args[0] ? findSpec(root, design, args[0]) : null;
+      console.log(spec ? JSON.stringify(spec) : `No spec "${args[0] ?? ''}"${design ? '' : ': the design module is off'}.`);
+      return spec ? 0 : 1;
+    }
+    case 'route': {
+      const way = route(root, args.join(' '), loadConfig(root) ?? {});
+      console.log(routeText(way, path.relative(root, HOME).split(path.sep).join('/')) || 'Not a request: nothing to route.');
+      return 0;
+    }
     case 'hash':
       console.log(fnv1a(fs.readFileSync(path.resolve(process.cwd(), args[0]), 'utf8')));
       return 0;
     case 'figma':
-      return figmaScript(args);
+      return figmaScript(root, args);
     case 'hook':
       return hook(root, args);
     default:

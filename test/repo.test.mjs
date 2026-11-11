@@ -39,7 +39,7 @@ function installed(root) {
   const target = path.join(root, '.agents/design-fence');
   fs.cpSync(HOME, target, {
     recursive: true,
-    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
+    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`) && !source.includes(`${path.sep}bench`),
   });
   const output = execFileSync(process.execPath, [path.join(target, 'install.mjs')], {
     cwd: root,
@@ -161,7 +161,7 @@ test('install elsewhere than .agents/design-fence copies the skills, with their 
   const target = path.join(root, 'tools/df');
   fs.cpSync(HOME, target, {
     recursive: true,
-    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`),
+    filter: source => !source.includes(`${path.sep}.git`) && !source.includes(`${path.sep}test`) && !source.includes(`${path.sep}bench`),
   });
   const run = () => execFileSync(process.execPath, [path.join(target, 'install.mjs')], {cwd: root, encoding: 'utf8'});
   assert.match(run(), /Skills written to/);

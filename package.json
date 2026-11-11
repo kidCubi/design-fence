@@ -1,0 +1,23 @@
+{
+  "name": "design-fence",
+  "version": "0.2.0",
+  "description": "A process for building software with AI agents, installed into a project as a git submodule and enforced by git, CI and the agent tools' hooks. npx design-fence installs it.",
+  "bin": {
+    "design-fence": "bin/setup.mjs"
+  },
+  "files": [
+    "bin/setup.mjs",
+    "install.mjs",
+    "lib/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kidCubi/design-fence.git"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
