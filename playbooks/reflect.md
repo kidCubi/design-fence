@@ -55,7 +55,7 @@ A workaround that is the correct trade-off is fine. It must then be deliberate: 
 - Comments describe what the code is, not how it came to be or what it used to be.
 - The project's checks pass: `node .agents/design-fence/bin/design-fence.mjs check`.
 - UI: the design system's components and tokens only (no raw colours or sizes a token covers, nothing hand-rolled a component covers), and what the catalog says still true after the change.
-- Design module: the spec says what Figma and the code do, and nothing in either goes beyond it; the tokens file came from the tokens export, not by hand; `design-fence specs` holds; `design/index.md` and `flows.yml` say what is now true; the views `flows.yml` lists for a changed component were checked again.
+- Design module: the spec says what Figma and the code do, and nothing in either goes beyond it; the tokens file came from the tokens export, not by hand; `design-fence design` holds; `design/index.md` and `flows.yml` say what is now true; the views `flows.yml` lists for a changed component were checked again.
 
 **Tests and docs**
 

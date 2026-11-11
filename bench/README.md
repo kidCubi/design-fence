@@ -35,7 +35,7 @@ node bench/summary.mjs bench/results/<round>
 
 - Runs go one at a time, the arms alternating. Without `--tasks`, only the tasks that need no Figma run.
 - For the Figma tasks: Figma Desktop open on your copy of "Design fence landing", the Desktop Bridge plugin running, and figma-console as the only Figma server. After each run on Figma its page is audited and deleted, not measured.
-- Claude Code runs with no MCP server but figma-console (and none at all for the tasks without Figma), edits accepted, commits refused, capped at the task's budget. Codex runs in its workspace sandbox with the network on. Your own user-level settings take part in every arm alike: say what they hold when you share results.
+- Claude Code runs with no MCP server but figma-console, at design-fence's version (and none at all for the tasks without Figma), edits accepted, commits refused, capped at the task's budget. Codex runs in its workspace sandbox with the network on. Your own user-level settings take part in every arm alike: say what they hold when you share results.
 - Results: `bench/results/<round>/<task>/<arm>-<n>.json` (numbers and score), `.jsonl` (the agent's log) and the copy itself; `summary.md` and `summary.json` beside them. Only the summaries are committed.
 - `node bench/where.mjs <run.jsonl>` lists what entered a run's context and what it cost by staying there.
 - Prices: `bench/prices.json`, list prices. Check them on the day.

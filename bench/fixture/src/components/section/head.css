@@ -9,7 +9,7 @@
 
 .title {
   flex: none;
-  /* The title's column: no token holds it (design/issues.md, "Sizes without tokens"). */
+  /* design-fence: raw. The title's column: no token holds it yet. */
   width: 304px;
   margin: 0;
   color: var(--text-default);

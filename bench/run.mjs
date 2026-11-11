@@ -28,6 +28,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
+import {FIGMA_CONSOLE} from '../lib/fence.mjs';
+
 const BENCH = path.dirname(fileURLToPath(import.meta.url));
 const HOME = path.dirname(BENCH);
 const FIXTURE = path.join(BENCH, 'fixture');
@@ -128,7 +130,13 @@ export async function prepare(t, arm, n) {
 }
 
 const NO_MCP = path.join(BENCH, 'mcp-none.json');
-const FIGMA_MCP = path.join(BENCH, 'mcp.json');
+/** Claude Code's MCP settings for a run on Figma: figma-console alone, at design-fence's version. */
+function figmaMcp() {
+  const file = path.join(OUT, 'mcp.json');
+  fs.mkdirSync(OUT, {recursive: true});
+  fs.writeFileSync(file, JSON.stringify({mcpServers: {'figma-console': {command: 'npx', args: ['-y', FIGMA_CONSOLE], env: {FIGMA_ACCESS_TOKEN: '${FIGMA_ACCESS_TOKEN:-}'}}}}));
+  return file;
+}
 
 /** One run of the agent in its copy, its log beside it; returns the log's path. */
 function agentRun(t, dir, log, run) {
@@ -138,7 +146,7 @@ function agentRun(t, dir, log, run) {
   let result;
   if (AGENT === 'claude') {
     const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--max-budget-usd', String(t.budget ?? 5), '--no-session-persistence',
-      '--permission-mode', 'acceptEdits', '--strict-mcp-config', '--mcp-config', t.figma ? FIGMA_MCP : NO_MCP,
+      '--permission-mode', 'acceptEdits', '--strict-mcp-config', '--mcp-config', t.figma ? figmaMcp() : NO_MCP,
       '--allowedTools', 'Bash', 'Read', 'Edit', 'Write', 'Glob', 'Grep', 'Skill', ...(t.figma ? ['mcp__figma-console'] : []),
       '--disallowedTools', 'Bash(git commit:*)', 'Bash(git push:*)', ...(MODEL ? ['--model', MODEL] : [])];
     // With Figma: the bridge plugin needs a moment to find the new server before the first call.
@@ -148,7 +156,7 @@ function agentRun(t, dir, log, run) {
     const args = ['exec', '--json', '--sandbox', 'workspace-write', '-c', 'sandbox_workspace_write.network_access=true',
       ...(t.figma
         ? ['-c', 'mcp_servers.figma-console.default_tools_approval_mode="approve"', '-c', 'mcp_servers.figma-console.command="node"',
-            '-c', `mcp_servers.figma-console.args=["${path.join(BENCH, 'wait-bridge.mjs')}","npx","-y","figma-console-mcp@latest"]`,
+            '-c', `mcp_servers.figma-console.args=["${path.join(BENCH, 'wait-bridge.mjs')}","npx","-y","${FIGMA_CONSOLE}"]`,
             '-c', 'mcp_servers.figma-console.tool_timeout_sec=180']
         : []),
       ...(MODEL ? ['-m', MODEL] : []), ...(EFFORT ? ['-c', `model_reasoning_effort=${EFFORT}`] : []), '-C', dir, prompt];

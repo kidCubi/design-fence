@@ -12,6 +12,7 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
+import {FIGMA_CONSOLE} from '../lib/fence.mjs';
 import {changedFiles} from '../lib/git.mjs';
 import {plan, runChecks} from '../lib/check.mjs';
 
@@ -187,7 +188,8 @@ test('install --design adds the design module once, and keeps what the project h
   assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), /`\.agents\/design-fence\/playbooks\/figma\.md`, "Connect" first/);
   assert.equal(fs.lstatSync(path.join(root, '.claude/skills/design-fence-figma')).isSymbolicLink(), true);
   const config = JSON.parse(fs.readFileSync(path.join(root, '.agents/validate.json'), 'utf8'));
-  assert.deepEqual(config, {checks: [NO_BAD], design: {dir: 'design'}});
+  const check = {name: 'design', when: ['design/**', '**/*.stories.*'], run: 'node .agents/design-fence/bin/design-fence.mjs design'};
+  assert.deepEqual(config, {checks: [NO_BAD, check], design: {dir: 'design'}}, "the module, and its check among the project's");
   assert.equal(fs.readFileSync(path.join(root, 'design/index.md'), 'utf8'), 'ours\n');
   assert.match(fs.readFileSync(path.join(root, 'design/PHILOSOPHY.md'), 'utf8'), new RegExp(path.basename(root)));
   assert.match(run(), /nothing to write/);
@@ -204,19 +206,33 @@ test('install --design declares the Figma server for each agent tool, once, keep
     execFileSync(process.execPath, [path.join(target, 'install.mjs'), '--design'], {cwd: root, encoding: 'utf8'});
   assert.match(run(), /Figma's server \(figma-console, [^)]*\) declared in: \.mcp\.json, opencode\.json, \.codex\/config\.toml\n/);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')), {
-    mcpServers: {'figma-console': {command: 'npx', args: ['-y', 'figma-console-mcp@latest']}},
+    mcpServers: {'figma-console': {command: 'npx', args: ['-y', FIGMA_CONSOLE]}},
   });
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'opencode.json'), 'utf8')), {
     model: 'x',
-    mcp: {other: {type: 'remote', url: 'u'}, 'figma-console': {type: 'local', command: ['npx', '-y', 'figma-console-mcp@latest']}},
+    mcp: {other: {type: 'remote', url: 'u'}, 'figma-console': {type: 'local', command: ['npx', '-y', FIGMA_CONSOLE]}},
   });
   const codex = fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8');
-  assert.match(codex, /^model = "x"\n\n# design-fence[^\n]*\n\[mcp_servers\.figma-console\]\ncommand = "npx"\nargs = \["-y", "figma-console-mcp@latest"\]\n$/);
+  assert.ok(codex.startsWith('model = "x"\n\n# design-fence'));
+  assert.ok(codex.endsWith(`[mcp_servers.figma-console]\ncommand = "npx"\nargs = ["-y", "${FIGMA_CONSOLE}"]\n`), codex);
   assert.doesNotMatch(codex, /FIGMA_ACCESS_TOKEN/);
   const again = run();
   assert.match(again, /nothing to write/);
   assert.doesNotMatch(again, /Figma's server/);
   assert.equal(fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8'), codex);
+
+  // What design-fence declared at another version comes to this one; a declaration of the project's own stays.
+  const old = text => text.replaceAll(FIGMA_CONSOLE, 'figma-console-mcp@latest');
+  for (const file of ['.mcp.json', 'opencode.json', '.codex/config.toml']) {
+    fs.writeFileSync(path.join(root, file), old(fs.readFileSync(path.join(root, file), 'utf8')));
+  }
+  assert.match(run(), /Figma's server \(figma-console, [^)]*\) declared in: \.mcp\.json, opencode\.json, \.codex\/config\.toml\n/);
+  assert.equal(fs.readFileSync(path.join(root, '.codex/config.toml'), 'utf8'), codex);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')).mcpServers['figma-console'].args, ['-y', FIGMA_CONSOLE]);
+  const theirs = {mcpServers: {'figma-console': {command: 'npx', args: ['-y', 'figma-console-mcp@latest'], env: {FIGMA_ACCESS_TOKEN: 'x'}}}};
+  fs.writeFileSync(path.join(root, '.mcp.json'), JSON.stringify(theirs));
+  assert.doesNotMatch(run(), /\.mcp\.json/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8')), theirs);
 });
 
 test('install --design leaves a declared Figma server, and a file it cannot read, alone', () => {
@@ -258,7 +274,7 @@ test('install merges the agent hooks into the tools\' settings once, keeping the
   assert.deepEqual(claude.hooks.PreToolUse[0], theirs);
   assert.equal(
     claude.hooks.PreToolUse[1].hooks[0].command,
-    'node "$CLAUDE_PROJECT_DIR/.agents/design-fence/bin/design-fence.mjs" agent-hook pre-tool-use',
+    'node "${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}/.agents/design-fence/bin/design-fence.mjs" agent-hook pre-tool-use',
   );
   assert.deepEqual(Object.keys(claude.hooks), ['PreToolUse', 'SessionStart', 'UserPromptSubmit']);
   assert.equal(

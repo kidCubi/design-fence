@@ -1,0 +1,254 @@
+{
+ "round": "phase3-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "drift-probe": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01422144,
+       "min": 0.01331631,
+       "max": 0.01548233
+      },
+      "tokens": {
+       "median": 346725,
+       "min": 280314,
+       "max": 462332
+      },
+      "fresh": {
+       "median": 45961,
+       "min": 41295,
+       "max": 47536
+      },
+      "calls": {
+       "median": 15,
+       "min": 6,
+       "max": 16
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 16,
+       "min": 7,
+       "max": 17
+      },
+      "seconds": {
+       "median": 42,
+       "min": 36,
+       "max": 166
+      }
+     },
+     "score": {
+      "passed": 24,
+      "of": 25,
+      "share": 0.96,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the need is written down (a spec, drafted or amended)": {
+        "passed": 4,
+        "of": 5
+       },
+       "nothing approved by the agent itself": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "review": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01353229,
+       "min": 0.01240427,
+       "max": 0.01482387
+      },
+      "tokens": {
+       "median": 273921,
+       "min": 218267,
+       "max": 339367
+      },
+      "fresh": {
+       "median": 44312,
+       "min": 44000,
+       "max": 47368
+      },
+      "calls": {
+       "median": 5,
+       "min": 5,
+       "max": 9
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 6,
+       "min": 6,
+       "max": 10
+      },
+      "seconds": {
+       "median": 44,
+       "min": 38,
+       "max": 53
+      }
+     },
+     "score": {
+      "passed": 34,
+      "of": 35,
+      "share": 0.9714285714285714,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 4,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 5,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "ship-issue": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01567889,
+       "min": 0.01443569,
+       "max": 0.01828616
+      },
+      "tokens": {
+       "median": 574583,
+       "min": 430409,
+       "max": 676017
+      },
+      "fresh": {
+       "median": 44290,
+       "min": 40851,
+       "max": 47811
+      },
+      "calls": {
+       "median": 11,
+       "min": 11,
+       "max": 15
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 12,
+       "min": 12,
+       "max": 16
+      },
+      "seconds": {
+       "median": 44,
+       "min": 43,
+       "max": 55
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ }
+}

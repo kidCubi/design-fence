@@ -40,6 +40,8 @@ function projects() {
     'empty-existing': copy(empty),
     'empty-new': copy(root => {
       empty(root);
+      const file = path.join(root, '.agents/validate.json');
+      fs.writeFileSync(file, JSON.stringify({...config(root), design: {dir: 'design'}}));
       fs.rmSync(path.join(root, 'src/components'), {recursive: true});
       const agents = path.join(root, 'AGENTS.md');
       fs.writeFileSync(agents, fs.readFileSync(agents, 'utf8').replace(/^- Figma:.*$/m, ''));

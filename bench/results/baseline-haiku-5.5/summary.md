@@ -10,7 +10,7 @@
 | Tool calls | 9 (6 to 12) | 16 (13 to 41) | 11 (6 to 20) | +78% | +22% (not shown) | −31% (not shown) |
 | Turns | 10 (7 to 13) | 17 (14 to 42) | 12 (7 to 21) | +70% | +20% (not shown) | −29% (not shown) |
 | Seconds | 28 (23 to 34) | 50 (47 to 137) | 39 (21 to 52) | +79% | +39% (not shown) | −22% (not shown) |
-| Score (checks passed) | 10 of 15 | 24 of 25 | 24 of 25 | | | |
+| Score (checks passed) | 10 of 15 | 24 of 25 | 24 of 25 |  |  |  |
 
 | Check (runs that pass) | Without | With design-fence (released) | With design-fence (this tree) |
 | --- | --- | --- | --- |
@@ -30,7 +30,7 @@
 | Tool calls | 5 (3 to 7) | 5 (3 to 8) | 8 (5 to 10) | 0% (not shown) | +60% (not shown) | +60% (not shown) |
 | Turns | 6 (4 to 8) | 6 (4 to 9) | 9 (6 to 11) | 0% (not shown) | +50% (not shown) | +50% (not shown) |
 | Seconds | 34 (30 to 41) | 41 (27 to 52) | 44 (40 to 49) | +21% (not shown) | +29% (not shown) | +7% (not shown) |
-| Score (checks passed) | 32 of 35 | 35 of 35 | 34 of 35 | | | |
+| Score (checks passed) | 32 of 35 | 35 of 35 | 34 of 35 |  |  |  |
 
 | Check (runs that pass) | Without | With design-fence (released) | With design-fence (this tree) |
 | --- | --- | --- | --- |
@@ -52,7 +52,7 @@
 | Tool calls | 10 (8 to 12) | 11 (10 to 13) | 13 (10 to 16) | +10% (not shown) | +30% (not shown) | +18% (not shown) |
 | Turns | 11 (9 to 13) | 12 (11 to 14) | 14 (11 to 17) | +9% (not shown) | +27% (not shown) | +17% (not shown) |
 | Seconds | 29 (27 to 32) | 50 (42 to 61) | 49 (40 to 57) | +72% | +69% | −2% (not shown) |
-| Score (checks passed) | 35 of 35 | 32 of 35 | 30 of 30 | | | |
+| Score (checks passed) | 35 of 35 | 32 of 35 | 30 of 30 |  |  |  |
 
 | Check (runs that pass) | Without | With design-fence (released) | With design-fence (this tree) |
 | --- | --- | --- | --- |

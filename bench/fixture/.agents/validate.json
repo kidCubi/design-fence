@@ -4,23 +4,50 @@
   "checks": [
     {
       "name": "format",
-      "when": ["src/components/**/*.{js,css}", "tools/**/*.mjs", "test/**/*.mjs", "src/*.stories.js"],
+      "when": [
+        "src/components/**/*.{js,css}",
+        "tools/**/*.mjs",
+        "test/**/*.mjs",
+        "src/*.stories.js"
+      ],
       "run": "npx --yes prettier@3.3.3 --check {files}"
     },
     {
       "name": "tests",
-      "when": ["tools/**", "test/**"],
+      "when": [
+        "tools/**",
+        "test/**"
+      ],
       "run": "node --test test/*.test.mjs"
     },
     {
-      "name": "design specs",
-      "when": ["design/components/**", "src/**/*.stories.*"],
-      "run": "node .agents/design-fence/bin/design-fence.mjs specs"
+      "name": "design",
+      "when": [
+        "design/**",
+        "src/components/**",
+        "src/tokens.css"
+      ],
+      "run": "node .agents/design-fence/bin/design-fence.mjs design"
     }
   ],
   "design": {
     "dir": "design",
     "storybookIndex": "storybook-static/index.json",
-    "library": "./src/components/"
+    "library": "./src/components/",
+    "fileKey": "RpGPzmuHjXA4umtwY5M2tr",
+    "tokens": {
+      "file": "src/tokens.css",
+      "format": "css",
+      "px": [
+        "space/",
+        "font-size/",
+        "line-width/",
+        "radius/",
+        "size/"
+      ],
+      "private": [
+        "--mono-*"
+      ]
+    }
   }
 }

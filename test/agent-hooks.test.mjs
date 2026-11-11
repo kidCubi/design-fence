@@ -227,13 +227,20 @@ test('a screenshot is counted once per tool call, whichever layer sees it first'
   assert.deepEqual(decide(root, shot('b'), {home}), {});
 });
 
-test('runHook: Claude Code is asked; Codex refuses, with the way out', () => {
+test('runHook: Claude Code is asked; Codex, and a tool that only runs Claude Code\'s hooks, refuse, with the way out', () => {
   const root = repository();
-  const input = turn => JSON.stringify({cwd: root, hook_event_name: 'PreToolUse', tool_name: 'Edit', tool_input: {file_path: '.agents/validate.json'}, ...(turn ? {turn_id: 't'} : {})});
+  const input = (turn, extra = {}) => JSON.stringify({cwd: root, hook_event_name: 'PreToolUse', tool_name: 'Edit', tool_input: {file_path: '.agents/validate.json'}, ...(turn ? {turn_id: 't'} : {}), ...extra});
   const home = path.join(root, '.agents/design-fence');
-  const claude = runHook('pre-tool-use', input(false), {home, env: {CLAUDE_PROJECT_DIR: root}});
+  // Claude Code: its project variable, and the permission mode it sends with every tool call.
+  const claude = runHook('pre-tool-use', input(false, {permission_mode: 'default'}), {home, env: {CLAUDE_PROJECT_DIR: root}});
   assert.equal(claude.code, 0);
   assert.equal(JSON.parse(claude.stdout).hookSpecificOutput.permissionDecision, 'ask');
+  // Another tool running the same hooks (Cursor and Gemini CLI set the variable too; Copilot may not): "ask" may
+  // not be honoured there, so it is a refusal.
+  const other = runHook('pre-tool-use', input(false), {home, env: {CLAUDE_PROJECT_DIR: root}});
+  assert.equal(other.code, 2, 'no permission mode: not Claude Code itself');
+  assert.match(other.stderr, /design-fence: allow/);
+  assert.equal(runHook('pre-tool-use', input(false), {home, env: {}}).code, 2, 'nor without its variable');
   const codex = runHook('pre-tool-use', input(true), {home, env: {CLAUDE_PROJECT_DIR: root}});
   assert.equal(codex.code, 2, 'a turn_id: Codex, even with CLAUDE_PROJECT_DIR');
   assert.match(codex.stderr, /design-fence: allow/);
@@ -268,4 +275,44 @@ test('agent-hook: exit 2 with the reason refuses; anything else lets the call th
   const start = agentHook('session-start', {hook_event_name: 'SessionStart', cwd: root, source: 'startup'}, root);
   assert.equal(start.status, 0);
   assert.match(start.stdout, /git hooks are off/);
+});
+
+/** The measure's fixture as a repository: a project with the design module, its specs and its tokens file. */
+function designed() {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'design-fence-gate-')));
+  fs.cpSync(path.join(HOME, 'bench/fixture'), root, {recursive: true, filter: file => !file.includes('node_modules')});
+  execFileSync('git', ['-C', root, 'init', '-q']);
+  fs.writeFileSync(path.join(root, 'design/components/badge.md'), '---\nname: Badge\nstatus: draft\n---\n\n# Badge\n');
+  return root;
+}
+
+test("the design gate: marking a spec approved needs the human's word; building an approved one does not", () => {
+  const root = designed();
+  const home = path.join(root, '.agents/design-fence');
+  const pre = (tool, input, session = 'g') => decide(root, {name: 'pre-tool-use', tool, input, session}, {home, homedir: os.tmpdir()});
+  const badge = path.join(root, 'design/components/badge.md');
+  const approve = {file_path: badge, old_string: 'status: draft', new_string: "status: approved\nfigma: '1:2'"};
+  assert.match(pre('Edit', approve).ask, /it marks design\/components\/badge\.md approved\. Approval is the human's word at the design gate/);
+  assert.match(pre('Write', {file_path: badge, content: '---\nname: Badge\nstatus: approved\n---\n'}).ask, /approved/);
+  assert.match(pre('apply_patch', {input: `*** Begin Patch\n*** Update File: design/components/badge.md\n-status: draft\n+status: approved\n*** End Patch`}).ask, /approved/);
+  assert.match(pre('Bash', {command: "sed -i '' 's/status: draft/status: approved/' design/components/badge.md"}).ask, /approved/);
+  assert.match(pre('Edit', {file_path: path.join(root, 'design/content/landing.md'), old_string: 'x', new_string: 'Status: **approved** by the designer'}).ask ?? 'already approved: nothing', /nothing/);
+  assert.deepEqual(pre('Edit', {file_path: badge, old_string: '# Badge', new_string: '# Badge\n\n## Purpose'}), {}, 'writing a draft is free');
+  assert.deepEqual(pre('Bash', {command: 'grep -n "status: approved" design/components/badge.md'}), {}, 'reading is free');
+  const command = path.join(root, 'design/components/command.md');
+  assert.deepEqual(pre('Edit', {file_path: command, old_string: 'status: approved', new_string: "status: built\nstory: 'Components/Command'"}), {}, 'approved, then built');
+  decide(root, {name: 'user-prompt', session: 'g', prompt: 'Good, approved. design-fence: allow'}, {home});
+  assert.deepEqual(pre('Edit', approve), {}, "with the human's word");
+});
+
+test("the tokens file is the export's: an edit by hand needs the human's word, the export does not", () => {
+  const root = designed();
+  const home = path.join(root, '.agents/design-fence');
+  const pre = (tool, input) => decide(root, {name: 'pre-tool-use', tool, input, session: 't'}, {home, homedir: os.tmpdir()});
+  assert.match(pre('Edit', {file_path: path.join(root, 'src/tokens.css'), old_string: '#6d6b67', new_string: '#777777'}).ask, /it changes src\/tokens\.css, which the tokens export writes/);
+  assert.match(pre('Bash', {command: "sed -i '' 's/6d6b67/777777/' src/tokens.css"}).ask, /tokens export writes/);
+  assert.match(pre('Write', {file_path: path.join(root, 'design/tokens.lock'), content: '{}'}).ask, /tokens\.lock/);
+  assert.deepEqual(pre('Bash', {command: 'node .agents/design-fence/bin/design-fence.mjs figma tokens --out'}), {});
+  assert.deepEqual(pre('Bash', {command: 'node .agents/design-fence/bin/design-fence.mjs figma tokens --format css --out src/tokens.css'}), {});
+  assert.deepEqual(pre('Edit', {file_path: path.join(root, 'src/page.css'), old_string: 'a', new_string: 'b'}), {});
 });

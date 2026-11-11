@@ -5,8 +5,14 @@
  *     design-fence check [--all] [--no-cache] [--base <ref>]   the project's checks on what changed
  *     design-fence commits <revs…>                             commits changing code with no Reflect line
  *     design-fence rules                                       the rules, the checks, the ledger, the hooks
+ *     design-fence doctor [--bridge]                           what is in place for design-fence to work here, and the fix
+ *                                                              for what is not (--bridge: also whether Figma's bridge answers)
+ *     design-fence update                                      the submodule to its newest version, the installer run again,
+ *                                                              and the commit to make
  *     design-fence route "<request>"                           which playbook a request needs, and the project's files it touches
- *     design-fence specs                                       the design specs against Storybook's index
+ *     design-fence design                                      the design module's check: specs against Storybook, the index,
+ *                                                              flows.yml, raw values in the library's CSS, the tokens file
+ *                                                              (`specs`: its earlier name)
  *     design-fence spec <component>                            one spec's status, Figma node, version, story and properties
  *     design-fence hash <file>                                 a file's FNV-1a, to compare with figma/tokens.js
  *     design-fence figma lint-gaps <node id> [--properties <name,…>]   figma/*.js through the Desktop Bridge,
@@ -37,7 +43,12 @@ import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
 import {section} from '../lib/markdown.mjs';
 import {route, routeText} from '../lib/route.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
-import {checkSpecs, findSpec, readSpecs, readStories} from '../lib/specs.mjs';
+import {spawnSync} from 'node:child_process';
+
+import {checkDesign, fnv1a, lockFile} from '../lib/design-check.mjs';
+import {doctor, doctorText} from '../lib/doctor.mjs';
+import {parseStatus} from '../lib/git.mjs';
+import {findSpec} from '../lib/specs.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ZERO = /^0+$/;
@@ -154,32 +165,28 @@ function rules(root) {
   return 0;
 }
 
-function specs(root) {
-  const design = loadConfig(root)?.design;
-  if (!design) {
+function design(root) {
+  const config = loadConfig(root)?.design;
+  if (!config) {
     console.log(`The design module is off (no design section in ${CONFIG}).`);
     return 0;
   }
-  const all = readSpecs(root, design);
-  const stories = readStories(root, design);
-  const problems = checkSpecs(all, stories, design);
-  const against = stories ? `${stories.length} stories of ${design.storybookIndex}` : 'no Storybook index (design.storybookIndex)';
-  console.log(`${all.length} spec(s), against ${against}.`);
+  const {problems, warnings, notes} = checkDesign(root, config);
+  console.log(`${notes.join('; ')}.`);
   for (const problem of problems) {
     console.log(`- ${problem}`);
+  }
+  if (warnings.length) {
+    console.log(`Not refused, to bring in step (${warnings.length}; all refused once design.strict is true):`);
+    for (const warning of warnings.slice(0, 20)) {
+      console.log(`  ${warning}`);
+    }
+    if (warnings.length > 20) console.log(`  … and ${warnings.length - 20} more.`);
   }
   return problems.length ? 1 : 0;
 }
 
-/** FNV-1a (32 bits) of a text, in hex: the same as figma/tokens.js computes in Figma. */
-export function fnv1a(text) {
-  let hash = 0x811c9dc5;
-  for (const byte of Buffer.from(text, 'utf8')) {
-    hash ^= byte;
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, '0');
-}
+export {fnv1a};
 
 /**
  * A script of figma/ run through the bridge; its result printed as one line
@@ -208,11 +215,69 @@ async function figmaScript(root, [name, ...argv]) {
   const out = parsed.options.out;
   if (name === 'tokens' && typeof out === 'string' && typeof result?.text === 'string') {
     fs.writeFileSync(path.resolve(process.cwd(), out), result.text);
+    // What was exported, for `design-fence design` to hold the file to (lib/design-check.mjs).
+    if (design.dir || design.tokens) {
+      const written = path.relative(root, path.resolve(process.cwd(), out)).split(path.sep).join('/');
+      fs.writeFileSync(path.join(root, lockFile(design)), `${JSON.stringify({file: written, hash: result.hash, format: result.format, figma: file ?? null}, null, 2)}\n`);
+    }
     const {text, ...rest} = result;
     console.log(JSON.stringify({file, written: out, ...rest}));
     return 0;
   }
   console.log(JSON.stringify({file, ...result}));
+  return 0;
+}
+
+/** `design-fence doctor`: `lib/doctor.mjs`, and with --bridge a call through Figma's bridge. */
+async function checkUp(root, args) {
+  const lines = doctor(root, HOME);
+  if (args.includes('--bridge')) {
+    const key = loadConfig(root)?.design?.fileKey;
+    try {
+      const {file} = await runInFigma('return 1;', {fileKey: key, wait: 30_000});
+      lines.push({state: 'ok', what: `Figma's bridge answers, on "${file}"`});
+    } catch (error) {
+      lines.push({state: 'off', what: "Figma's bridge does not answer", fix: error.message});
+    }
+  }
+  const {text, off} = doctorText(lines);
+  console.log(text);
+  console.log(off ? `\n${off} to put right.` : '\nAll in place.');
+  return off ? 1 : 0;
+}
+
+/**
+ * `design-fence update`: the submodule to its remote's newest commit, then
+ * that version's installer (a new process: this file is the old one), then
+ * what to commit. It does not commit.
+ */
+function update(root) {
+  const at = path.relative(root, HOME).split(path.sep).join('/');
+  const run = (command, args) => spawnSync(command, args, {cwd: root, encoding: 'utf8'});
+  const before = new Set(parseStatus(git(root, ['status', '--porcelain', '-z'])));
+  const from = run('git', ['-C', HOME, 'rev-parse', '--short', 'HEAD']).stdout.trim();
+  const pulled = run('git', ['submodule', 'update', '--remote', '--', at]);
+  if (pulled.status !== 0) {
+    console.error(`design-fence is not a submodule here (${at}), or its remote cannot be reached:\n${pulled.stderr.trim()}`);
+    return 1;
+  }
+  const to = run('git', ['-C', HOME, 'rev-parse', '--short', 'HEAD']).stdout.trim();
+  const config = loadConfig(root);
+  const installed = run(process.execPath, [path.join(HOME, 'install.mjs'), ...(config?.design ? ['--design'] : [])]);
+  process.stdout.write(installed.stdout);
+  if (installed.status !== 0) {
+    console.error(installed.stderr.trim());
+    return 1;
+  }
+  const changed = parseStatus(git(root, ['status', '--porcelain', '-z'])).filter(file => !before.has(file));
+  if (from === to && !changed.length) {
+    console.log(`design-fence is up to date (${to}).`);
+    return 0;
+  }
+  console.log(`\ndesign-fence ${from} → ${to}. To commit the update (it does not commit):`);
+  console.log(`  git add ${changed.join(' ')}`);
+  console.log(`  git commit -m "chore: design-fence ${to}" -m "Reflect: design-fence's files, as released"`);
+  console.log(`Then: node ${at}/bin/design-fence.mjs doctor`);
   return 0;
 }
 
@@ -339,8 +404,13 @@ function main(argv) {
       return commits(root, args);
     case 'rules':
       return rules(root);
+    case 'design':
     case 'specs':
-      return specs(root);
+      return design(root);
+    case 'doctor':
+      return checkUp(root, args);
+    case 'update':
+      return update(root);
     case 'spec': {
       const design = loadConfig(root)?.design;
       const spec = design && args[0] ? findSpec(root, design, args[0]) : null;

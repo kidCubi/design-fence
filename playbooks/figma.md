@@ -6,7 +6,7 @@ The project's `AGENTS.md` names the file (file key, pages), the tokens file and 
 
 ## Connect first, over the bridge only
 
-The server is figma-console, which `install.mjs --design` declares for Claude Code (`.mcp.json`), Codex (`.codex/config.toml`) and OpenCode (`opencode.json`); its Desktop Bridge needs no token. Not among the agent's tools: the human approves it (Claude Code asks at the start of a session; Codex once the project is trusted) and starts a new session.
+The server is figma-console, at the version design-fence was tried with, which `install.mjs --design` declares for Claude Code (`.mcp.json`), Codex (`.codex/config.toml`) and OpenCode (`opencode.json`); its Desktop Bridge needs no token. Not among the agent's tools: the human approves it (Claude Code asks at the start of a session; Codex once the project is trusted) and starts a new session.
 
 1. Call `figma_get_status` with `probe: true` before the first Figma call of the session, and again only when a call fails.
 2. Healthy: `setup.valid: true`, `transport.active: "websocket"`, the probe succeeds, and the connected file is the one `AGENTS.md` names. Check the file name before writing: several files may have the plugin open.

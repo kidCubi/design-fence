@@ -243,17 +243,43 @@ test('runInFigma says what failed: no bridge, another file, the script', async (
   await assert.rejects(runInFigma('x', {server: fakeServer({fail: true}), every: 10}), /failed in Figma: boom/);
 });
 
+test('runInFigma says so when the server answers in a shape it does not know (another version)', async () => {
+  const other = reply => [
+    process.execPath,
+    '-e',
+    `require('readline').createInterface({input: process.stdin}).on('line', line => {
+      const m = JSON.parse(line);
+      if (m.id == null) return;
+      if (m.method === 'initialize') return console.log(JSON.stringify({jsonrpc: '2.0', id: m.id, result: {}}));
+      const text = JSON.stringify((${reply})(m.params.name));
+      console.log(JSON.stringify({jsonrpc: '2.0', id: m.id, result: {content: [{type: 'text', text}]}}));
+    });`,
+  ];
+  await assert.rejects(runInFigma('x', {server: other('() => ({connection: {ok: true}, file: "Kit"})'), every: 10}), /answered figma_get_status without "setup" \(it has: connection, file\): its format changed\. design-fence works with figma-console-mcp@\d/);
+  const status = '{setup: {probeResult: {success: true}}, currentFileName: "Kit"}';
+  await assert.rejects(runInFigma('x', {server: other(`name => name === 'figma_get_status' ? ${status} : {ok: true, value: 1}`), every: 10}), /answered figma_execute without "success"/);
+});
+
 test('runInFigma fails at once when the server stops, with what it said', async () => {
   const dies = [process.execPath, '-e', "console.error('npm error network: request to registry failed'); process.exit(1)"];
   await assert.rejects(runInFigma('x', {server: dies}), /figma-console stopped \(exit 1\): npm error network/);
   await assert.rejects(runInFigma('x', {server: ['no-such-command-design-fence']}), /did not start/);
 });
 
-test('figmaServer: the variable, else the newest figma-console npx has fetched, else npx', async () => {
+test('figmaServer: the variable, else the pinned figma-console where npx has fetched it, else npx with that version', async () => {
   const {figmaServer} = await import('../lib/figma.mjs');
   const cache = fs.mkdtempSync(path.join((await import('node:os')).tmpdir(), 'npx-'));
-  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', 'figma-console-mcp@latest']);
-  for (const [dir, version] of [['a', '1.9.0'], ['b', '1.10.2']]) {
+  const {FIGMA_CONSOLE} = await import('../lib/fence.mjs');
+  const pinned = FIGMA_CONSOLE.split('@')[1];
+  assert.match(pinned, /^\d+\.\d+\.\d+$/, 'a version, never latest');
+  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', FIGMA_CONSOLE]);
+  for (const [dir, version] of [['a', '1.9.0'], ['c', '99.0.0']]) {
+    const pkg = path.join(cache, dir, 'node_modules/figma-console-mcp');
+    fs.mkdirSync(pkg, {recursive: true});
+    fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({version, bin: {'figma-console-mcp': './dist/local.js'}}));
+  }
+  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', FIGMA_CONSOLE], 'another version in the cache is not it');
+  for (const [dir, version] of [['b', pinned]]) {
     const pkg = path.join(cache, dir, 'node_modules/figma-console-mcp');
     fs.mkdirSync(pkg, {recursive: true});
     fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({version, bin: {'figma-console-mcp': './dist/local.js'}}));

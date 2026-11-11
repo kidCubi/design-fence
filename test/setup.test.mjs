@@ -100,7 +100,7 @@ test('npx design-fence, for an agent: the submodule, the project, the plugin in 
   assert.match(log, new RegExp(`claude plugin install design-fence --marketplace ${designFence()}`));
   assert.match(log, new RegExp(`codex plugin marketplace add ${designFence()}`));
   assert.match(log, /codex plugin add design-fence@design-fence/);
-  assert.match(log, /npx -y figma-console-mcp@latest --print-path/);
+  assert.match(log, /npx -y figma-console-mcp@\d+\.\d+\.\d+ --print-path/);
   assert.equal(
     fs.readFileSync(path.join(home, '.config/opencode/plugins/design-fence.js'), 'utf8'),
     fs.readFileSync(path.join(HOME, 'harness/opencode/design-fence.js'), 'utf8'),
@@ -182,4 +182,67 @@ test("install.mjs --agents: the project's tools, added to", () => {
   fs.writeFileSync(path.join(root, '.opencode/plugins/design-fence.js'), '');
   assert.deepEqual(agentsFor(root, {}), ['claude', 'codex', 'opencode'], 'no list, no --agents: all, as before');
   assert.deepEqual(agentsFor(root, {}, ['claude']), ['claude', 'opencode'], 'no list yet: added to the tools wired already');
+});
+
+const cli = (root, env, ...args) => {
+  const result = spawnSync(process.execPath, [path.join(root, '.agents/design-fence/bin/design-fence.mjs'), ...args], {cwd: root, env, encoding: 'utf8'});
+  return {status: result.status, output: `${result.stdout}${result.stderr}`};
+};
+
+test('design-fence doctor: all in place after the installer, and the fix for what is then undone', () => {
+  const root = repository();
+  const {env} = machine();
+  assert.equal(setup(root, env, '--yes', '--agents', 'claude,opencode').status, 0);
+  const fine = cli(root, env, 'doctor');
+  assert.equal(fine.status, 0, fine.output);
+  assert.match(fine.output, /ok {3}The git hooks are on[\s\S]*ok {3}Claude Code: the session hooks are in the project[\s\S]*ok {3}OpenCode: your own copy of the plugin is this version[\s\S]*note The design module is off[\s\S]*All in place\./);
+
+  execFileSync('git', ['-C', root, 'config', '--unset', 'core.hooksPath']);
+  fs.rmSync(path.join(root, '.claude/settings.json'));
+  const agents = path.join(root, 'AGENTS.md');
+  fs.writeFileSync(agents, fs.readFileSync(agents, 'utf8').replace('### design-fence\'s non-negotiables', '### The non-negotiables, as an earlier version wrote them'));
+  const off = cli(root, env, 'doctor');
+  assert.equal(off.status, 1);
+  assert.match(off.output, /OFF {2}The git hooks are off in this clone\n {7}→ node \.agents\/design-fence\/install\.mjs/);
+  assert.match(off.output, /OFF {2}AGENTS\.md's design-fence block is an earlier version's/);
+  assert.match(off.output, /OFF {2}Claude Code: the session hooks are not in the project/);
+  assert.match(off.output, /3 to put right\./);
+});
+
+test('design-fence doctor, with the design module: the check, the Figma server at its version, the bridge plugin', () => {
+  const root = repository();
+  const {env} = machine();
+  assert.equal(setup(root, env, '--yes', '--agents', 'claude', '--design').status, 0);
+  const fine = cli(root, env, 'doctor');
+  assert.match(fine.output, /ok {3}The design module's check is among the project's checks/);
+  assert.match(fine.output, /ok {3}Claude Code: Figma's server is figma-console-mcp@\d+\.\d+\.\d+\n/);
+  assert.match(fine.output, /ok {3}The Desktop Bridge plugin's files are on this machine/);
+  const mcp = path.join(root, '.mcp.json');
+  fs.writeFileSync(mcp, fs.readFileSync(mcp, 'utf8').replace(/figma-console-mcp@[\d.]+/, 'figma-console-mcp@latest'));
+  assert.match(cli(root, env, 'doctor').output, /OFF {2}Claude Code: Figma's server is figma-console-mcp@latest; design-fence works with figma-console-mcp@\d/);
+});
+
+test('design-fence update: the submodule to its newest commit, the installer again, and the commit to make', () => {
+  const root = repository();
+  const {env} = machine();
+  // Its own source, so that a commit can be added to it: a copy of the shared one.
+  const origin = path.join(temp('origin'), 'design-fence');
+  execFileSync('git', ['clone', '-q', designFence(), origin]);
+  const local = {...env, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'protocol.file.allow', GIT_CONFIG_VALUE_0: 'always'};
+  const first = spawnSync(process.execPath, [SETUP, '--source', origin, '--yes', '--agents', 'claude'], {cwd: root, env: local, encoding: 'utf8'});
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  execFileSync('git', ['-C', root, '-c', 'core.hooksPath=/dev/null', 'add', '-A']);
+  execFileSync('git', ['-C', root, '-c', 'core.hooksPath=/dev/null', 'commit', '-q', '-m', 'install'], {env: {...process.env, ...GIT_ENV}});
+  assert.match(cli(root, local, 'update').output, /design-fence is up to date/);
+
+  // A new version: a line more in the block of AGENTS.md.
+  const block = path.join(origin, 'templates/agents-block.md');
+  fs.writeFileSync(block, `${fs.readFileSync(block, 'utf8')}\nA line of the next version.\n`);
+  execFileSync('git', ['-C', origin, 'commit', '-qam', 'next'], {env: {...process.env, ...GIT_ENV}});
+  const updated = cli(root, local, 'update');
+  assert.equal(updated.status, 0, updated.output);
+  assert.match(updated.output, /design-fence \w+ → \w+\. To commit the update[\s\S]*git add [^\n]*\.agents\/design-fence[^\n]*AGENTS\.md|git add [^\n]*AGENTS\.md[^\n]*\.agents\/design-fence/);
+  assert.match(updated.output, /Reflect: design-fence's files, as released/);
+  assert.match(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), /A line of the next version\./);
+  assert.equal(execFileSync('git', ['-C', root, 'rev-list', '--count', 'HEAD'], {encoding: 'utf8'}).trim(), '1', 'not committed');
 });

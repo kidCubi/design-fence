@@ -4,7 +4,7 @@
  */
 
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
+import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -43,8 +43,13 @@ test('the copies: without design-fence its layer is gone and the project stays; 
   const status = execFileSync('git', ['-C', next, 'status', '--porcelain'], {encoding: 'utf8'});
   assert.match(status, /button\.css/, 'the change to review is left uncommitted');
   assert.equal(execFileSync('git', ['-C', next, 'rev-list', '--count', 'HEAD'], {encoding: 'utf8'}).trim(), '1');
-  // The fixture itself passes design-fence's own design check.
-  assert.match(execFileSync(process.execPath, [path.join(next, '.agents/design-fence/bin/design-fence.mjs'), 'specs'], {cwd: next, encoding: 'utf8'}), /./);
+  // The change to review breaks design-fence's own design check; the fixture without it passes.
+  const design = () => spawnSync(process.execPath, [path.join(next, '.agents/design-fence/bin/design-fence.mjs'), 'design'], {cwd: next, encoding: 'utf8'});
+  assert.equal(design().status, 1);
+  assert.match(design().stdout, /button\.css:\d+: 18px is written raw/);
+  assert.match(design().stdout, /button\.css:\d+: --mono-60 is not for components/);
+  execFileSync('git', ['-C', next, 'checkout', '-q', '--', '.']);
+  assert.equal(design().status, 0, design().stdout);
 });
 
 test('the scores: a fixed outline passes, the untouched one fails', async () => {

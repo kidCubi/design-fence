@@ -9,12 +9,14 @@
 import {spawn} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 
+import {FIGMA_CONSOLE} from '../lib/fence.mjs';
+
 const args = process.argv.slice(2);
 const opt = name => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
 const code = opt('-e') ?? readFileSync(args[0], 'utf8');
 const key = opt('--key');
 
-const server = spawn('npx', ['-y', 'figma-console-mcp@latest'], {stdio: ['pipe', 'pipe', 'ignore'], env: process.env});
+const server = spawn('npx', ['-y', FIGMA_CONSOLE], {stdio: ['pipe', 'pipe', 'ignore'], env: process.env});
 const pending = new Map();
 let id = 0;
 let buffer = '';

@@ -89,7 +89,8 @@ for (const [task, byArm] of Object.entries(tasks).sort()) {
   const pairs = [...names.filter(arm => arm !== 'without' && arms.without).map(arm => [arm, 'without']), ...(arms.next && arms.with ? [['next', 'with']] : [])];
   summary.tasks[task] = {arms, differences: {}};
   lines.push(`## ${task}`, '');
-  lines.push(`| Median (least to most) | ${names.map(arm => `${LABEL[arm]}, ${arms[arm].counted} of ${arms[arm].runs} runs`).join(' | ')} | ${pairs.map(([a, b]) => `${a} against ${b}`).join(' | ')} |`);
+  const row = cells => `| ${cells.join(' | ')} |`;
+  lines.push(row(['Median (least to most)', ...names.map(arm => `${LABEL[arm]}, ${arms[arm].counted} of ${arms[arm].runs} runs`), ...pairs.map(([a, b]) => `${a} against ${b}`)]));
   lines.push(`|${' --- |'.repeat(1 + names.length + pairs.length)}`);
   for (const [key, label, , show] of MEASURES) {
     if (!names.some(arm => arms[arm].measures[key]?.max > 0)) continue;
@@ -102,9 +103,9 @@ for (const [task, byArm] of Object.entries(tasks).sort()) {
       (summary.tasks[task].differences[`${a}/${b}`] ??= {})[key] = diff;
       return percent(diff);
     });
-    lines.push(`| ${label} | ${cells.join(' | ')} | ${diffs.join(' | ')} |`);
+    lines.push(row([label, ...cells, ...diffs]));
   }
-  lines.push(`| Score (checks passed) | ${names.map(arm => `${arms[arm].score.passed} of ${arms[arm].score.of}`).join(' | ')} |${' |'.repeat(pairs.length)}`, '');
+  lines.push(row(['Score (checks passed)', ...names.map(arm => `${arms[arm].score.passed} of ${arms[arm].score.of}`), ...pairs.map(() => '')]), '');
   const checkNames = [...new Set(names.flatMap(arm => Object.keys(arms[arm].score.checks)))];
   lines.push(`| Check (runs that pass) | ${names.map(arm => LABEL[arm]).join(' | ')} |`, `|${' --- |'.repeat(1 + names.length)}`);
   for (const name of checkNames) {

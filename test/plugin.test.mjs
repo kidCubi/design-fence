@@ -41,12 +41,12 @@ function cachedPlugin() {
   return path.join(dir, 'hook.mjs');
 }
 
-/** Runs the plugin's hook on a tool call; `claude`: as Claude Code runs it (CLAUDE_PROJECT_DIR set, no turn_id). */
+/** Runs the plugin's hook on a tool call; `claude`: as Claude Code runs it (CLAUDE_PROJECT_DIR set, its permission mode, no turn_id). */
 function run(hook, cwd, event, payload, claude = true) {
   return spawnSync(process.execPath, [hook, event], {
     cwd,
     env: {...process.env, CLAUDE_PROJECT_DIR: claude ? cwd : ''},
-    input: JSON.stringify({cwd, ...(claude ? {} : {turn_id: 't'}), ...payload}),
+    input: JSON.stringify({cwd, ...(claude ? {permission_mode: 'default'} : {turn_id: 't'}), ...payload}),
     encoding: 'utf8',
   });
 }

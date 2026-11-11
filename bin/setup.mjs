@@ -38,7 +38,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 import {AGENTS, listFlag} from '../install.mjs';
-import {CONVENTION, designFenceHome, hooksState, readText, relativeTo} from '../lib/fence.mjs';
+import {CONVENTION, FIGMA_CONSOLE, designFenceHome, hooksState, readText, relativeTo} from '../lib/fence.mjs';
 import {git, parseStatus, projectRoot} from '../lib/git.mjs';
 import {and, bold, choose, confirm, cyan, dim, green, red, yellow} from '../lib/prompt.mjs';
 
@@ -200,7 +200,7 @@ function figmaBridge() {
   if (!onPath('npx')) {
     return null;
   }
-  const result = run('npx', ['-y', 'figma-console-mcp@latest', '--print-path'], {timeout: 300_000});
+  const result = run('npx', ['-y', FIGMA_CONSOLE, '--print-path'], {timeout: 300_000});
   const manifest = result.out.split('\n').find(line => line.trim().endsWith('manifest.json'))?.trim();
   return result.ok && manifest && fs.existsSync(manifest) ? manifest : null;
 }
@@ -374,7 +374,7 @@ export async function main(argv = process.argv.slice(2)) {
     if (manifest) {
       ok(`Figma's Desktop Bridge plugin is ready: ${tilde(manifest)}`);
     } else {
-      warn("Figma's Desktop Bridge plugin is not ready yet: it will be once your agent starts figma-console (npx -y figma-console-mcp@latest --print-path says where).");
+      warn("Figma's Desktop Bridge plugin is not ready yet: it will be once your agent starts figma-console (npx -y " + FIGMA_CONSOLE + " --print-path says where).");
     }
   }
 
@@ -402,7 +402,7 @@ export async function main(argv = process.argv.slice(2)) {
     } else {
       left.push(
         'In your other agent: if it does not read AGENTS.md, add one line to its own instructions file: "Read AGENTS.md first."' +
-          (design ? ' Add the MCP server figma-console to its settings (command: npx -y figma-console-mcp@latest).' : ''),
+          (design ? ' Add the MCP server figma-console to its settings (command: npx -y ' + FIGMA_CONSOLE + ').' : ''),
       );
     }
   }
@@ -416,6 +416,7 @@ export async function main(argv = process.argv.slice(2)) {
     );
   }
   left.push(`Each teammate, in their clone: ${COMMAND} (it checks design-fence out, turns its git hooks on, and installs the plugin in their tools).`);
+  left.push(`If something does not work: node ${relativeTo(root, home)}/bin/design-fence.mjs doctor (it says what is off, and the fix).`);
   left.push(`Then ask your agent: "Read ${relativeTo(root, home)}/playbooks/start.md and tell me the first step it suggests."`);
 
   say(bold('Left for you:'));

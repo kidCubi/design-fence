@@ -18,7 +18,7 @@ Nothing in it belongs to one tool. The rules are Markdown any agent reads (`AGEN
 | `playbooks/figma.md` | Working in Figma through the figma-console Desktop Bridge; `figma-more.md`: fixing a connection, images, capturing HTML |
 | `lib/route.mjs` | `design-fence route "<request>"`: which playbook a request needs and the project's files it touches, from the repository's own names, without a model; the agent tools' prompt hook gives it to the agent. It says when it is unsure (`bench/routing*.jsonl` measure it) |
 | `hooks/` | The git hooks: `pre-commit` (the checks), `commit-msg` (the `Reflect:` line), `pre-push` (both, on what is pushed) |
-| `bin/design-fence.mjs` | `check`, `commits`, `rules`, `specs` (the design specs against Storybook), `hash` (a file's FNV-1a, against Figma's), `figma` (the scripts of `figma/` through the Desktop Bridge, their text out of the agent's context), and `hook` for the git hooks |
+| `bin/design-fence.mjs` | `check`, `commits`, `rules`, `doctor`, `update`, `route`, `design` (the design module's check: specs against Storybook, the index, `flows.yml`, raw values, the tokens file), `spec` (one spec's facts), `hash` (a file's FNV-1a, against Figma's), `figma` (the scripts of `figma/` through the Desktop Bridge, their text out of the agent's context), and `hook` for the git hooks |
 | `figma/lint-gaps.js` | Design module: the Figma lint `figma_lint_design` does not make (unbound spacing, radius, stroke; default names; invisible borders; stale paints; descriptions; properties against the spec), run through the bridge |
 | `figma/tokens.js` | Design module: Figma's variables as the project's tokens file (W3C design tokens or CSS), or only its hash, run through the bridge |
 | `figma/sources.js` | Design module: what a Figma file's design system is made of (local components, library components in use with their keys, variables), for `design/index.md`, run once through the bridge |
@@ -94,10 +94,12 @@ For a project designed in Figma and built from a Storybook component library: sp
 node .agents/design-fence/install.mjs --design
 ```
 
-It adds `"design": {"dir": "design"}` to `.agents/validate.json` (rewriting it as two-space JSON) and the templates `design/PHILOSOPHY.md`, `tokens.md`, `index.md` and `flows.yml` the project does not have. It declares Figma's server, figma-console, for each agent tool: `.mcp.json` (Claude Code), `.codex/config.toml` (Codex), `opencode.json` (OpenCode), unless the file declares it already. Over its Desktop Bridge it needs no token, so nothing personal goes into the repository; each person approves the server once (Claude Code asks; Codex, once the project is trusted). A `figma-console` of your own in your user settings, with a token, keeps working beside it. Codex's sandbox keeps the network off, which `design-fence figma` needs: turn it on for yourself (`playbooks/figma.md`), not in the project. Then follow `playbooks/start.md`: the foundation for a new project, the adoption for an existing one. Once the project has Storybook, name its index and the library's folder in the section (`"storybookIndex": "storybook-static/index.json", "library": "./src/components/"`) and add `design-fence specs` to the checks:
+It adds `"design": {"dir": "design"}` to `.agents/validate.json` (rewriting it as two-space JSON) and the templates `design/PHILOSOPHY.md`, `tokens.md`, `index.md` and `flows.yml` the project does not have. It declares Figma's server, figma-console, for each agent tool: `.mcp.json` (Claude Code), `.codex/config.toml` (Codex), `opencode.json` (OpenCode), unless the file declares it already. Over its Desktop Bridge it needs no token, so nothing personal goes into the repository; each person approves the server once (Claude Code asks; Codex, once the project is trusted). A `figma-console` of your own in your user settings, with a token, keeps working beside it. Codex's sandbox keeps the network off, which `design-fence figma` needs: turn it on for yourself (`playbooks/figma.md`), not in the project. Then follow `playbooks/start.md`: the foundation for a new project, the adoption for an existing one. It also adds the check `design-fence design` to the project's checks (specs against Storybook, the index, `flows.yml`, raw values in the library's CSS, the tokens file as exported: `ENFORCEMENT.md` says what each holds and what it cannot see). Once the project has Storybook and a tokens file, name them in the section, with the Figma file's key and the tokens components must not bind (`private`), so the check and the Figma commands need nothing else:
 
   ```json
-  {"name": "design specs", "when": ["design/components/**", "**/*.stories.*"], "run": "node .agents/design-fence/bin/design-fence.mjs specs"}
+  "design": {"dir": "design", "storybookIndex": "storybook-static/index.json", "library": "./src/components/",
+             "fileKey": "<the Figma file's key>",
+             "tokens": {"file": "src/tokens.css", "format": "css", "px": ["space/", "radius/"], "private": ["--mono-*"]}}
   ```
 
 What happens in Figma stays advisory: see the ledger.
@@ -160,13 +162,20 @@ explain each step in one plain sentence, and ask me before anything you can't un
 ## Update
 
 ```sh
-git submodule update --remote .agents/design-fence
-node .agents/design-fence/install.mjs
-git add .agents AGENTS.md .claude/skills .claude/settings.json .codex .opencode/plugins $(for f in CLAUDE.md .mcp.json opencode.json; do test -f $f && echo $f; done)
-git commit -m "chore: design-fence <version>" -m "Reflect: design-fence's files, as released"
+node .agents/design-fence/bin/design-fence.mjs update
 ```
 
-The installer refreshes design-fence's block in `AGENTS.md`, the agent hooks and OpenCode's plugin, and adds the skills of new playbooks; `git add` takes the new links, which `commit -a` would leave out.
+It brings the submodule to its newest version, runs that version's installer (which refreshes design-fence's block in `AGENTS.md`, the agent hooks, OpenCode's plugin, the Figma server's version, and adds the skills of new playbooks), and prints the commit to make; it does not commit. By hand: `git submodule update --remote .agents/design-fence`, then `node .agents/design-fence/install.mjs`, then commit what changed, with a `Reflect:` line.
+
+## When something does not work
+
+```sh
+node .agents/design-fence/bin/design-fence.mjs doctor
+```
+
+It says what is in place and, for each thing that is not, the command or the step that puts it right: the git hooks in this clone, the installer's files against this version, the session hooks for the project's tools, the design module's check, the Figma server's version in each tool's settings, the Desktop Bridge plugin on this machine. `--bridge` also asks Figma's bridge for an answer. It changes nothing.
+
+**One version of Figma's server.** design-fence declares figma-console at the version it was tried with (`FIGMA_CONSOLE` in `lib/fence.mjs`), not `@latest`: the package changes several times a week, and design-fence reads its answers. A design-fence release moves it; `design-fence update` then brings the project's declarations along. A declaration of your own, with a token, is left as it is.
 
 Changes to how to work anywhere go here, as a change to this repository; what is specific to one project goes into that project's `AGENTS.md`.
 
