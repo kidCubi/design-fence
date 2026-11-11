@@ -1,0 +1,26 @@
+{
+  "node": 20,
+  "base": "main",
+  "checks": [
+    {
+      "name": "format",
+      "when": ["src/components/**/*.{js,css}", "tools/**/*.mjs", "test/**/*.mjs", "src/*.stories.js"],
+      "run": "npx --yes prettier@3.3.3 --check {files}"
+    },
+    {
+      "name": "tests",
+      "when": ["tools/**", "test/**"],
+      "run": "node --test test/*.test.mjs"
+    },
+    {
+      "name": "design specs",
+      "when": ["design/components/**", "src/**/*.stories.*"],
+      "run": "node .agents/design-fence/bin/design-fence.mjs specs"
+    }
+  ],
+  "design": {
+    "dir": "design",
+    "storybookIndex": "storybook-static/index.json",
+    "library": "./src/components/"
+  }
+}

@@ -1,0 +1,74 @@
+/* A Section's head (design/components/section.md, "Layout"): its title, and beside it its lead, or over it under
+   1024px; its text. Shared with the footer's "Get started", laid out as a Section's (footer.md, "Start"). Tokens only. */
+/* Desktop (from 1024px): the title in its column, the lead beside it, its first line on the title's. */
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-32);
+}
+
+.title {
+  flex: none;
+  /* The title's column: no token holds it (design/issues.md, "Sizes without tokens"). */
+  width: 304px;
+  margin: 0;
+  color: var(--text-default);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-display);
+}
+
+.lead {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-top: var(--space-4);
+}
+
+.lead,
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  color: var(--text-muted);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-text);
+  line-height: var(--line-height-body);
+}
+
+/* Its text: paragraphs and lists spaced by the column's gap, a list indented by space/6. */
+::slotted(p),
+::slotted(ul),
+::slotted(ol) {
+  margin: 0;
+}
+
+::slotted(ul),
+::slotted(ol) {
+  padding-left: var(--space-6);
+}
+
+/* Until its head is a quarter of the way up, with motion allowed: the title and text wait to come in. */
+:host([data-pending]) .title,
+:host([data-pending]) .lead,
+:host([data-pending]) .content {
+  opacity: 0;
+}
+
+/* Tablet (768px to under 1024px, the tablet-landscape breakpoint: a media query cannot read a token), and Mobile:
+   the title over its lead. */
+@media (max-width: 1023px) {
+  .head {
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .title {
+    width: auto;
+  }
+
+  .lead {
+    align-self: stretch;
+    padding-top: 0;
+  }
+}

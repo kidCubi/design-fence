@@ -1,0 +1,64 @@
+/* Button (design/components/button.md): tokens only. Its frame is an inset shadow, as Figma's inside stroke
+   takes no room. */
+:host {
+  display: inline-flex;
+  /* Its font's own line height, as in Figma, wherever it is placed (a section's text sets the body's). */
+  line-height: normal;
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-6);
+  border: none;
+  border-radius: var(--radius-none);
+  background: none;
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-frame);
+  color: var(--text-default);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-text);
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.control:hover {
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-focus);
+}
+
+.control:focus-visible {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-focus);
+}
+
+.control:active {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-frame);
+}
+
+/* Secondary: no frame at rest (the same size: the frame takes no room); on hover, line/frame; focus and pressed
+   as the Primary's. */
+:host([secondary]) .control {
+  box-shadow: none;
+}
+
+:host([secondary]) .control:hover {
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-frame);
+}
+
+:host([secondary]) .control:focus-visible {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-focus);
+}
+
+:host([secondary]) .control:active {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 var(--line-width-hairline) var(--line-frame);
+}
+
+.status[hidden],
+.label[hidden] {
+  display: none;
+}

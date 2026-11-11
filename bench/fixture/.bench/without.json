@@ -1,0 +1,10 @@
+{
+  "about": "What the copy without design-fence keeps of design/ (the project's own files, not design-fence's layer), and where. Everything else under design/, .agents/ and .github/ goes.",
+  "keep": {"design/content/landing.md": "content/landing.md", "design/issues.md": "issues.md"},
+  "replace": [
+    {"file": "tools/outline.mjs", "from": "design/content/landing.md", "to": "content/landing.md"},
+    {"file": "content/landing.md", "from": " The words of `flows.yml`'s view `landing`, top to bottom, written to `PHILOSOPHY.md`: designers first", "to": " Designers first"},
+    {"file": "issues.md", "from": "design/content/landing.md", "to": "content/landing.md"},
+    {"file": "index.html", "from": "design/content/landing.md (approved 2026-11-09). The view: design/flows.yml, landing.", "to": "content/landing.md (approved 2026-11-09)."}
+  ]
+}

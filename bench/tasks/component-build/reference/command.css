@@ -1,0 +1,49 @@
+/* Command (design/components/command.md): tokens only. */
+:host {
+  display: block;
+  /* Its font's own line height, as in Figma, wherever it is placed (a section's text sets the body's). */
+  line-height: normal;
+}
+
+.command {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  border: var(--line-width-hairline) solid var(--line-frame);
+  border-radius: var(--radius-none);
+}
+
+pre {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-text);
+}
+
+code {
+  font: inherit;
+}
+
+df-button[hidden] {
+  display: none;
+}
+
+/* Mobile (under 768px, the tablet-portrait breakpoint: a media query cannot read a token): the button under
+   the text. */
+@media (max-width: 767px) {
+  .command {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  pre {
+    align-self: stretch;
+  }
+}

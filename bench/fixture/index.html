@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>design-fence</title>
+    <meta name="description" content="A design system safeguard for your agents." />
+    <link rel="stylesheet" href="/src/page.css" />
+    <script type="module" src="/src/page.js"></script>
+  </head>
+  <body>
+    <!-- The words: design/content/landing.md (approved 2026-11-09). The view: design/flows.yml, landing. -->
+    <df-top-bar href="https://github.com/kidCubi/design-fence/blob/main/PROCESS.md">Read the process</df-top-bar>
+
+    <main>
+      <df-section heading="Creative freedom" statement>
+        <p slot="lead">Stay creative without giving up consistency.</p>
+      </df-section>
+
+      <df-section heading="One source for every decision">
+        <p slot="lead">Your design decisions live on the canvas.</p>
+        <p slot="lead">
+          Changes travel one way: spec, Figma, Storybook, code. When something changes, it changes at its source first,
+          so nothing drifts.
+        </p>
+      </df-section>
+
+      <df-section heading="How it works">
+        <p slot="lead">
+          LLM and framework agnostic: design-fence gives you web components to work with your own stack.
+        </p>
+        <div>
+          <df-link href="https://github.com/kidCubi/design-fence/blob/main/PROCESS.md">Read the whole process</df-link>
+        </div>
+      </df-section>
+
+      <df-section heading="Enforced or advice" statement>
+        <p slot="lead">
+          design-fence checks what matters at every commit.<br class="wide" />
+          The rest is your call.
+        </p>
+      </df-section>
+
+      <df-section heading="Any agent, any model">
+        <p slot="lead">
+          Agent agnostic. Everything lives in your favourite code editor. You’ll only need a Figma account.
+        </p>
+      </df-section>
+    </main>
+  </body>
+</html>

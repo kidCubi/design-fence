@@ -1,0 +1,37 @@
+{
+  "about": "List prices in USD per million tokens, standard tier, for the models the bench has run. measure.mjs prices each run's tokens with them, the same way for every agent. Check them on the day of a round and update the date.",
+  "checked": "2026-11-10",
+  "models": {
+    "claude-opus-5-5": {
+      "input": 4,
+      "cachedInput": 0.2,
+      "cacheWrite5m": 5,
+      "cacheWrite1h": 8,
+      "output": 20,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing (cache writes 1.25x and 2x input); matches Claude Code's own costUSD to the cent"
+    },
+    "claude-sonnet-5-5": {
+      "input": 2,
+      "cachedInput": 0.1,
+      "cacheWrite5m": 2.5,
+      "cacheWrite1h": 4,
+      "output": 10,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing (cache writes 1.25x and 2x input)"
+    },
+    "claude-haiku-5-5": {
+      "input": 0.1,
+      "cachedInput": 0.01,
+      "cacheWrite5m": 0.125,
+      "cacheWrite1h": 0.2,
+      "output": 0.5,
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing (prompts up to 100k tokens; cache reads 0.1x, writes 1.25x and 2x input). Claude Code uses it for small side tasks."
+    },
+    "gpt-6.1-sol": {
+      "input": 2,
+      "cachedInput": 0.1,
+      "cacheWrite": 2.5,
+      "output": 10,
+      "source": "https://developers.openai.com/api/docs/pricing (standard; over 272k input tokens in a request: 4, 0.2, 5 and 15, which Codex's log cannot show per request)"
+    }
+  }
+}

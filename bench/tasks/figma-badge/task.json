@@ -1,0 +1,8 @@
+{
+  "title": "Design a new component in Figma, up to the designer's approval",
+  "figma": true,
+  "page": "Bench {{run}}",
+  "minutes": 25,
+  "budget": 5,
+  "prompt": "Design a new component for this page, in Figma: a Badge, a short label of one or two words (for example \"Enforced\" or \"Advice\") shown beside a heading, for the section \"Enforced or advice\". The Figma file is \"Design fence landing\" (file key {{key}}). Put everything you make on a new page named \"Bench {{run}}\" and change nothing else in the file. Build it from the file's existing variables and components, so it belongs with the rest of the page. Stop when it is ready for the designer's approval: end with one screenshot of it and a short note of what you decided. Do not build it in code. Work on your own to the end: do not ask questions, and do not commit."
+}

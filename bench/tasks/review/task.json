@@ -1,0 +1,7 @@
+{
+  "title": "Review a change someone else made, before it is committed",
+  "figma": false,
+  "minutes": 15,
+  "budget": 3,
+  "prompt": "A colleague changed the Button and left the change uncommitted. Review it before it is committed: tell me whether it can be committed as it is, and list what must change, most important first. Do not fix anything, and do not commit."
+}

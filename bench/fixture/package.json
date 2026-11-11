@@ -1,0 +1,25 @@
+{
+  "name": "fence-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "10.6.6",
+    "@storybook/addon-docs": "10.6.6",
+    "@storybook/web-components-vite": "10.6.6",
+    "storybook": "10.6.6",
+    "vite": "8.3.6"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/public-sans": "5.3.0",
+    "animejs": "4.5.0"
+  }
+}

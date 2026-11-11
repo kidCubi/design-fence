@@ -1,0 +1,39 @@
+/* Top bar (design/components/top-bar.md): tokens only. */
+:host {
+  display: block;
+  /* Fixed above the page (the hero 0, the sections 1, the fencer 2): no layer token yet, design/issues.md. */
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 3;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-4) var(--space-16);
+  border-bottom: var(--line-width-hairline) solid var(--line-raster);
+  background: var(--surface-page);
+}
+
+.wordmark {
+  white-space: nowrap;
+  color: var(--text-default);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-display);
+}
+
+/* The link's label on one line too: white-space inherits into its shadow root. */
+df-link {
+  white-space: nowrap;
+}
+
+/* Mobile (under 768px, the tablet-portrait breakpoint: a media query cannot read a token). */
+@media (max-width: 767px) {
+  header {
+    padding: var(--space-4) var(--space-6);
+  }
+}

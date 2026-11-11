@@ -1,0 +1,65 @@
+/* Section (design/components/section.md): tokens only. Its head's rules: head.css. */
+/* A slide: above the hero, which stays behind the page (no layer token yet: design/issues.md); it sticks when its
+   top reaches the screen's top, or, taller than the screen, at its end (--stick, set by the element); the next
+   section, later in the page, slides over it. */
+:host {
+  display: block;
+  position: sticky;
+  top: var(--stick, 0px);
+  z-index: 1;
+}
+
+section {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-24) var(--space-16);
+  border-top: var(--line-width-hairline) solid var(--line-raster);
+  background: var(--surface-page);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  max-width: var(--size-column);
+}
+
+/* Wide: the content shows only when the section has some. */
+.content[hidden] {
+  display: none;
+}
+
+/* A statement: full-screen (at least the screen's height: a device's, no token), no title shown, the lead alone,
+   centred in it and set as a title is, in the body text's colour. */
+:host([statement]) section {
+  align-items: center;
+  min-height: 100svh;
+}
+
+:host([statement]) .title {
+  display: none;
+}
+
+:host([statement]) .lead {
+  padding-top: 0;
+  text-align: center;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-display);
+  line-height: normal;
+}
+
+/* Mobile (under 768px, the tablet-portrait breakpoint): narrower padding; a statement in h3. */
+@media (max-width: 767px) {
+  section {
+    padding: var(--space-24) var(--space-6);
+  }
+
+  :host([statement]) .lead {
+    font-size: var(--font-size-h3);
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Fix an issue that changes nothing users see, to the point of committing",
+  "figma": false,
+  "minutes": 15,
+  "budget": 3,
+  "prompt": "Fix the open issue \"The outline keeps the copy's markers\" (the project's issues file). Work on your own to the end: do not ask questions. Do not commit: when it is ready to commit, stop and tell me what you changed and what you ran."
+}

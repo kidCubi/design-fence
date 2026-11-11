@@ -1,0 +1,21 @@
+/* The landing page (design/flows.yml, view `landing`): tokens only. Everything else is its components'. */
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-default);
+  font-family: var(--font-family);
+}
+
+/* A word as typed, inside a sentence. */
+code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small);
+}
+
+/* A line break written for the Desktop layout only (the designer's, in Figma's desktop frame): from 1024px, the
+   tablet-landscape breakpoint (a media query cannot read a token). */
+@media (max-width: 1023px) {
+  br.wide {
+    display: none;
+  }
+}

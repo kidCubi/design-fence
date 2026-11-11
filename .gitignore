@@ -1,2 +1,8 @@
 node_modules
 .DS_Store
+# The measure (bench/README.md): its runs stay out; a round's summary is committed.
+bench/results/*/*/
+bench/results/*/*.jsonl
+bench/fixture/node_modules/
+bench/fixture/package-lock.json
+bench/fixture/storybook-static/

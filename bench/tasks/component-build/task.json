@@ -1,0 +1,7 @@
+{
+  "title": "Build a component in the library from its design, approved in Figma",
+  "figma": true,
+  "minutes": 25,
+  "budget": 5,
+  "prompt": "The Command component's design is approved in Figma: node 4:568 in the file \"Design fence landing\" (file key {{key}}). Build it in the component library, as the element df-command (a command or a program's output in the monospace font, with an optional copy button), with its stories in Storybook. Change nothing in Figma. Work on your own to the end: do not ask questions, and do not commit. When it is ready to commit, stop and tell me what you built and what you checked."
+}
