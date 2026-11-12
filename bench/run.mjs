@@ -18,6 +18,9 @@
  *   --runs <n>             runs per arm (default 3)
  *   --round <name>         the results folder under bench/results (default: agent-model)
  *   --base <ref>           design-fence for the arm `with` (default origin/main)
+ *   --hooks on|off         Codex: whether the copy's own hooks run, as in a project its people trusted (default on)
+ *   --resume               `all` keeps the round's runs that count and makes the others (after a stop: `all` stops
+ *                          by itself when the agent's plan reaches its usage limit)
  *   --key <file key>       your copy of the Figma file, for the tasks that need Figma (or FILE_KEY)
  *
  * Arms: `without` (the project without design-fence's layer: bench/fixture/.bench), `with` (design-fence as
@@ -52,6 +55,7 @@ const EFFORT = option('effort', '');
 const RUNS = Number(option('runs', 3));
 const BASE = option('base', 'origin/main');
 const KEY = option('key', process.env.FILE_KEY ?? '');
+const HOOKS = option('hooks', 'on') !== 'off';
 const ROUND = option('round', `${AGENT}-${MODEL || 'default'}`);
 const OUT = path.join(BENCH, 'results', ROUND);
 
@@ -92,7 +96,7 @@ function snapshot() {
   walk(SNAPSHOT);
   const head = sh('git', ['-C', HOME, 'rev-parse', '--short', 'HEAD']).trim();
   const dirty = sh('git', ['-C', HOME, 'status', '--porcelain', '--', '.', ':!bench', ':!test']).trim().split('\n').filter(Boolean).length;
-  fs.writeFileSync(path.join(OUT, 'tree.json'), JSON.stringify({next: {head, uncommittedFiles: dirty, id: hash.digest('hex').slice(0, 12)}, with: {ref: BASE, commit: sh('git', ['-C', HOME, 'rev-parse', '--short', BASE]).trim()}, at: new Date().toISOString()}, null, 1));
+  fs.writeFileSync(path.join(OUT, 'tree.json'), JSON.stringify({next: {head, uncommittedFiles: dirty, id: hash.digest('hex').slice(0, 12)}, with: {ref: BASE, commit: sh('git', ['-C', HOME, 'rev-parse', '--short', BASE]).trim()}, at: new Date().toISOString(), ...(AGENT === 'codex' ? {codexHooks: HOOKS} : {})}, null, 1));
 }
 
 /** design-fence's files into `target`: as released at `ref`, or as the working tree has them (what git would commit). */
@@ -216,6 +220,12 @@ function agentRun(t, dir, log, run) {
   } else {
     const args = ['exec', '--json', '--sandbox', 'workspace-write', '-c', 'sandbox_workspace_write.network_access=true',
       '-c', `sandbox_workspace_write.writable_roots=${JSON.stringify(codexCaches())}`,
+      // Codex runs a project's hooks once a person reviewed each of them; a copy is new every run. With --hooks on,
+      // the run takes the copy's hooks as reviewed: they are design-fence's, from the round's own copy of it (the copy
+      // without design-fence has none). The project itself, `exec` trusts as it starts in a sandbox it can write in
+      // (tried on 0.167: a hook that logs and gives a word ran on the first run of a new folder, and the agent said
+      // the word; without the flag, or in a read-only sandbox, neither).
+      ...(HOOKS ? ['--dangerously-bypass-hook-trust'] : []),
       ...codexServers().filter(name => !(t.figma && name === 'figma-console')).flatMap(name => ['-c', `mcp_servers.${/^[\w-]+$/.test(name) ? name : JSON.stringify(name)}.enabled=false`]),
       ...(t.figma
         ? ['-c', 'mcp_servers.figma-console.default_tools_approval_mode="approve"', '-c', 'mcp_servers.figma-console.command="node"',
@@ -227,7 +237,7 @@ function agentRun(t, dir, log, run) {
     const config = fs.existsSync(`${process.env.HOME}/.codex/config.toml`) ? fs.readFileSync(`${process.env.HOME}/.codex/config.toml`, 'utf8').split(/^\[/m)[0] : '';
     const top = key => config.match(new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, 'm'))?.[1];
     fs.writeFileSync(`${log}.meta.json`, JSON.stringify({
-      model: MODEL || top('model'), effort: EFFORT || top('model_reasoning_effort'),
+      model: MODEL || top('model'), effort: EFFORT || top('model_reasoning_effort'), hooks: HOOKS,
       agentVersion: sh('codex', ['--version']).trim(), seconds: Math.round((Date.now() - started) / 1000),
     }));
   }
@@ -349,8 +359,25 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     }
     fs.mkdirSync(OUT, {recursive: true});
     if (arms.includes('next')) snapshot();
-    for (const t of chosen()) for (let n = 1; n <= RUNS; n++) for (const arm of arms) await one(t, arm, n);
-    spawnSync(process.execPath, [path.join(BENCH, 'summary.mjs'), OUT], {stdio: 'inherit'});
+    const summary = () => spawnSync(process.execPath, [path.join(BENCH, 'summary.mjs'), OUT], {stdio: 'inherit'});
+    const resume = argv.includes('--resume');
+    for (const t of chosen()) {
+      for (let n = 1; n <= RUNS; n++) {
+        for (const arm of arms) {
+          const log = path.join(OUT, t.name, `${arm}-${n}`);
+          // --resume: a run that counts is kept; one that did not finish is run again.
+          if (resume && fs.existsSync(`${log}.json`) && JSON.parse(fs.readFileSync(`${log}.json`, 'utf8')).ok) continue;
+          const result = await one(t, arm, n);
+          // The plan the agent runs on is spent: every run after this one would fail the same way, in seconds.
+          const limit = result.ok ? null : /[^"\\]*usage limit[^"\\]*/i.exec(fs.readFileSync(`${log}.jsonl`, 'utf8'));
+          if (limit) {
+            summary();
+            fail(`Stopped at ${t.name} ${arm}-${n}: "${limit[0].trim()}" The same command with --resume goes on from this run.`);
+          }
+        }
+      }
+    }
+    summary();
   } else if (command === 'rescore') {
     // After a change to a score.mjs: the scores again, from what each run left. No agent runs, no number is measured again.
     for (const t of tasks()) {

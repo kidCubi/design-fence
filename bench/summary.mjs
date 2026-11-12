@@ -85,6 +85,7 @@ summary.tree = tree;
 const lines = [`# ${summary.round}: ${summary.model ?? '?'} (${summary.agent === 'codex' ? 'Codex' : 'Claude Code'} ${summary.agentVersion ?? ''})`, ''];
 if (tree) {
   lines.push(`design-fence, "this tree": ${tree.next.head}${tree.next.uncommittedFiles ? ` with ${tree.next.uncommittedFiles} uncommitted file(s)` : ''} (snapshot ${tree.next.id}, ${tree.at.slice(0, 10)}); "released": ${tree.with.ref} (${tree.with.commit}).`, '');
+  if ('codexHooks' in tree) lines.push(tree.codexHooks ? "Codex ran each copy as a trusted project: design-fence's session hooks on." : "Codex ran each copy untrusted: design-fence's session hooks did not run.", '');
 }
 const percent = diff => (diff ? `${diff.percent > 0 ? '+' : diff.percent < 0 ? '−' : ''}${Math.abs(diff.percent)}%${diff.shown ? '' : ' (not shown)'}` : '—');
 

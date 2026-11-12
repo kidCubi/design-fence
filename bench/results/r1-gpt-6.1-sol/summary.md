@@ -2,6 +2,8 @@
 
 design-fence, "this tree": e3cc04d with 10 uncommitted file(s) (snapshot 0821eadf0bf2, 2026-11-11); "released": origin/main (9579683).
 
+Codex ran each copy untrusted: design-fence's session hooks did not run.
+
 ## component-build
 
 | Median (least to most) | Without, 5 of 5 runs | With design-fence (this tree), 5 of 5 runs | next against without |
@@ -100,14 +102,14 @@ design-fence, "this tree": e3cc04d with 10 uncommitted file(s) (snapshot 0821ead
 | Tokens not from cache | 21k (20k to 26k) | 35k (33k to 37k) | +64% (not shown) |
 | Tool calls | 14 (11 to 18) | 21 (19 to 22) | +46% (not shown) |
 | Seconds | 64 (64 to 68) | 138 (134 to 141) | +115% (not shown) |
-| Score (checks passed) | 18 of 18 | 10 of 12 |  |
+| Score (checks passed) | 18 of 18 | 12 of 12 |  |
 
 | Check (runs that pass) | Without | With design-fence (this tree) |
 | --- | --- | --- |
 | the issue is fixed (its own test) | 3 of 3 | 2 of 2 |
 | the project's tests pass | 3 of 3 | 2 of 2 |
 | a test covers the fix | 3 of 3 | 2 of 2 |
-| nothing else changed | 3 of 3 | 0 of 2 |
+| nothing else changed | 3 of 3 | 2 of 2 |
 | not committed | 3 of 3 | 2 of 2 |
 | the report names what ran | 3 of 3 | 2 of 2 |
 

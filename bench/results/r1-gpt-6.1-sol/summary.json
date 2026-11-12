@@ -844,9 +844,9 @@
       }
      },
      "score": {
-      "passed": 10,
+      "passed": 12,
       "of": 12,
-      "share": 0.8333333333333334,
+      "share": 1,
       "checks": {
        "the issue is fixed (its own test)": {
         "passed": 2,
@@ -861,7 +861,7 @@
         "of": 2
        },
        "nothing else changed": {
-        "passed": 0,
+        "passed": 2,
         "of": 2
        },
        "not committed": {
@@ -912,6 +912,7 @@
    "ref": "origin/main",
    "commit": "9579683"
   },
-  "at": "2026-11-11T23:58:54.501Z"
+  "at": "2026-11-11T23:58:54.501Z",
+  "codexHooks": false
  }
 }

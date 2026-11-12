@@ -23,6 +23,8 @@ test('raw values: colours, lengths and times outside var(), not zero, not commen
   assert.deepEqual(rawValues(['  padding: 10px 18px;', '  color: #ff5a36;', '  transition: transform 200ms ease-out;']), ['10px', '18px', '#ff5a36', '200ms']);
   assert.deepEqual(rawValues(['  padding: var(--space-3) var(--space-6);', '  margin: 0;', '  inset: 0px;', '  /* 12px in Figma */', '  border: var(--line-width-hairline) solid var(--line-frame);']), []);
   assert.deepEqual(rawValues(['  background: rgb(20, 20, 20);', '  gap: 1.5rem;']), ['rgb(20, 20, 20)', '1.5rem']);
+  // A comment over several lines names values on a line that reads like code; a unit given to a bare number is none.
+  assert.deepEqual(rawValues(['/* The size of the Command', '   here (the Desktop variant is 52px tall: the hairlines, the padding). */', '  transition: color calc(var(--duration-fast) * 1ms) ease-out;', '  width: 304px;']), ['304px']);
   assert.deepEqual(addedLines('+++ b/src/a.css\n+a: 1px;\n-b\n+++ b/x.js\n+c'), {'src/a.css': ['a: 1px;'], 'x.js': ['c']});
 });
 
@@ -82,4 +84,32 @@ test('the summary: medians, and a difference is shown only when three runs or mo
   assert.equal(tasks.task.differences['next/without'].seconds.shown, false, 'the runs overlap');
   assert.deepEqual(tasks.task.arms.next.score.checks.a, {passed: 3, of: 3});
   assert.match(fs.readFileSync(path.join(dir, 'summary.md'), 'utf8'), /\(not shown\)/);
+});
+
+test('the report: rounds side by side, the runs that hold, and only the differences that are shown', () => {
+  const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'design-fence-report-')));
+  const round = (name, model, runs) => {
+    const dir = path.join(home, name);
+    fs.mkdirSync(path.join(dir, 'figma-badge'), {recursive: true});
+    for (const [arm, n, cost, checks, ok = true] of runs) {
+      fs.writeFileSync(path.join(dir, 'figma-badge', `${arm}-${n}.json`), JSON.stringify({task: 'figma-badge', arm, n, ok, agent: 'claude', model, cost, total: cost * 1e6, fresh: 1000, tools: {Bash: 2}, seconds: 60, score: {passed: checks.filter(Boolean).length, of: checks.length, checks: ['every value bound to a variable', 'one screenshot at most', 'a draft spec is left'].slice(0, checks.length).map((check, i) => ({name: check, pass: checks[i]}))}}));
+    }
+    execFileSync(process.execPath, [path.join(BENCH, 'summary.mjs'), dir, '--quiet']);
+    return dir;
+  };
+  // Without: its design holds twice of three, and it never keeps to design-fence's own rule, which is not held against it.
+  const a = round('a', 'model-a', [['without', 1, 1.0, [true, false]], ['without', 2, 1.2, [false, false]], ['without', 3, 1.1, [true, false]], ['next', 1, 0.8, [true, true, true]], ['next', 2, 0.9, [true, true, true]], ['next', 3, 0.7, [true, true, true]]]);
+  // A run that did not finish does not count, and two runs an arm show nothing.
+  const b = round('b', 'model-b', [['without', 1, 1.0, [true, false]], ['without', 2, 1.0, [true, false]], ['next', 1, 0.5, [true, true, true]], ['next', 2, 0.5, [true, true, true]], ['next', 3, 0, [false, false, false], false]]);
+  const out = path.join(home, 'report');
+  execFileSync(process.execPath, [path.join(BENCH, 'report.mjs'), a, b, '--out', out]);
+  const report = JSON.parse(fs.readFileSync(`${out}.json`, 'utf8'));
+  assert.deepEqual(report.rounds.map(r => r.model), ['model-a', 'model-b']);
+  assert.deepEqual(report.rounds[0].tasks['figma-badge'].holds, {without: {held: 2, of: 3}, with: {held: 3, of: 3}});
+  assert.deepEqual(report.rounds[1].tasks['figma-badge'].holds, {without: {held: 2, of: 2}, with: {held: 2, of: 2}});
+  assert.deepEqual(report.shown.map(item => [item.model, item.measure, item.percent]), [['model-a', 'Cost', -27], ['model-a', 'Tokens', -27]]);
+  const text = fs.readFileSync(`${out}.md`, 'utf8');
+  assert.match(text, /\| figma-badge \| 2 of 3 → 3 of 3 \| 2 of 2 → 2 of 2 \|/);
+  assert.match(text, /\$1\.10 → \$0\.80 \(−27%\*\) \| \$1\.00 → \$0\.50 \(−50%\) \|/);
+  assert.match(text, /one screenshot at most \(design-fence's own rule\) \| 0 of 3 → 3 of 3/);
 });

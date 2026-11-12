@@ -2,6 +2,8 @@
 
 design-fence, "this tree": e3cc04d with 10 uncommitted file(s) (snapshot 0821eadf0bf2, 2026-11-11); "released": origin/main (9579683).
 
+Codex ran each copy untrusted: design-fence's session hooks did not run.
+
 ## component-build
 
 | Median (least to most) | Without, 5 of 5 runs | With design-fence (this tree), 5 of 5 runs | next against without |

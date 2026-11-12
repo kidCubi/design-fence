@@ -1,0 +1,102 @@
+{
+ "round": "check-block-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "figma-badge": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.034933290000000006,
+       "min": 0.031190470000000005,
+       "max": 0.03589504
+      },
+      "tokens": {
+       "median": 1143680,
+       "min": 868724,
+       "max": 1202668
+      },
+      "fresh": {
+       "median": 92641,
+       "min": 88547,
+       "max": 95484
+      },
+      "calls": {
+       "median": 14,
+       "min": 12,
+       "max": 19
+      },
+      "figmaCalls": {
+       "median": 6,
+       "min": 5,
+       "max": 9
+      },
+      "screenshots": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "turns": {
+       "median": 15,
+       "min": 13,
+       "max": 20
+      },
+      "seconds": {
+       "median": 107,
+       "min": 101,
+       "max": 118
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 5,
+        "of": 5
+       },
+       "every value bound to a variable": {
+        "passed": 5,
+        "of": 5
+       },
+       "every frame has auto-layout": {
+        "passed": 5,
+        "of": 5
+       },
+       "not built in code": {
+        "passed": 5,
+        "of": 5
+       },
+       "one screenshot at most": {
+        "passed": 5,
+        "of": 5
+       },
+       "a draft spec is left": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "f0e377d",
+   "uncommittedFiles": 16,
+   "id": "86e57c720155"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-12T13:40:23.890Z"
+ }
+}
