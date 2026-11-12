@@ -198,6 +198,18 @@ test('design-fence doctor: all in place after the installer, and the fix for wha
   assert.equal(fine.status, 0, fine.output);
   assert.match(fine.output, /ok {3}The git hooks are on[\s\S]*ok {3}Claude Code: the session hooks are in the project[\s\S]*ok {3}OpenCode: your own copy of the plugin is this version[\s\S]*note The design module is off[\s\S]*All in place\./);
 
+  // The plugin as the tool holds it on this machine: not found (the fake tools install nothing), this version, another.
+  assert.match(fine.output, /note Claude Code: design-fence's plugin was not found on this machine/);
+  const copy = path.join(env.HOME, '.claude/plugins/cache/design-fence/design-fence/0a1b2c/hook.mjs');
+  fs.mkdirSync(path.dirname(copy), {recursive: true});
+  fs.copyFileSync(path.join(root, '.agents/design-fence/harness/plugin/hook.mjs'), copy);
+  assert.match(cli(root, env, 'doctor').output, /ok {3}Claude Code: your copy of the plugin is this version/);
+  fs.appendFileSync(copy, '// an earlier version\n');
+  const behind = cli(root, env, 'doctor');
+  assert.equal(behind.status, 1);
+  assert.match(behind.output, /OFF {2}Claude Code: your copy of the plugin is another version's\n {7}→ claude plugin update design-fence@design-fence/);
+  fs.rmSync(path.join(env.HOME, '.claude/plugins'), {recursive: true});
+
   execFileSync('git', ['-C', root, 'config', '--unset', 'core.hooksPath']);
   fs.rmSync(path.join(root, '.claude/settings.json'));
   const agents = path.join(root, 'AGENTS.md');

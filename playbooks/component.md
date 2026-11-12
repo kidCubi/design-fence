@@ -33,17 +33,18 @@ The code's tokens come from the tokens file `design.md` writes (step 5), through
 
 ## 4. Stories
 
-- One story per variant and state the spec lists, with the args Figma's properties have, under the title the library's stories take.
+- Under the title the library's stories take, with the args Figma's properties have: a first story for the defaults (`Default`), then one for each other value the spec's "Properties" lists, named with that value (`Secondary`, `Secondary focus`, `Mobile`); for a property that is on or off, with the property's name (`Wide`). `design-fence design` holds a built component to it. None for a pointer's states (hover, pressed), which a story cannot hold still, nor for a row of the table that says "no story", and why.
 - Each story links its Figma node when the project's Storybook shows designs (`@storybook/addon-designs`, from the spec's `figma`); the spec's `story` field is the stories' title (`Components/Text area`).
 - A component with motion gets a "Tune" story: a control for each of its settings (attributes that default to the spec's values), so the human tunes it where it runs, and the values they settle on go back into the spec.
 - A running Storybook dev server can index a story file while it is still being written and keep the failed parse ("Unable to index files") after it is whole: write each story file in one step, and restart the dev server after adding stories.
 
 ## 5. Check
 
-1. Against the Figma read of step 1, by values: the story's computed sizes, spacing, colours and type against each part's layout and bound variables. Not by eye. Best as a script the project keeps (each story's computed styles against the tokens file, in a headless browser, as its `visual` command): it found bugs a screenshot did not, and it runs again for every later change.
-2. Motion, when the spec has some: run it in Storybook, check what can be measured (it starts, it ends where the spec says, nothing moves with reduced motion), and bring it to the human: its gate is here, not in Figma.
-3. The visual regression of **all** stories (the project's `visual` command): a change in another component's story is a break, unless that component's spec says it changes.
-4. The project's checks (`design-fence check`), `design-fence design` among them.
+1. `design-fence figma bound --spec <name> --out`: the tokens the design is bound to against those the code reads. It names what differs, and records them: `design-fence design` then holds the code to that record.
+2. By values, not by eye: the story's computed sizes, spacing, colours and type against the Figma read of step 1. Best as a script the project keeps (each story's computed styles against the tokens file, in a headless browser, as its `visual` command): it runs again for every later change.
+3. Motion, when the spec has some: run it in Storybook, check what can be measured (it starts, it ends where the spec says, nothing moves with reduced motion), and bring it to the human: its gate is here, not in Figma.
+4. The visual regression of **all** stories (the project's `visual` command): a change in another component's story is a break, unless that component's spec says it changes.
+5. The project's checks (`design-fence check`), `design-fence design` among them.
 
 ## 6. Record
 

@@ -1,0 +1,19 @@
+{
+  "component": "Top bar",
+  "figma": "4:536",
+  "tokens": [
+    "font-size/h3",
+    "font/family-display",
+    "font/weight-display",
+    "line-width/hairline",
+    "line/raster",
+    "space/16",
+    "space/4",
+    "space/6",
+    "surface/page",
+    "text/default"
+  ],
+  "instances": [
+    "Link"
+  ]
+}

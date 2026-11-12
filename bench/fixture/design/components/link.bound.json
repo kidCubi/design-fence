@@ -1,0 +1,15 @@
+{
+  "component": "Link",
+  "figma": "2:184",
+  "tokens": [
+    "font-size/body",
+    "font/family",
+    "font/weight-text",
+    "line-width/hairline",
+    "line/focus",
+    "line/frame",
+    "space/1",
+    "text/default"
+  ],
+  "instances": []
+}

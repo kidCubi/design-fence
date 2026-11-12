@@ -113,7 +113,7 @@ export function agentsBlock(relative, design, home = HOME) {
     `| A request or an issue, to the default branch | ${at('ship')} |`,
     ...(design
       ? [
-          `| Anything users see (a component, a view, a token, a change to any of them) | ${at('design')}, then ${at('component')}; ${at('flows')} first when a view, a route or a path is new or moves. ${at('start')} instead while \`design/index.md\` lists nothing yet, or when the way is unclear |`,
+          `| Anything users see (a component, a view, a token, a change to any of them) | ${at('design')} up to the human's approval of the design; ${at('component')} only then, to build what they approved. ${at('flows')} first when a view, a route or a path is new or moves. ${at('start')} instead while \`design/index.md\` lists nothing yet, or when the way is unclear |`,
           `| Any Figma read or write | ${at('figma')}, "Connect" first |`,
         ]
       : []),

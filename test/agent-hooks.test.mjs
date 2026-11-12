@@ -315,6 +315,13 @@ test("the tokens file is the export's: an edit by hand needs the human's word, t
   assert.deepEqual(pre('Bash', {command: 'node .agents/design-fence/bin/design-fence.mjs figma tokens --out'}), {});
   assert.deepEqual(pre('Bash', {command: 'node .agents/design-fence/bin/design-fence.mjs figma tokens --format css --out src/tokens.css'}), {});
   assert.deepEqual(pre('Edit', {file_path: path.join(root, 'src/page.css'), old_string: 'a', new_string: 'b'}), {});
+  // The record of what a design is bound to is the command's to write: the code follows the design, not the record the code.
+  const record = path.join(root, 'design/components/button.bound.json');
+  fs.writeFileSync(record, '{"tokens": ["space/3"]}');
+  assert.match(pre('Edit', {file_path: record, old_string: 'space/3', new_string: 'space/4'}).ask, /button\.bound\.json, which `design-fence figma bound --spec button --out` writes from the design in Figma/);
+  assert.match(pre('Bash', {command: "sed -i '' 's/space\\/3/space\\/4/' design/components/button.bound.json"}).ask, /writes from the design in Figma/);
+  assert.deepEqual(pre('Bash', {command: 'node .agents/design-fence/bin/design-fence.mjs figma bound --spec button --out'}), {});
+  assert.deepEqual(pre('Bash', {command: 'cat design/components/button.bound.json'}), {}, 'reading is free');
 });
 
 test("GitHub Copilot running Claude Code's hooks (its payloads, as recorded with harness/probe.mjs on 1.0.109): refused with the reason, in the form it shows its agent", () => {

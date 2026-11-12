@@ -18,6 +18,9 @@
  *     design-fence figma lint-gaps <node id> [--properties <name,…>]   figma/*.js through the Desktop Bridge,
  *     design-fence figma sources                                       so their text stays out of the agent's
  *     design-fence figma tokens [--format dtcg|css] [--px <prefix,…>] [--ms <prefix,…>] [--hash-only] [--out <file>]
+ *     design-fence figma bound <node id> | --spec <component> [--out]  the tokens a component's design is bound to;
+ *                      with --spec, against its code (exit 1 when they differ), and with --out, recorded beside
+ *                      the spec for `design-fence design` to hold the code to
  *                      (each takes --key <file key>: refuse to run on another file. From validate.json's `design`,
  *                      when it has them: the key (`fileKey`), the tokens' format, prefixes and file (`tokens`;
  *                      `--out` alone writes there); `lint-gaps --spec <component>` takes the node and the
@@ -45,7 +48,7 @@ import {route, routeText} from '../lib/route.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
 import {spawnSync} from 'node:child_process';
 
-import {checkDesign, fnv1a, lockFile} from '../lib/design-check.mjs';
+import {boundAgainstCode, boundFile, checkDesign, cssName, fnv1a, lockFile} from '../lib/design-check.mjs';
 import {doctor, doctorText} from '../lib/doctor.mjs';
 import {parseStatus} from '../lib/git.mjs';
 import {findSpec} from '../lib/specs.mjs';
@@ -214,8 +217,38 @@ async function figmaScript(root, [name, ...argv]) {
     options.properties ??= spec.properties.join(',');
     parsed.args[0] ??= spec.figma;
   }
+  // `bound --spec <component>`: its node from the spec, its record beside the spec (`--out`), its code compared.
+  const boundSpec = name === 'bound' && typeof options.spec === 'string' ? findSpec(root, design, options.spec) : null;
+  if (name === 'bound' && typeof options.spec === 'string') {
+    if (!boundSpec) throw new Error(`No spec "${options.spec}" in ${design.dir ?? 'design'}/components.`);
+    parsed.args[0] ??= boundSpec.figma;
+  }
   const {file, result} = await runInFigma(scriptCode(name, parsed), {fileKey: typeof options.key === 'string' ? options.key : undefined});
   const out = parsed.options.out;
+  if (name === 'bound') {
+    if (!Array.isArray(result?.tokens)) {
+      console.log(JSON.stringify({file, ...result}));
+      return 1;
+    }
+    const said = {file, ...result};
+    if (boundSpec && out) {
+      const record = boundFile(boundSpec);
+      fs.writeFileSync(path.join(root, record), `${JSON.stringify({component: boundSpec.name, figma: result.node, tokens: result.tokens, instances: result.instances}, null, 2)}\n`);
+      said.written = record;
+    }
+    let differs = false;
+    if (boundSpec) {
+      // The design's tokens against the component's code, where it is built: the look, by its tokens.
+      const groups = [...new Set(result.tokens.map(token => `${cssName(token.split('/')[0])}-`))];
+      const {files, missing, extra} = boundAgainstCode(root, design, boundSpec, result.tokens, groups);
+      if (files.length) {
+        said.code = {files, notRead: missing.map(found => found.token), notInTheDesign: extra.map(found => `${found.file}:${found.line} ${found.name}`)};
+        differs = missing.length + extra.length > 0;
+      }
+    }
+    console.log(JSON.stringify(said));
+    return differs ? 1 : 0;
+  }
   if (name === 'tokens' && typeof out === 'string' && typeof result?.text === 'string') {
     fs.writeFileSync(path.resolve(process.cwd(), out), result.text);
     // What was exported, for `design-fence design` to hold the file to (lib/design-check.mjs).

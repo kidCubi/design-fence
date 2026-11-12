@@ -22,7 +22,7 @@ const PLAYBOOKS = {
   'foundation.md': 2000,
   'adopt.md': 2900,
   'design.md': 10300,
-  'component.md': 6400,
+  'component.md': 6900, // 6400 until two rules became checks: the design's tokens against the code's, and how stories are named
   'flows.md': 2200,
   'figma.md': 8100,
   'figma-more.md': 2400,
@@ -45,7 +45,7 @@ test('what every session loads: the block of AGENTS.md', () => {
 
 test('what a request reads before its first step', () => {
   const upFront = {design: ['design.md', 'figma.md'], ship: ['ship.md'], reflect: ['reflect.md'], component: ['component.md', 'figma.md'], flows: ['flows.md', 'design.md', 'figma.md']};
-  const ceilings = {design: 18400, ship: 5600, reflect: 7100, component: 14500, flows: 20600};
+  const ceilings = {design: 18400, ship: 5600, reflect: 7100, component: 15000, flows: 20600};
   for (const [way, files] of Object.entries(upFront)) {
     const total = files.reduce((sum, name) => sum + size(name), 0);
     assert.ok(total <= ceilings[way], `${way}: ${total} bytes, ceiling ${ceilings[way]}`);

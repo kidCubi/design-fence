@@ -198,7 +198,15 @@ function agentHooksState(root) {
  * - with Storybook's index (`design.storybookIndex`, an `index.json` from a
  *   build or the dev server): a built or as-is spec's title has stories, and,
  *   when `design.library` says where the library's stories live, each of
- *   their titles has a spec.
+ *   their titles has a spec;
+ * - a built spec's stories show what its "Properties" table lists: for each
+ *   property with a list of values (two or more, its default one of them), a
+ *   story for each value but the default, named with that value ("Secondary",
+ *   "Secondary focus"); for one that is on or off, with the property's own
+ *   name ("Wide"). The defaults together are the first story's. Not asked: a
+ *   pointer's states (hover, pressed, active), which a story cannot hold
+ *   still, and a row that says "no story", with its reason. The convention is
+ *   the one the project design-fence was drawn from already followed.
  *
  * validate.json:
  *
@@ -221,7 +229,58 @@ function frontMatter(text) {
   return fields;
 }
 
-/** The specs of `design/components/`: `{file, name, status, figma, figma_version, approved_by, story}`. */
+/** A table's rows under a `## <heading>`, as cells; the first is the header. */
+function table(text, heading) {
+  const lines = text.split('\n');
+  const start = lines.findIndex(line => new RegExp(`^##\\s+${heading}\\b`, 'i').test(line));
+  if (start < 0) {
+    return [];
+  }
+  const end = lines.findIndex((line, i) => i > start && /^##\s/.test(line));
+  const rows = lines.slice(start + 1, end < 0 ? undefined : end).filter(line => line.trim().startsWith('|')).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+  return rows.filter((row, i) => i !== 1);
+}
+
+/** States a pointer makes, which a story cannot hold still. */
+const POINTER = ['hover', 'pressed', 'active'];
+const SWITCHES = [['on', 'off'], ['true', 'false'], ['yes', 'no']];
+const bare = cell => (cell ?? '').replace(/\(.*?\)/g, '').replace(/`/g, '').trim();
+
+/**
+ * What a spec's stories are to show, from its "Properties" table:
+ * `[{property, value, phrase}]`, `phrase` being what a story's name must
+ * have. A property counts when its Values list two or more and its Default
+ * is one of them (so "text, one or more lines" is no list); the default
+ * needs no story, nor a pointer's state, nor a row that says "no story".
+ */
+function storiesToShow(text) {
+  const [header, ...rows] = table(text, 'Properties');
+  const column = name => (header ?? []).findIndex(cell => new RegExp(`^${name}$`, 'i').test(cell));
+  const [property, values, fallback] = [column('Property'), column('Values'), column('Default')];
+  if (property < 0 || values < 0 || fallback < 0) {
+    return [];
+  }
+  const shows = [];
+  for (const row of rows) {
+    const listed = (row[values] ?? '').split(',').map(bare).filter(Boolean);
+    const usual = bare(row[fallback]).toLowerCase();
+    if (listed.length < 2 || !listed.some(value => value.toLowerCase() === usual) || row.some(cell => /\bno story\b/i.test(cell))) {
+      continue;
+    }
+    const lower = listed.map(value => value.toLowerCase());
+    const onOff = SWITCHES.some(pair => lower.length === 2 && pair.every(word => lower.includes(word)));
+    for (const value of listed.filter(v => v.toLowerCase() !== usual && !POINTER.includes(v.toLowerCase()))) {
+      shows.push({property: bare(row[property]), value, phrase: onOff ? bare(row[property]) : value});
+    }
+  }
+  return shows;
+}
+
+/** Whether a story's name has `phrase` as whole words, whatever the case and the punctuation ("Copy, phone"). */
+const words = text => ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()} `;
+const named = (name, phrase) => words(name ?? '').includes(words(phrase));
+
+/** The specs of `design/components/`: `{file, name, status, figma, figma_version, approved_by, story, shows}`. */
 function readSpecs(root, design = {}) {
   const dir = path.join(root, design.dir ?? 'design', 'components');
   if (!fs.existsSync(dir)) {
@@ -233,7 +292,8 @@ function readSpecs(root, design = {}) {
     .sort()
     .map(name => {
       const file = path.relative(root, path.join(dir, name)).split(path.sep).join('/');
-      return {file, ...frontMatter(fs.readFileSync(path.join(dir, name), 'utf8'))};
+      const text = fs.readFileSync(path.join(dir, name), 'utf8');
+      return {file, ...frontMatter(text), shows: storiesToShow(text)};
     });
 }
 
@@ -242,18 +302,12 @@ function readSpecs(root, design = {}) {
  * row), for the lint to compare with the component's own (`figma/lint-gaps.js`).
  */
 function specProperties(text) {
-  const lines = text.split('\n');
-  const start = lines.findIndex(line => /^##\s+Properties\b/i.test(line));
-  if (start < 0) {
-    return [];
-  }
-  const end = lines.findIndex((line, i) => i > start && /^##\s/.test(line));
-  const rows = lines.slice(start + 1, end < 0 ? undefined : end).filter(line => line.trim().startsWith('|')).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
-  const column = (rows[0] ?? []).findIndex(cell => /^figma$/i.test(cell));
+  const [header, ...rows] = table(text, 'Properties');
+  const column = (header ?? []).findIndex(cell => /^figma$/i.test(cell));
   if (column < 0) {
     return [];
   }
-  return rows.slice(2).map(row => /`([^`]+)`/.exec(row[column] ?? '')?.[1]).filter(Boolean);
+  return rows.map(row => /`([^`]+)`/.exec(row[column] ?? '')?.[1]).filter(Boolean);
 }
 
 /** The spec of a component, by its name or its file's: `readSpecs`' entry with its `properties`; null when none. */
@@ -263,7 +317,7 @@ function findSpec(root, design, name) {
   return spec ? {...spec, properties: specProperties(fs.readFileSync(path.join(root, spec.file), 'utf8'))} : null;
 }
 
-/** The stories of Storybook's index.json, as `{title, importPath}`; null when there is no index. */
+/** The stories of Storybook's index.json, as `{title, name, importPath}`; null when there is no index. */
 function readStories(root, design = {}) {
   const file = design.storybookIndex && path.join(root, design.storybookIndex);
   if (!file || !fs.existsSync(file)) {
@@ -272,7 +326,7 @@ function readStories(root, design = {}) {
   const index = JSON.parse(fs.readFileSync(file, 'utf8'));
   return Object.values(index.entries ?? index.stories ?? {})
     .filter(entry => (entry.type ?? 'story') === 'story')
-    .map(entry => ({title: entry.title, importPath: entry.importPath ?? ''}));
+    .map(entry => ({title: entry.title, name: entry.name ?? '', importPath: entry.importPath ?? ''}));
 }
 
 /** What breaks the rules above, as sentences; empty when the specs hold. */
@@ -295,8 +349,15 @@ function checkSpecs(specs, stories, design = {}) {
       problems.push(`${where} built, but no story (its Storybook title).`);
     }
     if (stories && spec.story && (spec.status === 'built' || spec.status === 'as-is')) {
-      if (!stories.some(story => story.title === spec.story)) {
+      const own = stories.filter(story => story.title === spec.story);
+      if (!own.length) {
         problems.push(`${where} no story titled "${spec.story}" in Storybook's index.`);
+      }
+      // What its "Properties" list, shown: a component adopted as it is (as-is) is not asked.
+      for (const {property, value, phrase} of own.length && spec.status === 'built' ? (spec.shows ?? []) : []) {
+        if (!own.some(story => named(story.name, phrase))) {
+          problems.push(`${where} no story of "${spec.story}" shows ${property}: ${value} (a story whose name has "${phrase}"). Its "Properties" list it: a story for each value but the default, or "no story" and why in its row.`);
+        }
       }
     }
   }
@@ -352,6 +413,9 @@ const MODES = [
 const VIEW = '(?:views?|pages?|screens?|routes?|flows?|modals?|dialogs?|vues?|ecrans?|parcours)';
 const FLOW_NEW = new RegExp(`\\b(?:new|add|create|another|need|needs|nouvelle|nouveau|nouvel|ajoute|cree)\\s+(?:[\\p{L}\\p{N}-]+\\s+){0,2}${VIEW}\\b`, 'iu');
 const FLOW_MOVES = new RegExp(`\\b(?:move|split|rename|merge|deplace|renomme)\\b.*\\b${VIEW}\\b`, 'iu');
+// A page of the Figma file, where a design is put ("on a new page named …"), is no view of the product. Only in a
+// request that speaks of Figma: "add a new page named Pricing" alone is a view.
+const FIGMA_PAGE = /\b(?:(?:a|an|the|its own)\s+)?(?:(?:new|separate|fresh)\s+)?(?:(?:figma|canvas)\s+page\b|pages?\s+(?:named|called|nommee|appelee)\s+(?:"[^"]*"|'[^']*'|\S+))/giu;
 // Work on what users do not see, said by its own words: a tool, a test, a dependency.
 const CODE = /\b(?:tools?|scripts?|tests?|ci|dependenc(?:y|ies)|deps|crash(?:es)?|flag|env(?:ironment)?|cli|lint|prettier|refactor|bug|readme|docs?|document|module|parser|function|types?|typescript|changelog|workflow|actions?|version|warning|cache)\b|[\w/.-]+\.(?:mjs|cjs|js|ts|json|ya?ml|sh)\b/i;
 const VISIBLE = any([
@@ -397,6 +461,8 @@ function designOf(root, config) {
     // The tokens' names as the tokens file has them (`--line-frame`: "line-frame", and "line/frame" in a request).
     tokenNames: tokens ? [...new Set([...read(path.join(root, tokens)).matchAll(/--([a-z][\w-]*-[\w-]+)\s*:/g)].map(match => match[1]))] : [],
     library,
+    // The Figma file's name, as the index gives it: its words are no component's and no view's ("Design fence landing").
+    fileName: /Figma file:\s*"([^"]+)"/.exec(index)?.[1] ?? /Figma file:\s*"([^"]+)"/.exec(agents)?.[1] ?? '',
     // A design exists somewhere: a Figma file named, a library, stories.
     exists: /file key\s*`?\w{10,}/i.test(agents) || Boolean(design.fileKey) || (library && fs.existsSync(path.join(root, library))),
   };
@@ -433,11 +499,14 @@ function route(root, request, config) {
     return out('ship', ['ship.md'], `"${mode}"`);
   }
 
-  // The project's own names in the request: components (their specs), views, the tokens file.
-  const named = design.specs.filter(spec => any([escape(plain(spec.name)), `df-${slug(spec.name)}`, escape(slug(spec.name))]).test(text));
-  const views = design.views.filter(id => any([escape(id)]).test(text));
-  const tokens = design.tokenNames.filter(name => any([escape(name), escape(name.replace('-', '/'))]).test(text));
-  const flow = (FLOW_NEW.test(text) || FLOW_MOVES.test(text)) && !CODE.test(text);
+  // The project's own names in the request: components (their specs), views, the tokens file. A request written
+  // as a paragraph names things in passing: the Figma file by its name, a page of it to work on.
+  const own = design.fileName ? text.replace(new RegExp(escape(plain(design.fileName)), 'giu'), ' ') : text;
+  const named = design.specs.filter(spec => any([escape(plain(spec.name)), `df-${slug(spec.name)}`, escape(slug(spec.name))]).test(own));
+  const views = design.views.filter(id => any([escape(id)]).test(own));
+  const tokens = design.tokenNames.filter(name => any([escape(name), escape(name.replace('-', '/'))]).test(own));
+  const places = FIGMA.test(text) ? own.replace(FIGMA_PAGE, ' ') : own;
+  const flow = (FLOW_NEW.test(places) || FLOW_MOVES.test(places)) && !CODE.test(text);
   const code = CODE.test(text);
   const said = VISIBLE.test(text);
   // Sure it is something users see: the project's own name for it with no sign of other work, a token, Figma, a
@@ -464,10 +533,12 @@ function route(root, request, config) {
   }
   const state = named.map(spec => `${spec.name}: ${spec.status}`).join(', ');
 
-  // An approved design waiting to be built: straight to the library.
+  // An approved design waiting to be built: straight to the library. A component already built may be named with it
+  // (the Button a Command places): sure when the request says the design is approved, a guess otherwise.
   const waiting = named.filter(spec => spec.status === 'approved' && !spec.story);
-  if (waiting.length && waiting.length === named.length && TO_CODE.test(text) && !/^(?:re)?design\b/i.test(text)) {
-    return out('component', ['component.md'], `${state}: approved, to build`, {read: files});
+  if (waiting.length && TO_CODE.test(text) && !/^(?:re)?design\b/i.test(text)) {
+    const alone = waiting.length === named.length;
+    return out('component', ['component.md'], `${waiting.map(spec => spec.name).join(', ')}: approved, to build`, {read: files, sure: alone || /\bapproved\b/i.test(text)});
   }
   if (flow) {
     return out('flows', ['flows.md', 'design.md'], 'a view, a route or a path is new or moves', {read: files});
@@ -480,11 +551,14 @@ function routeText(result, home = '.agents/design-fence') {
   if (result.way === 'none') {
     return '';
   }
-  const at = name => `${home}/playbooks/${name}`;
+  // design-fence's own repository is its own home: no folder before its files.
+  const at = name => `${home ? `${home}/` : ''}playbooks/${name}`;
   const [first, ...then] = result.playbooks;
   const lines = [`design-fence route: ${result.way}${result.mode && result.mode !== 'full' ? ` (${result.mode})` : ''}: ${result.why}.`, `Read ${at(first)} before the first step${then.length ? `, then ${then.map(at).join(', ')}` : ''}.`];
   if (result.read.length) {
-    lines.push(`In the project, read only: ${result.read.join(', ')}.`);
+    // Not "read only", which also reads as "do not write": the runs given that line by a hook wrote nothing in the
+    // project and left their draft spec in Figma (three of three, GPT 6.1 Sol; the cause is not proven).
+    lines.push(`The project's files it touches, to read before the rest: ${result.read.join(', ')}.`);
   }
   if (['design', 'flows', 'component'].includes(result.way)) {
     lines.push(`Before any Figma call: ${at('figma.md')}, "Connect". Before committing code: ${at('reflect.md')}.`);
@@ -495,7 +569,9 @@ function routeText(result, home = '.agents/design-fence') {
     lines.push(
       result.way === 'ship'
         ? `Unsure from the words alone: if it changes anything users see, it is ${at('design.md')} first.`
-        : `Unsure from the words alone: if nothing users see changes, it is ${at('ship.md')} instead.`,
+        : result.way === 'component'
+          ? `Unsure from the words alone: if a design is to change too (a component already built is named), it is ${at('design.md')} first.`
+          : `Unsure from the words alone: if nothing users see changes, it is ${at('ship.md')} instead.`,
     );
   }
   return lines.join('\n');
@@ -552,7 +628,7 @@ const SCREENSHOT = /(?:^|[_.:-])(?:figma_take_screenshot|figma_capture_screensho
 const EXECUTE = /(?:^|[_.:-])(?:figma_execute|use_figma)$/;
 
 /** design-fence's Figma scripts, by the function each one defines, and the command that runs it. */
-const SCRIPTS = {lintGaps: 'lint-gaps', tokens: 'tokens', sources: 'sources'};
+const SCRIPTS = {lintGaps: 'lint-gaps', tokens: 'tokens', sources: 'sources', bound: 'bound'};
 const SCRIPT_START = new RegExp(`\\basync function (${Object.keys(SCRIPTS).join('|')})\\s*\\(`);
 
 /** Git's commands whose short `-n` is `--no-verify`. */
@@ -746,7 +822,19 @@ function designFiles(root) {
     return [];
   }
   const why = `which the tokens export writes: a token's value changes in Figma, then \`design-fence figma tokens --out\` writes it`;
-  return [{file: design.tokens.file, why}, {file: `${design.dir ?? 'design'}/tokens.lock`, why}];
+  // The records of what each design is bound to (`design-fence figma bound --out`), which the code is held to.
+  const components = `${design.dir ?? 'design'}/components`;
+  let records = [];
+  try {
+    records = fs.readdirSync(path.join(root, components)).filter(name => name.endsWith('.bound.json'));
+  } catch {
+    // No specs yet.
+  }
+  return [
+    {file: design.tokens.file, why},
+    {file: `${design.dir ?? 'design'}/tokens.lock`, why},
+    ...records.map(name => ({file: `${components}/${name}`, why: `which \`design-fence figma bound --spec ${name.replace(/\.bound\.json$/, '')} --out\` writes from the design in Figma: the code follows the design, not the record the code`})),
+  ];
 }
 
 /**

@@ -198,11 +198,30 @@ test('a bound paint that shows another colour than its variable is found', async
 
 const {parseArgs, runInFigma, scriptCode} = await import('../lib/figma.mjs');
 
+test("bound: the variables of a component's own layers, every variant, not its set's frame nor its instances' insides", async () => {
+  const bound = new Function(`${fs.readFileSync(path.join(HOME, 'figma/bound.js'), 'utf8')}\nreturn bound;`)();
+  const names = {pad: 'space/3', gap: 'space/8', frame: 'line/frame', focus: 'line/focus', text: 'text/default', size: 'font-size/body', inner: 'surface/raised', blur: 'shadow/soft', gone: null};
+  const label = {type: 'TEXT', name: 'Label', fills: [{boundVariables: {color: {id: 'text'}}}], textStyleId: 'S:1'};
+  const icon = {type: 'INSTANCE', name: 'Icon', boundVariables: {paddingLeft: {id: 'inner'}}, getMainComponentAsync: async () => ({name: 'Size=Small', parent: {type: 'COMPONENT_SET', name: 'Icon'}})};
+  const variant = (stroke, extra = {}) => ({type: 'COMPONENT', name: 'State', boundVariables: {paddingLeft: {id: 'pad'}, paddingTop: {id: 'pad'}}, strokes: [{boundVariables: {color: {id: stroke}}}], children: [label, icon], ...extra});
+  const set = {type: 'COMPONENT_SET', name: 'Button', boundVariables: {itemSpacing: {id: 'gap'}}, children: [variant('frame'), variant('focus', {effects: [{boundVariables: {radius: {id: 'blur'}, color: {id: 'gone'}}}]})]};
+  globalThis.figma = {
+    getNodeByIdAsync: async id => ({'1:1': set, '1:2': {type: 'FRAME', name: 'Hero'}})[id] ?? null,
+    getStyleByIdAsync: async () => ({boundVariables: {fontSize: {id: 'size'}}}),
+    variables: {getVariableByIdAsync: async id => (names[id] ? {name: names[id]} : null)},
+  };
+  assert.deepEqual(await bound('1:1'), {node: '1:1', name: 'Button', tokens: ['font-size/body', 'line/focus', 'line/frame', 'shadow/soft', 'space/3', 'text/default'], instances: ['Icon']});
+  assert.match((await bound('1:2')).error, /a frame, not a component/);
+  assert.equal((await bound('9:9')).error, 'not found');
+});
+
 test('each script ends with its call, from the command line arguments', () => {
   const tail = (name, argv) => scriptCode(name, parseArgs(argv)).split('\n').at(-1);
   assert.equal(tail('lint-gaps', ['12:34', '--properties', 'Label, Tone']), 'return await lintGaps("12:34", {"properties":["Label","Tone"]});');
   assert.equal(tail('lint-gaps', ['12:34']), 'return await lintGaps("12:34", {});');
   assert.equal(tail('sources', []), 'return await sources();');
+  assert.equal(tail('bound', ['2:193', '--out']), 'return await bound("2:193");');
+  assert.throws(() => scriptCode('bound', parseArgs(['--out'])), /Name the node or the component/);
   assert.equal(
     tail('tokens', ['--format', 'css', '--px', 'space/,radius/', '--hash-only', '--out', 'src/tokens.css']),
     'return await tokens({"format":"css","px":["space/","radius/"],"ms":[],"hashOnly":true});',

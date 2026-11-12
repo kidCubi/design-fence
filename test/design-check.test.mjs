@@ -11,7 +11,7 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
-import {checkDesign, fnv1a, indexRows, lockFile, rawValuesIn} from '../lib/design-check.mjs';
+import {boundAgainstCode, checkDesign, cssName, fnv1a, indexRows, lockFile, rawValuesIn} from '../lib/design-check.mjs';
 import {parseYaml} from '../lib/yaml.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -100,9 +100,19 @@ test("Storybook's index: a library story without a spec is said, then refused; a
     fs.mkdirSync(path.join(root, 'storybook-static'), {recursive: true});
     fs.writeFileSync(path.join(root, 'storybook-static/index.json'), JSON.stringify({v: 5, entries}));
   };
-  const story = (title, name) => ({type: 'story', title, name, importPath: `./src/components/${name}/${name}.stories.js`});
-  const all = {a: story('Components/Link', 'link'), b: story('Components/Button', 'button'), c: story('Components/Section', 'section'), d: story('Components/Top bar', 'top-bar')};
+  // The fixture's own stories, by the names Storybook gives them.
+  const stories = (title, folder, names) => Object.fromEntries(names.map(name => [`${folder}--${name}`, {type: 'story', title, name, importPath: `./src/components/${folder}/${folder}.stories.js`}]));
+  const story = (title, folder) => Object.values(stories(title, folder, ['Default']))[0];
+  const all = {
+    ...stories('Components/Link', 'link', ['Default', 'Focus']),
+    ...stories('Components/Button', 'button', ['Default', 'Focus', 'After its action', 'Secondary', 'Secondary Focus']),
+    ...stories('Components/Section', 'section', ['Default', 'Wide', 'Tablet', 'Mobile', 'Statement', 'Statement Mobile']),
+    ...stories('Components/Top bar', 'top-bar', ['Default', 'Mobile']),
+  };
   assert.deepEqual(drift(({root}) => index(root, all)).problems, []);
+  // A story for each value its spec's properties list, by the value's name: the Button's Secondary gone, its Kind is not shown.
+  const {'button--Secondary': gone, 'button--Secondary Focus': too, ...fewer} = all;
+  one(drift(({root}) => index(root, fewer)), /button\.md: no story of "Components\/Button" shows Kind: Secondary \(a story whose name has "Secondary"\)/);
   const extra = drift(({root}) => index(root, {...all, e: story('Components/Carousel', 'carousel')}));
   assert.deepEqual(extra.problems, []);
   assert.match(extra.warnings[0], /"Components\/Carousel" .* has no spec/);
@@ -112,4 +122,51 @@ test("Storybook's index: a library story without a spec is said, then refused; a
     const old = new Date(Date.now() - 3600_000);
     fs.utimesSync(path.join(root, 'storybook-static/index.json'), old, old);
   }), /storybook-static\/index\.json is older than src\/components\/.*\.stories\.js/);
+});
+
+// The Button's design, as `design-fence figma bound --spec button --out` recorded it from the project's Figma file.
+const BUTTON = ['font-size/body', 'font/family', 'font/weight-text', 'line-width/hairline', 'line/focus', 'line/frame', 'radius/none', 'space/3', 'space/6', 'surface/raised', 'text/default'];
+const record = ({root}, tokens = BUTTON) => fs.writeFileSync(path.join(root, 'design/components/button.bound.json'), JSON.stringify({component: 'Button', figma: '2:193', tokens, instances: []}));
+
+test("a component's code reads the tokens its design is bound to, and no other", () => {
+  const css = 'src/components/button/button.css';
+  assert.equal(cssName('Line Width/hairline'), '--line-width-hairline');
+  // As it is: the code and the design agree (the fixture holds the five records, as the command wrote them from
+  // the project's Figma file); a built component with no record is named, not refused.
+  const fine = drift(record);
+  assert.deepEqual([fine.problems, fine.warnings], [[], []]);
+  assert.doesNotMatch(fine.notes.join('; '), /not held to their design/);
+  const fewer = drift(({root}) => ['link', 'top-bar'].forEach(name => fs.rmSync(path.join(root, `design/components/${name}.bound.json`))));
+  assert.deepEqual(fewer.problems, []);
+  assert.match(fewer.notes.join('; '), /2 built component\(s\) not held to their design's tokens yet \(link, top-bar\)/);
+  // A padding off its design: the token the code reads instead, and the one it no longer reads.
+  const off = drift(change => (record(change), change.edit(css, /var\(--space-3\)/g, 'var(--space-4)')));
+  assert.equal(off.problems.length, 2, off.problems.join('\n'));
+  assert.match(off.problems[0], /button\.css:\d+: --space-4 is not in Button's design in Figma \(design\/components\/button\.bound\.json\)/);
+  assert.match(off.problems[1], /button\.bound\.json: Button's design in Figma is bound to space\/3, and its code does not read --space-3 \(src\/components\/button\/button\.css\)/);
+  // A token the design does not have: refused; said to be the code's alone, allowed; of a group no design binds
+  // (a duration), not held; a property of the component's own, or a token named in a comment, not seen.
+  one(drift(change => (record(change), change.edit(css, /$/, '\n.hint {\n  color: var(--text-muted);\n}\n'))), /button\.css:\d+: --text-muted is not in Button's design/);
+  const allowed = '\n.hint {\n  /* design-fence: not in Figma. A hint only the code shows. */\n  color: var(--text-muted);\n  transition: color calc(var(--duration-fast) * 1ms);\n  width: var(--own);\n  /* once var(--line-raster) */\n}\n';
+  assert.deepEqual(drift(change => (record(change), change.edit(css, /$/, allowed))).problems, []);
+  // The design gained a token the code does not read yet.
+  one(drift(change => record(change, [...BUTTON, 'space/12'])), /bound to space\/12, and its code does not read --space-12/);
+  // A record that is not one.
+  one(drift(({root}) => fs.writeFileSync(path.join(root, 'design/components/button.bound.json'), '{"tokens": "all"}')), /button\.bound\.json: not a record of design-fence figma bound/);
+});
+
+test('an approved component not built yet is not held; being built, it is said, then refused when strict', () => {
+  // The Command: approved, its design recorded, not built in the fixture.
+  const command = ({root}) => fs.writeFileSync(path.join(root, 'design/components/command.bound.json'), JSON.stringify({tokens: ['space/4', 'text/muted']}));
+  assert.deepEqual(drift(command).problems, []);
+  const half = change => {
+    command(change);
+    fs.mkdirSync(path.join(change.root, 'src/components/command'));
+    fs.writeFileSync(path.join(change.root, 'src/components/command/command.css'), ':host {\n  padding: var(--space-4);\n}\n');
+  };
+  assert.deepEqual(drift(half).problems, []);
+  assert.match(drift(half).warnings.join('\n'), /Command's design in Figma is bound to text\/muted, and its code does not read --text-muted/);
+  one(drift(half, {strict: true}), /does not read --text-muted/);
+  const {missing, extra, files} = boundAgainstCode(drift(half).root, {library: './src/components/', tokens: {file: 'src/tokens.css'}}, {name: 'Command', file: 'design/components/command.md'}, ['space/4', 'text/muted']);
+  assert.deepEqual([files, missing, extra], [['src/components/command/command.css'], [{token: 'text/muted', name: '--text-muted'}], []]);
 });

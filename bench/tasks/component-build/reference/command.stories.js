@@ -1,6 +1,9 @@
 import './command.js';
 
-/** Command (design/components/command.md; Figma 4:568). "Output" without the copy button, "Install" with it. */
+/**
+ * Command (design/components/command.md; Figma 4:568). "Output" without the copy button, "Install" with it: its
+ * name says Copy, the property it shows, as a story's name does for each value its spec lists (design-fence design).
+ */
 export default {
   title: 'Components/Command',
   component: 'df-command',
@@ -16,6 +19,7 @@ export default {
 export const Output = {};
 
 export const Install = {
+  name: 'Install, with Copy',
   args: {
     text: 'git submodule add https://github.com/kidCubi/design-fence.git .agents/design-fence\nnode .agents/design-fence/install.mjs --design',
     copy: true,
