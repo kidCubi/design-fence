@@ -61,7 +61,7 @@ const short = files => files.slice(0, 5).join(', ') + (files.length > 5 ? `, and
 
 /** Runs the checks and prints their results; true when all passed. */
 function report(root, options, print) {
-  const {node, results} = runChecks(root, {...options, log: line => print(`→ ${line}`)});
+  const {node, results, kept} = runChecks(root, {...options, log: line => print(`→ ${line}`)});
   if (!loadConfig(root)) {
     print(`No ${CONFIG}: nothing to check.`);
     return true;
@@ -77,6 +77,9 @@ function report(root, options, print) {
     if (!result.ok) {
       print(tail(result.output));
     }
+  }
+  if (!kept && results.some(result => result.ok && !result.cached)) {
+    print('The passes are not remembered: .git cannot be written here (a sandbox). The commit runs the checks again.');
   }
   return results.every(result => result.ok);
 }

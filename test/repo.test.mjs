@@ -106,6 +106,22 @@ test('a pass is not run again on the same contents', () => {
   assert.deepEqual(runChecks(root).results.map(r => [r.ok, r.cached]), [[false, false]]);
 });
 
+test('where .git cannot be written (an agent\'s sandbox), the checks run and say they are not remembered', {skip: process.getuid?.() === 0}, () => {
+  const root = repository({checks: [NO_BAD]});
+  fs.writeFileSync(path.join(root, 'src/a.js'), 'fine\n');
+  fs.chmodSync(path.join(root, '.git'), 0o555);
+  try {
+    const run = () => runChecks(root);
+    assert.deepEqual([run().kept, run().results.map(r => [r.ok, r.cached])], [false, [[true, false]]]);
+    const told = spawnSync(process.execPath, [path.join(HOME, 'bin/design-fence.mjs'), 'check'], {cwd: root, encoding: 'utf8'});
+    assert.equal(told.status, 0, told.stderr);
+    assert.match(told.stdout, /ok {3}no bad[\s\S]*not remembered: \.git cannot be written/);
+  } finally {
+    fs.chmodSync(path.join(root, '.git'), 0o755);
+  }
+  assert.equal(runChecks(root).kept, true);
+});
+
 test('install adds what is missing, turns the hooks on, and does nothing a second time', () => {
   const root = repository({checks: []});
   fs.rmSync(path.join(root, '.agents'), {recursive: true});

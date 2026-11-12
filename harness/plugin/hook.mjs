@@ -941,12 +941,19 @@ function readSessions(root) {
   }
 }
 
-/** Writes the sessions back, without those untouched for a day. */
+/**
+ * Writes the sessions back, without those untouched for a day. Where `.git` cannot be written (a sandbox), the
+ * hook still answers: only what it counts (the screenshots) is not kept.
+ */
 function writeSessions(root, sessions, now) {
   const kept = Object.fromEntries(Object.entries(sessions).filter(([, s]) => now - (s.at ?? 0) < DAY));
-  const dir = stateDir(root);
-  fs.mkdirSync(dir, {recursive: true});
-  fs.writeFileSync(path.join(dir, SESSIONS), `${JSON.stringify(kept)}\n`);
+  try {
+    const dir = stateDir(root);
+    fs.mkdirSync(dir, {recursive: true});
+    fs.writeFileSync(path.join(dir, SESSIONS), `${JSON.stringify(kept)}\n`);
+  } catch {
+    // Nothing to do here: the decision does not depend on it.
+  }
 }
 
 /** The budget of `playbooks/figma.md`: one design-tool screenshot per phase. */
