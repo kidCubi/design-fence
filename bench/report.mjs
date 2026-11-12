@@ -49,6 +49,8 @@ function roundOf(dir) {
     const b = arms[withArm];
     if (!a || !b) continue;
     const shared = Object.keys(a.score.checks).filter(name => name in b.score.checks && !OWN_RULES.includes(name));
+    // What the arm's counted runs cost together, for what each result that holds cost.
+    const spent = {};
     const holds = arm => {
       let held = 0;
       let counted = 0;
@@ -56,6 +58,7 @@ function roundOf(dir) {
         const run = JSON.parse(fs.readFileSync(path.join(dir, task, file), 'utf8'));
         if (!run.ok) continue;
         counted++;
+        spent[arm] = (spent[arm] ?? 0) + (run.cost ?? 0);
         if (run.score.checks.filter(check => shared.includes(check.name)).every(check => check.pass)) held++;
       }
       return {held, of: counted};
@@ -71,6 +74,7 @@ function roundOf(dir) {
       runs: {without: a.counted, with: b.counted},
       measures,
       holds: {without: holds('without'), with: holds(withArm)},
+      spent: {without: spent.without ?? 0, with: spent[withArm] ?? 0},
       checks: Object.fromEntries(Object.keys(a.score.checks).filter(name => name in b.score.checks).map(name => [name, {without: a.score.checks[name], with: b.score.checks[name], ownRule: OWN_RULES.includes(name)}])),
     };
   }
@@ -108,6 +112,20 @@ lines.push('## Does the result hold', '', `Runs that pass every check both arms 
 lines.push(`| Task | ${report.rounds.map(round => round.label).join(' | ')} |`, `| --- | ${report.rounds.map(() => '---').join(' | ')} |`);
 for (const task of taskNames) {
   lines.push(`| ${task} | ${report.rounds.map(round => (round.tasks[task] ? `${round.tasks[task].holds.without.held} of ${round.tasks[task].holds.without.of} → ${round.tasks[task].holds.with.held} of ${round.tasks[task].holds.with.of}` : '—')).join(' | ')} |`);
+}
+lines.push('');
+
+// What each result that holds cost: the arm's whole spend on the task over its runs that hold. A run a person would
+// have to send back was paid for too.
+const perHeld = (spent, {held, of}) => (held ? `$${(spent / held).toFixed(spent / held < 0.1 ? 3 : 2)}` : `none of ${of} held`);
+lines.push('## What a result that holds costs', '', "The arm's whole spend on the task, over its runs that hold (the table above): a run that has to be sent back was paid for too.", '');
+lines.push(`| Task | ${report.rounds.map(round => round.label).join(' | ')} |`, `| --- | ${report.rounds.map(() => '---').join(' | ')} |`);
+for (const task of taskNames) {
+  const cells = report.rounds.map(round => {
+    const t = round.tasks[task];
+    return t ? `${perHeld(t.spent.without, t.holds.without)} → ${perHeld(t.spent.with, t.holds.with)}` : '—';
+  });
+  lines.push(`| ${task} | ${cells.join(' | ')} |`);
 }
 lines.push('');
 

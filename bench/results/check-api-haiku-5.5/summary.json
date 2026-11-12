@@ -1,0 +1,208 @@
+{
+ "round": "check-api-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "component-build": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.04966758,
+       "min": 0.04769864,
+       "max": 0.05470602000000001
+      },
+      "tokens": {
+       "median": 1998890,
+       "min": 1833454,
+       "max": 2150119
+      },
+      "fresh": {
+       "median": 116712,
+       "min": 107736,
+       "max": 123167
+      },
+      "calls": {
+       "median": 29,
+       "min": 28,
+       "max": 36
+      },
+      "figmaCalls": {
+       "median": 4,
+       "min": 4,
+       "max": 5
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 30,
+       "min": 29,
+       "max": 37
+      },
+      "seconds": {
+       "median": 184,
+       "min": 171,
+       "max": 191
+      }
+     },
+     "score": {
+      "passed": 55,
+      "of": 55,
+      "share": 1,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 5,
+        "of": 5
+       },
+       "its stories are titled Components/Command": {
+        "passed": 5,
+        "of": 5
+       },
+       "a story with the copy button and one without": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "the design's tokens, all of them": {
+        "passed": 5,
+        "of": 5
+       },
+       "no token the design does not use": {
+        "passed": 5,
+        "of": 5
+       },
+       "the copy button is the library's Button": {
+        "passed": 5,
+        "of": 5
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the project changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what it checked": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "figma-badge": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.03436918,
+       "min": 0.03237018,
+       "max": 0.03956351
+      },
+      "tokens": {
+       "median": 1070152,
+       "min": 793810,
+       "max": 1250491
+      },
+      "fresh": {
+       "median": 94522,
+       "min": 87638,
+       "max": 101650
+      },
+      "calls": {
+       "median": 16,
+       "min": 15,
+       "max": 21
+      },
+      "figmaCalls": {
+       "median": 7,
+       "min": 5,
+       "max": 10
+      },
+      "screenshots": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "turns": {
+       "median": 17,
+       "min": 16,
+       "max": 22
+      },
+      "seconds": {
+       "median": 115,
+       "min": 105,
+       "max": 138
+      }
+     },
+     "score": {
+      "passed": 34,
+      "of": 35,
+      "share": 0.9714285714285714,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 5,
+        "of": 5
+       },
+       "every value bound to a variable": {
+        "passed": 4,
+        "of": 5
+       },
+       "every frame has auto-layout": {
+        "passed": 5,
+        "of": 5
+       },
+       "not built in code": {
+        "passed": 5,
+        "of": 5
+       },
+       "one screenshot at most": {
+        "passed": 5,
+        "of": 5
+       },
+       "a draft spec is left": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "d835e68",
+   "uncommittedFiles": 1,
+   "id": "d07f6c4e0178"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-12T15:53:15.695Z"
+ }
+}

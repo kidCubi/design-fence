@@ -35,6 +35,7 @@ import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
 import {FIGMA_CONSOLE} from '../lib/fence.mjs';
+import {fileCheck} from './score-lib.mjs';
 
 const BENCH = path.dirname(fileURLToPath(import.meta.url));
 const HOME = path.dirname(BENCH);
@@ -301,6 +302,7 @@ async function scoreOf(t, arm, dir, measured, audit) {
   } catch (error) {
     checks = [{name: 'score.mjs ran', pass: false, note: error.message}];
   }
+  checks = [...checks, ...fileCheck(measured.elsewhere)];
   return {passed: checks.filter(c => c.pass).length, of: checks.length, checks};
 }
 
@@ -315,7 +317,10 @@ export async function one(t, arm, n) {
   const measured = JSON.parse(sh(process.execPath, [path.join(BENCH, 'measure.mjs'), `${log}.jsonl`, '--json']));
   const audit = t.figma && t.page ? figmaReset(log, t.page.replaceAll('{{run}}', run)) : undefined;
   const moved = t.figma ? fileUnchanged() : '';
-  const result = {task: t.name, arm, n, ...measured, score: await scoreOf(t, arm, dir, measured, audit)};
+  // What a run changed elsewhere in the file is kept with its numbers and scored (fileCheck); the round stops all the
+  // same, the file being someone's. When the bridge did not answer, nothing is known and nothing is said.
+  const elsewhere = t.figma && (!moved || moved.startsWith('the file was')) ? {elsewhere: moved} : {};
+  const result = {task: t.name, arm, n, ...measured, ...elsewhere, score: await scoreOf(t, arm, dir, {...measured, ...elsewhere}, audit)};
   fs.writeFileSync(`${log}.json`, JSON.stringify(result, null, 1));
   console.log(
     `${result.ok ? 'finished' : `DID NOT FINISH (${result.subtype})`}, $${(result.cost ?? 0).toFixed(2)}, ${Math.round(result.total / 1000)}k tokens, ` +

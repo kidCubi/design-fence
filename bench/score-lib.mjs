@@ -58,3 +58,10 @@ export const run = (command, args, options = {}) => {
 
 export const read = file => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
 export const check = (name, pass, note = '') => ({name, pass: Boolean(pass), note});
+
+/**
+ * The runner's own check of a run on Figma, in both arms: beside what the run was asked to make (its page, audited
+ * and deleted before the file is read again), the file is as the round found it. `elsewhere` is what differs, ''
+ * when nothing does; when the file could not be read (not a string), nothing is said.
+ */
+export const fileCheck = elsewhere => (typeof elsewhere === 'string' ? [check('nothing else in the Figma file changed', !elsewhere, elsewhere)] : []);

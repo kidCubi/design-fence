@@ -11,7 +11,7 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
-import {addedLines, rawValues} from '../bench/score-lib.mjs';
+import {addedLines, fileCheck, rawValues} from '../bench/score-lib.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const BENCH = path.join(HOME, 'bench');
@@ -26,6 +26,15 @@ test('raw values: colours, lengths and times outside var(), not zero, not commen
   // A comment over several lines names values on a line that reads like code; a unit given to a bare number is none.
   assert.deepEqual(rawValues(['/* The size of the Command', '   here (the Desktop variant is 52px tall: the hairlines, the padding). */', '  transition: color calc(var(--duration-fast) * 1ms) ease-out;', '  width: 304px;']), ['304px']);
   assert.deepEqual(addedLines('+++ b/src/a.css\n+a: 1px;\n-b\n+++ b/x.js\n+c'), {'src/a.css': ['a: 1px;'], 'x.js': ['c']});
+});
+
+test('a run on Figma that changed the file elsewhere fails a check of the runner; an unread file says nothing', () => {
+  assert.deepEqual(fileCheck(''), [{name: 'nothing else in the Figma file changed', pass: true, note: ''}]);
+  const [changed] = fileCheck('the file was [{"name":"Tokens","layers":147}], and is [{"name":"Tokens","layers":148}]');
+  assert.equal(changed.pass, false);
+  assert.match(changed.note, /"layers":148/);
+  // The bridge did not answer: the file's state is not known, and no check is made up.
+  assert.deepEqual(fileCheck(undefined), []);
 });
 
 test('the copies: without design-fence its layer is gone and the project stays; with it, it is installed', async t => {
@@ -110,6 +119,9 @@ test('the report: rounds side by side, the runs that hold, and only the differen
   assert.deepEqual(report.shown.map(item => [item.model, item.measure, item.percent]), [['model-a', 'Cost', -27], ['model-a', 'Tokens', -27]]);
   const text = fs.readFileSync(`${out}.md`, 'utf8');
   assert.match(text, /\| figma-badge \| 2 of 3 → 3 of 3 \| 2 of 2 → 2 of 2 \|/);
+  // What a result that holds cost: 3.30 spent for two that hold, 2.40 for three; the run that did not finish is not counted.
+  assert.equal(report.rounds[0].tasks['figma-badge'].spent.without.toFixed(2), '3.30');
+  assert.match(text, /\| figma-badge \| \$1\.65 → \$0\.80 \| \$1\.00 → \$0\.50 \|/);
   assert.match(text, /\$1\.10 → \$0\.80 \(−27%\*\) \| \$1\.00 → \$0\.50 \(−50%\) \|/);
   assert.match(text, /one screenshot at most \(design-fence's own rule\) \| 0 of 3 → 3 of 3/);
 });
