@@ -1,0 +1,424 @@
+{
+ "round": "figma-check-haiku",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "component-build": {
+   "arms": {
+    "without": {
+     "runs": 1,
+     "counted": 1,
+     "measures": {
+      "cost": {
+       "median": 0.03391776,
+       "min": 0.03391776,
+       "max": 0.03391776
+      },
+      "tokens": {
+       "median": 1169034,
+       "min": 1169034,
+       "max": 1169034
+      },
+      "fresh": {
+       "median": 86898,
+       "min": 86898,
+       "max": 86898
+      },
+      "calls": {
+       "median": 25,
+       "min": 25,
+       "max": 25
+      },
+      "figmaCalls": {
+       "median": 6,
+       "min": 6,
+       "max": 6
+      },
+      "screenshots": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "turns": {
+       "median": 26,
+       "min": 26,
+       "max": 26
+      },
+      "seconds": {
+       "median": 107,
+       "min": 107,
+       "max": 107
+      }
+     },
+     "score": {
+      "passed": 7,
+      "of": 10,
+      "share": 0.7,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 1,
+        "of": 1
+       },
+       "its stories are titled Components/Command": {
+        "passed": 1,
+        "of": 1
+       },
+       "a story with the copy button and one without": {
+        "passed": 1,
+        "of": 1
+       },
+       "no value written raw": {
+        "passed": 1,
+        "of": 1
+       },
+       "the design's tokens, all of them": {
+        "passed": 0,
+        "of": 1
+       },
+       "no token the design does not use": {
+        "passed": 1,
+        "of": 1
+       },
+       "the copy button is the library's Button": {
+        "passed": 1,
+        "of": 1
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 0,
+        "of": 1
+       },
+       "nothing else in the project changed": {
+        "passed": 0,
+        "of": 1
+       },
+       "the report names what it checked": {
+        "passed": 1,
+        "of": 1
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 1,
+     "counted": 1,
+     "measures": {
+      "cost": {
+       "median": 0.05751491,
+       "min": 0.05751491,
+       "max": 0.05751491
+      },
+      "tokens": {
+       "median": 2427533,
+       "min": 2427533,
+       "max": 2427533
+      },
+      "fresh": {
+       "median": 125212,
+       "min": 125212,
+       "max": 125212
+      },
+      "calls": {
+       "median": 39,
+       "min": 39,
+       "max": 39
+      },
+      "figmaCalls": {
+       "median": 5,
+       "min": 5,
+       "max": 5
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 40,
+       "min": 40,
+       "max": 40
+      },
+      "seconds": {
+       "median": 234,
+       "min": 234,
+       "max": 234
+      }
+     },
+     "score": {
+      "passed": 9,
+      "of": 10,
+      "share": 0.9,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 1,
+        "of": 1
+       },
+       "its stories are titled Components/Command": {
+        "passed": 1,
+        "of": 1
+       },
+       "a story with the copy button and one without": {
+        "passed": 1,
+        "of": 1
+       },
+       "no value written raw": {
+        "passed": 1,
+        "of": 1
+       },
+       "the design's tokens, all of them": {
+        "passed": 1,
+        "of": 1
+       },
+       "no token the design does not use": {
+        "passed": 1,
+        "of": 1
+       },
+       "the copy button is the library's Button": {
+        "passed": 1,
+        "of": 1
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 1,
+        "of": 1
+       },
+       "nothing else in the project changed": {
+        "passed": 0,
+        "of": 1
+       },
+       "the report names what it checked": {
+        "passed": 1,
+        "of": 1
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": 70,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 108,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 44,
+      "shown": false
+     },
+     "calls": {
+      "percent": 56,
+      "shown": false
+     },
+     "figmaCalls": {
+      "percent": -17,
+      "shown": false
+     },
+     "screenshots": {
+      "percent": -100,
+      "shown": false
+     },
+     "turns": {
+      "percent": 54,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 119,
+      "shown": false
+     }
+    }
+   }
+  },
+  "figma-badge": {
+   "arms": {
+    "without": {
+     "runs": 1,
+     "counted": 1,
+     "measures": {
+      "cost": {
+       "median": 0.038323850000000007,
+       "min": 0.038323850000000007,
+       "max": 0.038323850000000007
+      },
+      "tokens": {
+       "median": 1422060,
+       "min": 1422060,
+       "max": 1422060
+      },
+      "fresh": {
+       "median": 95485,
+       "min": 95485,
+       "max": 95485
+      },
+      "calls": {
+       "median": 21,
+       "min": 21,
+       "max": 21
+      },
+      "figmaCalls": {
+       "median": 17,
+       "min": 17,
+       "max": 17
+      },
+      "screenshots": {
+       "median": 5,
+       "min": 5,
+       "max": 5
+      },
+      "turns": {
+       "median": 22,
+       "min": 22,
+       "max": 22
+      },
+      "seconds": {
+       "median": 102,
+       "min": 102,
+       "max": 102
+      }
+     },
+     "score": {
+      "passed": 4,
+      "of": 5,
+      "share": 0.8,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 1,
+        "of": 1
+       },
+       "every value bound to a variable": {
+        "passed": 1,
+        "of": 1
+       },
+       "every frame has auto-layout": {
+        "passed": 1,
+        "of": 1
+       },
+       "not built in code": {
+        "passed": 1,
+        "of": 1
+       },
+       "one screenshot at most": {
+        "passed": 0,
+        "of": 1
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 1,
+     "counted": 1,
+     "measures": {
+      "cost": {
+       "median": 0.04412809000000001,
+       "min": 0.04412809000000001,
+       "max": 0.04412809000000001
+      },
+      "tokens": {
+       "median": 1424111,
+       "min": 1424111,
+       "max": 1424111
+      },
+      "fresh": {
+       "median": 115072,
+       "min": 115072,
+       "max": 115072
+      },
+      "calls": {
+       "median": 19,
+       "min": 19,
+       "max": 19
+      },
+      "figmaCalls": {
+       "median": 10,
+       "min": 10,
+       "max": 10
+      },
+      "screenshots": {
+       "median": 2,
+       "min": 2,
+       "max": 2
+      },
+      "turns": {
+       "median": 20,
+       "min": 20,
+       "max": 20
+      },
+      "seconds": {
+       "median": 146,
+       "min": 146,
+       "max": 146
+      }
+     },
+     "score": {
+      "passed": 5,
+      "of": 6,
+      "share": 0.8333333333333334,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 1,
+        "of": 1
+       },
+       "every value bound to a variable": {
+        "passed": 1,
+        "of": 1
+       },
+       "every frame has auto-layout": {
+        "passed": 1,
+        "of": 1
+       },
+       "not built in code": {
+        "passed": 1,
+        "of": 1
+       },
+       "one screenshot at most": {
+        "passed": 0,
+        "of": 1
+       },
+       "a draft spec is left": {
+        "passed": 1,
+        "of": 1
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": 15,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 0,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 21,
+      "shown": false
+     },
+     "calls": {
+      "percent": -10,
+      "shown": false
+     },
+     "figmaCalls": {
+      "percent": -41,
+      "shown": false
+     },
+     "screenshots": {
+      "percent": -60,
+      "shown": false
+     },
+     "turns": {
+      "percent": -9,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 43,
+      "shown": false
+     }
+    }
+   }
+  }
+ }
+}

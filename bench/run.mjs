@@ -6,6 +6,7 @@
  *     node bench/run.mjs setup                          the fixture's dependencies (once)
  *     node bench/run.mjs all [options]                  every run of the round, then the summary
  *     node bench/run.mjs one <task> <arm> <n> [options] one run, as `all` makes it (to replace one that does not count)
+ *     node bench/run.mjs rescore --round <name>         the scores again from what each run left, then the summary
  *     node bench/run.mjs prepare <task> <arm> <n>       only the copy
  *     node bench/run.mjs prompt <task>                  the request, word for word
  *     node bench/run.mjs tasks                          the tasks, and which need Figma
@@ -165,6 +166,39 @@ function figmaMcp() {
   return file;
 }
 
+/**
+ * Codex's sandbox writes in the copy alone. Two caches lie outside it and are opened to it, as they are to Claude
+ * Code, which has no sandbox here: npm's (the fixture's checks run `npx prettier`) and Storybook's (in the fixture's
+ * `node_modules`, which every copy links to). Without them both arms lose time on "EPERM", the arm with
+ * design-fence more, as it runs the project's checks. `.git` stays closed, as Codex has it.
+ */
+let caches;
+function codexCaches() {
+  if (!caches) {
+    const storybook = path.join(FIXTURE, 'node_modules/.cache');
+    if (fs.existsSync(path.dirname(storybook))) fs.mkdirSync(storybook, {recursive: true});
+    caches = [sh('npm', ['config', 'get', 'cache']).trim(), storybook].filter(dir => dir && fs.existsSync(dir)).map(dir => fs.realpathSync(dir));
+  }
+  return caches;
+}
+
+/**
+ * The MCP servers of the person's own Codex settings: a run sees none of them, but Figma's in a task on Figma (as
+ * Claude Code's runs, with --strict-mcp-config). Seen, a server is called, refused, and the run goes another way.
+ */
+let servers;
+function codexServers() {
+  if (!servers) {
+    try {
+      servers = JSON.parse(sh('codex', ['mcp', 'list', '--json'])).map(server => server.name);
+    } catch {
+      servers = [];
+    }
+    if (!servers.includes('figma-console')) servers.push('figma-console'); // the copy's own `.codex/config.toml` declares it
+  }
+  return servers;
+}
+
 /** One run of the agent in its copy, its log beside it; returns the log's path. */
 function agentRun(t, dir, log, run) {
   const prompt = promptOf(t, run);
@@ -181,6 +215,8 @@ function agentRun(t, dir, log, run) {
     result = spawnSync('claude', args, {cwd: dir, encoding: 'utf8', timeout, maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'pipe']});
   } else {
     const args = ['exec', '--json', '--sandbox', 'workspace-write', '-c', 'sandbox_workspace_write.network_access=true',
+      '-c', `sandbox_workspace_write.writable_roots=${JSON.stringify(codexCaches())}`,
+      ...codexServers().filter(name => !(t.figma && name === 'figma-console')).flatMap(name => ['-c', `mcp_servers.${/^[\w-]+$/.test(name) ? name : JSON.stringify(name)}.enabled=false`]),
       ...(t.figma
         ? ['-c', 'mcp_servers.figma-console.default_tools_approval_mode="approve"', '-c', 'mcp_servers.figma-console.command="node"',
             '-c', `mcp_servers.figma-console.args=["${path.join(BENCH, 'wait-bridge.mjs')}","npx","-y","${FIGMA_CONSOLE}"]`,
@@ -245,6 +281,19 @@ function figmaReset(log, page) {
   return found;
 }
 
+/** A run's score: the task's score.mjs on what the run left (its copy, its answer, its page's audit in Figma). */
+async function scoreOf(t, arm, dir, measured, audit) {
+  const changed = git(dir, 'status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3));
+  const diff = git(dir, 'diff', 'HEAD');
+  let checks = [];
+  try {
+    checks = await (await import(pathToFileURL(path.join(t.dir, 'score.mjs')))).default({dir, arm, answer: measured.answer ?? '', changed, diff, audit, measured});
+  } catch (error) {
+    checks = [{name: 'score.mjs ran', pass: false, note: error.message}];
+  }
+  return {passed: checks.filter(c => c.pass).length, of: checks.length, checks};
+}
+
 /** One run: the copy, the agent, its numbers (bench/measure.mjs) and its score (the task's score.mjs). */
 export async function one(t, arm, n) {
   if (t.figma && !KEY) fail(`${t.name} works in Figma: give --key <the key of your copy of the file> (bench/README.md).`);
@@ -256,15 +305,7 @@ export async function one(t, arm, n) {
   const measured = JSON.parse(sh(process.execPath, [path.join(BENCH, 'measure.mjs'), `${log}.jsonl`, '--json']));
   const audit = t.figma && t.page ? figmaReset(log, t.page.replaceAll('{{run}}', run)) : undefined;
   const moved = t.figma ? fileUnchanged() : '';
-  const changed = git(dir, 'status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3));
-  const diff = git(dir, 'diff', 'HEAD');
-  let checks = [];
-  try {
-    checks = await (await import(pathToFileURL(path.join(t.dir, 'score.mjs')))).default({dir, arm, answer: measured.answer ?? '', changed, diff, audit, measured});
-  } catch (error) {
-    checks = [{name: 'score.mjs ran', pass: false, note: error.message}];
-  }
-  const result = {task: t.name, arm, n, ...measured, score: {passed: checks.filter(c => c.pass).length, of: checks.length, checks}};
+  const result = {task: t.name, arm, n, ...measured, score: await scoreOf(t, arm, dir, measured, audit)};
   fs.writeFileSync(`${log}.json`, JSON.stringify(result, null, 1));
   console.log(
     `${result.ok ? 'finished' : `DID NOT FINISH (${result.subtype})`}, $${(result.cost ?? 0).toFixed(2)}, ${Math.round(result.total / 1000)}k tokens, ` +
@@ -310,7 +351,28 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     if (arms.includes('next')) snapshot();
     for (const t of chosen()) for (let n = 1; n <= RUNS; n++) for (const arm of arms) await one(t, arm, n);
     spawnSync(process.execPath, [path.join(BENCH, 'summary.mjs'), OUT], {stdio: 'inherit'});
+  } else if (command === 'rescore') {
+    // After a change to a score.mjs: the scores again, from what each run left. No agent runs, no number is measured again.
+    for (const t of tasks()) {
+      const folder = path.join(OUT, t.name);
+      if (!fs.existsSync(folder)) continue;
+      for (const file of fs.readdirSync(folder).filter(name => /^(without|with|next)-\d+\.json$/.test(name)).sort()) {
+        const log = path.join(folder, file.replace(/\.json$/, ''));
+        const {score: was, ...result} = JSON.parse(fs.readFileSync(`${log}.json`, 'utf8'));
+        if (!fs.existsSync(log)) {
+          console.log(`${t.name} ${file}: its copy is gone, its score stays`);
+          continue;
+        }
+        const audit = fs.existsSync(`${log}.audit.json`) ? JSON.parse(fs.readFileSync(`${log}.audit.json`, 'utf8')) : undefined;
+        const {task: _, arm, n, ...measured} = result;
+        const score = await scoreOf(t, arm, log, measured, audit);
+        fs.writeFileSync(`${log}.json`, JSON.stringify({...result, score}, null, 1));
+        const moved = score.checks.filter(c => c.pass !== was?.checks.find(w => w.name === c.name)?.pass).map(c => `${c.name}: now ${c.pass ? 'passes' : 'fails'}`);
+        if (moved.length) console.log(`${t.name} ${arm}-${n}: ${was?.passed}/${was?.of} to ${score.passed}/${score.of} (${moved.join('; ')})`);
+      }
+    }
+    spawnSync(process.execPath, [path.join(BENCH, 'summary.mjs'), OUT], {stdio: 'inherit'});
   } else {
-    fail('usage: node bench/run.mjs setup | tasks | prompt <task> | prepare <task> <arm> <n> | one <task> <arm> <n> | all   (options: bench/run.mjs, top)');
+    fail('usage: node bench/run.mjs setup | tasks | prompt <task> | prepare <task> <arm> <n> | one <task> <arm> <n> | all | rescore   (options: bench/run.mjs, top)');
   }
 }

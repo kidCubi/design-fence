@@ -31,11 +31,13 @@ node bench/run.mjs all --agent claude --model claude-haiku-5-5 --runs 5 --arms w
 node bench/run.mjs all --agent codex --model <model> --effort high --runs 5
 node bench/run.mjs all --tasks all --key <your Figma file's key> ...   # with the Figma tasks
 node bench/summary.mjs bench/results/<round>
+node bench/run.mjs rescore --round <round>                   # after a change to a score.mjs: the stored runs scored again
 ```
 
 - Runs go one at a time, the arms alternating. Without `--tasks`, only the tasks that need no Figma run.
 - For the Figma tasks: Figma Desktop open on your copy of "Design fence landing", the Desktop Bridge plugin running, and figma-console as the only Figma server. After each run on Figma its page is audited and deleted, not measured.
-- Claude Code runs with no MCP server but figma-console, at design-fence's version (and none at all for the tasks without Figma), edits accepted, commits refused, capped at the task's budget. Codex runs in its workspace sandbox with the network on. Your own user-level settings take part in every arm alike: say what they hold when you share results.
+- Claude Code runs with no MCP server but figma-console, at design-fence's version (and none at all for the tasks without Figma), edits accepted, commits refused, capped at the task's budget. Codex runs in its workspace sandbox with the network on, with the same servers as Claude Code (your own are turned off for the run), and with npm's cache and the fixture's Storybook cache opened to the sandbox, as Claude Code, which runs without one here, has them; `.git` stays read-only, as Codex keeps it. The rest of your user-level settings takes part in every arm alike: say what they hold when you share results.
+- Codex runs on your plan's allowance: a round of 100 runs on a main model can reach its limit, and the runs after that fail in seconds ("did not finish", not counted).
 - Results: `bench/results/<round>/<task>/<arm>-<n>.json` (numbers and score), `.jsonl` (the agent's log) and the copy itself; `summary.md` and `summary.json` beside them. Only the summaries are committed.
 - `node bench/where.mjs <run.jsonl>` lists what entered a run's context and what it cost by staying there.
 - Prices: `bench/prices.json`, list prices. Check them on the day.

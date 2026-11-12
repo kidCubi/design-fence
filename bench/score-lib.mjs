@@ -25,12 +25,23 @@ export function addedText({dir, diff, changed}, test) {
   return lines;
 }
 
-/** Values written raw in CSS lines: hex and functional colours, and lengths or times other than 0 outside `var()`. */
+/**
+ * Values written raw in CSS lines: hex and functional colours, and lengths or times other than 0 outside `var()`.
+ * Comments go first, whole: one that runs over several lines names values on lines that read like code ("the
+ * Desktop variant is 52px tall: the hairlines, …"). A unit given to a bare number is no value
+ * (`calc(var(--duration-fast) * 1ms)`, the project's own way to write a time).
+ */
 export function rawValues(lines) {
   const found = [];
-  for (const line of lines) {
-    const code = line.replace(/\/\*.*?\*\//g, '').replace(/var\([^)]*\)/g, '');
-    if (/^\s*(\/\/|\*|\/\*|@media|import )/.test(line) || !/:/.test(code)) continue;
+  const text = lines
+    .join('\n')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    // What is left of a comment that begins or ends outside these lines (a diff's added lines).
+    .replace(/^.*\*\//gm, '')
+    .replace(/\/\*.*$/gm, '');
+  for (const line of text.split('\n')) {
+    const code = line.replace(/var\([^)]*\)/g, '').replace(/[*/]\s*1(?:px|ms|s|rem|em)\b/g, '');
+    if (/^\s*(\/\/|\*|@media|import )/.test(line) || !/:/.test(code)) continue;
     for (const match of code.matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgb|hsl|oklch)a?\([^)]*\)|(?<![\w.-])(?!0(?:px|ms|s|rem|em)\b)\d*\.?\d+(?:px|rem|em|ms|s)\b/g)) {
       found.push(match[0]);
     }

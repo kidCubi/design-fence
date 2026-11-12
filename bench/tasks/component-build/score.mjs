@@ -20,8 +20,9 @@ export default function score(run) {
   const missing = [...want].filter(token => !got.has(token));
   const extra = [...got].filter(token => !want.has(token));
   const stories = files.filter(file => /\.stories\./.test(file)).map(file => read(path.join(folder, file))).join('\n');
-  // Its own folder, the design's records, and what an install or a build of Storybook leaves.
-  const outside = changed.filter(file => !/^(src\/components\/command\/|design\/|storybook-static\/|package-lock\.json$|node_modules\b)/.test(file));
+  // Its own folder, its tests, the project's records (the design's, and the issues file where there is no design/),
+  // and what an install or a build of Storybook leaves.
+  const outside = changed.filter(file => !/^(src\/components\/command\/|test\/|design\/|issues\.md$|storybook-static\/|package-lock\.json$|node_modules\b)/.test(file));
   return [
     check('the element df-command is defined', /customElements\.define\(\s*['"]df-command['"]/.test(all)),
     check('its stories are titled Components/Command', /title:\s*['"]Components\/Command['"]/.test(stories)),
