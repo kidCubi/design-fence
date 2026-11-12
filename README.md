@@ -61,7 +61,7 @@ The installer only adds what is missing and refreshes what is its own (running i
 - `AGENTS.md`, `.agents/validate.json`, `.agents/ENFORCEMENT.md`, `.github/workflows/design-fence.yml`: templates to fill in, if the project has none.
 - design-fence's block in `AGENTS.md`, between its markers: which playbook for which work, and the process's non-negotiables. It is added to an `AGENTS.md` the project already has, and replaced each time the installer runs; edit outside the markers.
 - the playbooks as skills: `.agents/skills/design-fence-*` (Codex) and `.claude/skills/design-fence-*` (Claude Code), links into `skills/`, so an agent that loads skills reads the right playbook when the work matches it. Copies instead of links when design-fence is not at `.agents/design-fence`, or where links fail.
-- the agent tools' hooks (`design-fence agent-hook`): merged into `.claude/settings.json` (Claude Code) and `.codex/hooks.json` (Codex), keeping the project's own hooks, and OpenCode's plugin as `.opencode/plugins/design-fence.js`. They refuse in the session what the git hooks would only catch at the commit, or not at all: `--no-verify`, `-c core.hooksPath=…` and changing `core.hooksPath`; a second design-tool screenshot in a phase (a phase ends when the human writes); one of `figma/*.js` pasted into `figma_execute`. After a compaction they give the agent design-fence's block of `AGENTS.md` again. Codex runs them once someone has trusted them (`/hooks`), and only in a trusted project. They go to the project's agent tools: `"agents"` in `.agents/validate.json`, which `--agents` adds to (`other`: none of the three; where there is no list yet, to the tools wired already); without either, all three.
+- the agent tools' hooks (`design-fence agent-hook`): merged into `.claude/settings.json` (Claude Code, and GitHub Copilot, which runs the same file) and `.codex/hooks.json` (Codex), keeping the project's own hooks, and OpenCode's plugin as `.opencode/plugins/design-fence.js`. They refuse in the session what the git hooks would only catch at the commit, or not at all: `--no-verify`, `-c core.hooksPath=…` and changing `core.hooksPath`; a second design-tool screenshot in a phase (a phase ends when the human writes); one of `figma/*.js` pasted into `figma_execute`. After a compaction they give the agent design-fence's block of `AGENTS.md` again. Codex runs them once someone has trusted them (`/hooks`), and only in a trusted project. They go to the project's agent tools: `"agents"` in `.agents/validate.json`, which `--agents` adds to (`other`: none of the three; where there is no list yet, to the tools wired already); without either, all three.
 - no `CLAUDE.md`: Claude Code reads `AGENTS.md` when there is none (2.1.277 or later). In a `CLAUDE.md` the project has, the installer adds `@AGENTS.md` (Claude Code reads `CLAUDE.md` instead of `AGENTS.md`) and removes the import of `PROCESS.md` that earlier versions added.
 
 Nothing to install per agent: every agent loads `AGENTS.md`, which says which playbook to read, and every commit it makes goes through the hooks. Another tool that reads only its own file gets one line in it pointing to `AGENTS.md`.
@@ -85,6 +85,20 @@ In Codex: `codex plugin marketplace add kidCubi/design-fence`, then install desi
 In OpenCode (1.18.29 or later, and 2.x): copy `harness/opencode/design-fence.js` into `~/.config/opencode/plugins/`. `install.mjs` also puts a copy in the project (`.opencode/plugins/`), for whoever has not got one; the person's copy is the fence.
 
 For a company, managed settings put the plugin out of everyone's reach: Claude Code's `managed-settings.json` can force-enable it with `allowManagedHooksOnly`, and Codex has `requirements.toml`. Not tried here: see their documentation.
+
+### Which agent tools, and what each gets
+
+Every tool gets the rules (`AGENTS.md`), the git hooks on every commit and push, and CI. What differs is what is held in the session, between two commits.
+
+| Tool | In the session | Figma's server | When the fence needs the human's word | Tried live |
+|---|---|---|---|---|
+| Claude Code | The project's hooks (`.claude/settings.json`) and the plugin, outside the repository | `.mcp.json` | It asks the human in place | 2.1.322, 2026-11-12 |
+| Codex | The project's hooks (`.codex/hooks.json`, once trusted in `/hooks`, in a trusted project) and the plugin | `.codex/config.toml` | Refused, with the reason and the way out ("design-fence: allow") | 0.167, 2026-11-11 |
+| OpenCode | The project's plugin (`.opencode/plugins/`) and your own copy of it | `opencode.json` | Refused, with the reason and the way out | 2.2.7, 2026-11-11 |
+| GitHub Copilot (its CLI) | Claude Code's hooks, which it runs in a folder you trust (`--trust-folder` in prompt mode): the same refusals, with their reason. It does not pass a hook's context to its agent, so no route and no rules again after a compaction; no plugin of design-fence's for it yet | `.mcp.json` (by its own help; not tried) | Refused, with the reason and the way out | 1.0.109, 2026-11-12 |
+| Cursor, Gemini CLI, Windsurf, others | Nothing wired by design-fence. Cursor loads Claude Code's hooks by itself: refusals should hold there (exit 2), not tried | By hand | — | Not tried |
+
+`node harness/probe.mjs` (and `--answers`) records what a tool sends to hooks and which of their answers it honours: how Copilot was brought in, and where to start for another tool.
 
 ### The design module (optional)
 

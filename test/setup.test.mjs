@@ -178,6 +178,7 @@ test("install.mjs --agents: the project's tools, added to", () => {
   assert.deepEqual(agentsFor(root, {agents: ['codex']}, ['claude']), ['claude', 'codex']);
   assert.deepEqual(agentsFor(root, {agents: ['codex']}), ['codex']);
   assert.deepEqual(agentsFor(root, {}, ['other']), []);
+  assert.deepEqual(agentsFor(root, {}, ['copilot', 'codex']), ['codex', 'copilot'], "Copilot is named, though its files are Claude Code's");
   fs.mkdirSync(path.join(root, '.opencode/plugins'), {recursive: true});
   fs.writeFileSync(path.join(root, '.opencode/plugins/design-fence.js'), '');
   assert.deepEqual(agentsFor(root, {}), ['claude', 'codex', 'opencode'], 'no list, no --agents: all, as before');

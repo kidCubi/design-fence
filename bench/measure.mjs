@@ -162,7 +162,10 @@ Object.assign(out, {
   fresh: t.input + t.cacheWrite + t.output, // what is not a cache read
   figmaCalls: sum(tools, /figma/i),
   failedFigmaCalls: sum(failed, /figma/i),
+  // Asked for, and taken: a screenshot design-fence's hook refused was asked for and not taken.
   screenshots: sum(tools, /screenshot/i),
+  screenshotsTaken: sum(tools, /screenshot/i) - sum(failed, /screenshot/i),
+  failed,
   tools,
   byModel,
 });

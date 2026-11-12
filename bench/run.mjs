@@ -20,10 +20,12 @@
  *   --key <file key>       your copy of the Figma file, for the tasks that need Figma (or FILE_KEY)
  *
  * Arms: `without` (the project without design-fence's layer: bench/fixture/.bench), `with` (design-fence as
- * released: --base), `next` (design-fence as it is in this working tree).
+ * released: --base), `next` (design-fence as it is in this working tree: `all` copies it once when the round begins,
+ * so a round measures one design-fence whatever changes meanwhile; tree.json says which).
  */
 
 import {execFileSync, spawnSync} from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -71,9 +73,34 @@ function fail(message) {
 /** The request, the same in every arm: only the Figma file's key and the run's name change. */
 const promptOf = (t, run) => t.prompt.replaceAll('{{key}}', KEY || ORIGINAL_KEY).replaceAll('{{run}}', run);
 
+/** Where a round keeps design-fence as its working tree was when the round began: every `next` run gets the same. */
+const SNAPSHOT = path.join(OUT, '.design-fence');
+
+/** The round's snapshot of the working tree, made once, with what it was made from (tree.json, for the summary). */
+function snapshot() {
+  if (fs.existsSync(SNAPSHOT)) return;
+  designFence(SNAPSHOT, null);
+  const hash = crypto.createHash('sha1');
+  const walk = dir => {
+    for (const entry of fs.readdirSync(dir, {withFileTypes: true}).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(file);
+      else hash.update(path.relative(SNAPSHOT, file)).update(fs.readFileSync(file));
+    }
+  };
+  walk(SNAPSHOT);
+  const head = sh('git', ['-C', HOME, 'rev-parse', '--short', 'HEAD']).trim();
+  const dirty = sh('git', ['-C', HOME, 'status', '--porcelain', '--', '.', ':!bench', ':!test']).trim().split('\n').filter(Boolean).length;
+  fs.writeFileSync(path.join(OUT, 'tree.json'), JSON.stringify({next: {head, uncommittedFiles: dirty, id: hash.digest('hex').slice(0, 12)}, with: {ref: BASE, commit: sh('git', ['-C', HOME, 'rev-parse', '--short', BASE]).trim()}, at: new Date().toISOString()}, null, 1));
+}
+
 /** design-fence's files into `target`: as released at `ref`, or as the working tree has them (what git would commit). */
 function designFence(target, ref) {
   fs.mkdirSync(target, {recursive: true});
+  if (!ref && target !== SNAPSHOT && fs.existsSync(SNAPSHOT)) {
+    fs.cpSync(SNAPSHOT, target, {recursive: true});
+    return;
+  }
   if (ref) {
     const tar = execFileSync('git', ['-C', HOME, 'archive', ref], {maxBuffer: 1 << 28});
     execFileSync('tar', ['-x', '-C', target], {input: tar});
@@ -174,6 +201,33 @@ function agentRun(t, dir, log, run) {
 
 const figma = (...args) => spawnSync(process.execPath, [path.join(BENCH, 'figma.mjs'), ...args, '--key', KEY], {encoding: 'utf8', timeout: 240_000});
 
+/**
+ * The Figma file as it is: its pages and how many layers each holds. The first call of a round keeps it
+ * (file.json); every later one must find the same, or a run changed something besides its own page. Returns what
+ * differs, '' when nothing does. A page named "Bench …" at the start is a leftover: the round does not start.
+ */
+function fileUnchanged() {
+  const answer = figma('-e', 'await figma.loadAllPagesAsync(); return figma.root.children.map(p => ({name: p.name, layers: p.findAll(() => true).length}));');
+  let now;
+  try {
+    now = JSON.parse(answer.stdout).result;
+  } catch {
+    return `the bridge did not answer (${(answer.stdout || answer.stderr || '').trim().split('\n').pop()})`;
+  }
+  if (!Array.isArray(now)) return `the bridge did not answer (${answer.stdout.trim().slice(0, 200)})`;
+  const record = path.join(OUT, 'file.json');
+  if (!fs.existsSync(record)) {
+    const left = now.filter(page => page.name.startsWith('Bench '));
+    if (left.length) return `pages left by an earlier run: ${left.map(page => page.name).join(', ')}: delete them first`;
+    fs.mkdirSync(OUT, {recursive: true});
+    fs.writeFileSync(record, JSON.stringify(now));
+    console.log(`The file: ${now.map(page => `${page.name} (${page.layers})`).join(', ')}`);
+    return '';
+  }
+  const was = fs.readFileSync(record, 'utf8');
+  return was === JSON.stringify(now) ? '' : `the file was ${was}, and is ${JSON.stringify(now)}`;
+}
+
 /** After a run on Figma, not measured: its page audited (bench/audit.js), then deleted. */
 function figmaReset(log, page) {
   const audit = figma(path.join(BENCH, 'audit.js'));
@@ -201,6 +255,7 @@ export async function one(t, arm, n) {
   agentRun(t, dir, log, run);
   const measured = JSON.parse(sh(process.execPath, [path.join(BENCH, 'measure.mjs'), `${log}.jsonl`, '--json']));
   const audit = t.figma && t.page ? figmaReset(log, t.page.replaceAll('{{run}}', run)) : undefined;
+  const moved = t.figma ? fileUnchanged() : '';
   const changed = git(dir, 'status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3));
   const diff = git(dir, 'diff', 'HEAD');
   let checks = [];
@@ -215,6 +270,7 @@ export async function one(t, arm, n) {
     `${result.ok ? 'finished' : `DID NOT FINISH (${result.subtype})`}, $${(result.cost ?? 0).toFixed(2)}, ${Math.round(result.total / 1000)}k tokens, ` +
       `${Object.values(result.tools).reduce((a, b) => a + b, 0)} tool calls, ${result.seconds}s, score ${result.score.passed}/${result.score.of}`,
   );
+  if (moved) fail(`Stopped after ${t.name} ${arm}-${n}: the Figma file is not as the round found it (${moved}).`);
   return result;
 }
 
@@ -237,9 +293,21 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
   } else if (command === 'prepare') {
     console.log(await prepare(task(rest[0]), rest[1], rest[2]));
   } else if (command === 'one') {
-    await one(task(rest[0]), rest[1], rest[2]);
+    const t = task(rest[0]);
+    if (t.figma && KEY) {
+      const moved = fileUnchanged();
+      if (moved) fail(`Not started: ${moved}.`);
+    }
+    await one(t, rest[1], rest[2]);
   } else if (command === 'all') {
     // One at a time, the arms alternating, so that what changes over an hour (the provider's load) touches both.
+    if (chosen().some(t => t.figma)) {
+      if (!KEY) fail('Tasks on Figma: give --key <the file key> (bench/README.md).');
+      const moved = fileUnchanged();
+      if (moved) fail(`Not started: ${moved}.`);
+    }
+    fs.mkdirSync(OUT, {recursive: true});
+    if (arms.includes('next')) snapshot();
     for (const t of chosen()) for (let n = 1; n <= RUNS; n++) for (const arm of arms) await one(t, arm, n);
     spawnSync(process.execPath, [path.join(BENCH, 'summary.mjs'), OUT], {stdio: 'inherit'});
   } else {

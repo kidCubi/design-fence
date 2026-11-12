@@ -28,7 +28,7 @@ const MEASURES = [
   ['fresh', 'Tokens not from cache', run => run.fresh, value => `${Math.round(value / 1e3)}k`],
   ['calls', 'Tool calls', run => Object.values(run.tools ?? {}).reduce((a, b) => a + b, 0), value => String(Math.round(value))],
   ['figmaCalls', 'Figma calls', run => run.figmaCalls, value => String(Math.round(value))],
-  ['screenshots', 'Screenshots', run => run.screenshots, value => String(Math.round(value))],
+  ['screenshots', 'Screenshots taken', run => run.screenshotsTaken ?? run.screenshots, value => String(Math.round(value))],
   ['turns', 'Turns', run => run.turns, value => String(Math.round(value))],
   ['seconds', 'Seconds', run => run.seconds, value => String(Math.round(value))],
 ];
@@ -80,7 +80,12 @@ const summary = {
   model: first?.model,
   tasks: {},
 };
+const tree = fs.existsSync(path.join(dir, 'tree.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'tree.json'), 'utf8')) : null;
+summary.tree = tree;
 const lines = [`# ${summary.round}: ${summary.model ?? '?'} (${summary.agent === 'codex' ? 'Codex' : 'Claude Code'} ${summary.agentVersion ?? ''})`, ''];
+if (tree) {
+  lines.push(`design-fence, "this tree": ${tree.next.head}${tree.next.uncommittedFiles ? ` with ${tree.next.uncommittedFiles} uncommitted file(s)` : ''} (snapshot ${tree.next.id}, ${tree.at.slice(0, 10)}); "released": ${tree.with.ref} (${tree.with.commit}).`, '');
+}
 const percent = diff => (diff ? `${diff.percent > 0 ? '+' : diff.percent < 0 ? '−' : ''}${Math.abs(diff.percent)}%${diff.shown ? '' : ' (not shown)'}` : '—');
 
 for (const [task, byArm] of Object.entries(tasks).sort()) {

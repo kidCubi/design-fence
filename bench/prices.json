@@ -1,6 +1,6 @@
 {
   "about": "List prices in USD per million tokens, standard tier, for the models the bench has run. measure.mjs prices each run's tokens with them, the same way for every agent. Check them on the day of a round and update the date.",
-  "checked": "2026-11-10",
+  "checked": "2026-11-12",
   "models": {
     "claude-opus-5-5": {
       "input": 4,
@@ -32,6 +32,13 @@
       "cacheWrite": 2.5,
       "output": 10,
       "source": "https://developers.openai.com/api/docs/pricing (standard; over 272k input tokens in a request: 4, 0.2, 5 and 15, which Codex's log cannot show per request)"
+    },
+    "gpt-6-luna": {
+      "input": 0.1,
+      "cachedInput": 0.01,
+      "cacheWrite": 0.125,
+      "output": 0.5,
+      "source": "Price aggregators (benchlm.ai/models/gpt-6-luna, techjacksolutions.com, teamorouter.com), 2026-11-12: not read from OpenAI's own pricing page; confirm at https://developers.openai.com/api/docs/pricing before quoting a cost. Over 272k input tokens in a request: 0.2 and 0.75, which Codex's log cannot show per request."
     }
   }
 }

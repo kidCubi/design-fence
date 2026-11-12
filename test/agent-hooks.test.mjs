@@ -316,3 +316,32 @@ test("the tokens file is the export's: an edit by hand needs the human's word, t
   assert.deepEqual(pre('Bash', {command: 'node .agents/design-fence/bin/design-fence.mjs figma tokens --format css --out src/tokens.css'}), {});
   assert.deepEqual(pre('Edit', {file_path: path.join(root, 'src/page.css'), old_string: 'a', new_string: 'b'}), {});
 });
+
+test("GitHub Copilot running Claude Code's hooks (its payloads, as recorded with harness/probe.mjs on 1.0.109): refused with the reason, in the form it shows its agent", () => {
+  const root = designed();
+  const home = path.join(root, '.agents/design-fence');
+  // Copilot sets CLAUDE_PROJECT_DIR, maps its tools to Claude Code's names, and sends no permission mode.
+  const env = {CLAUDE_PROJECT_DIR: root, COPILOT_PROJECT_DIR: root, COPILOT_CLI: '1'};
+  const base = {session_id: 'c7f1', timestamp: '2026-11-11T23:43:22.423Z', cwd: root};
+  const pre = (tool_name, tool_input, tool_use_id = 'toolu_1') => runHook('pre-tool-use', JSON.stringify({...base, hook_event_name: 'PreToolUse', tool_use_id, tool_name, tool_input}), {home, env});
+  // On exit 2, Copilot tells its agent only "hook exited with code 2": the refusal is Claude Code's JSON, on exit 0.
+  const refused = result => {
+    assert.equal(result.code, 0);
+    const output = JSON.parse(result.stdout).hookSpecificOutput;
+    assert.equal(output.permissionDecision, 'deny');
+    return output.permissionDecisionReason;
+  };
+  assert.deepEqual(pre('Bash', {command: 'echo hello', description: 'Echo hello'}), {code: 0});
+  assert.match(refused(pre('Bash', {command: 'git -c core.hooksPath=/dev/null status', description: 'Status'})), /skips the git hooks/);
+  // Its `create` tool, as `Write`, with `path` and `file_text`.
+  assert.match(refused(pre('Write', {path: path.join(root, '.agents/validate.json'), file_text: '{}'})), /needs the human's word[\s\S]*design-fence: allow/);
+  assert.match(refused(pre('Write', {path: path.join(root, 'design/components/badge.md'), file_text: '---\nname: Badge\nstatus: approved\n---\n'})), /marks design\/components\/badge\.md approved/);
+  assert.deepEqual(pre('Write', {path: path.join(root, 'b.txt'), file_text: 'hi\n'}), {code: 0});
+  // The same payloads from a tool that is neither (no COPILOT_CLI): exit 2, the form every tool refuses on.
+  const other = runHook('pre-tool-use', JSON.stringify({...base, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: {command: 'git commit --no-verify'}}), {home, env: {CLAUDE_PROJECT_DIR: root}});
+  assert.equal(other.code, 2);
+  // The route is still computed for the prompt; Copilot does not pass a hook's context on (AGENTS.md names the command).
+  const prompt = runHook('user-prompt', JSON.stringify({...base, hook_event_name: 'UserPromptSubmit', prompt: 'Make the Button corners rounded'}), {home, env});
+  assert.match(prompt.stdout, /design-fence route: design: something users see \(Button: built\)/);
+  assert.equal(runHook('session-start', JSON.stringify({...base, hook_event_name: 'SessionStart', source: 'new', initial_prompt: 'x'}), {home, env}).code, 0);
+});

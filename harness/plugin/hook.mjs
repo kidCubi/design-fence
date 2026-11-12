@@ -160,9 +160,15 @@ function hooksState(root, home) {
   return {state, current, wanted};
 }
 
-/** The project's files where `install.mjs` puts the agent tools' hooks. */
+/**
+ * The project's files where `install.mjs` puts the agent tools' hooks.
+ * GitHub Copilot's is Claude Code's: its CLI runs the hooks of
+ * `.claude/settings.json` in a folder it trusts, as Claude Code does (its
+ * tool names mapped to Claude Code's), and reads the same `.mcp.json`.
+ */
 const AGENT_FILES = {
   claude: '.claude/settings.json',
+  copilot: '.claude/settings.json',
   codex: '.codex/hooks.json',
   opencode: '.opencode/plugins/design-fence.js',
 };
@@ -173,6 +179,7 @@ function agentHooksState(root) {
   const has = file => /design-fence\.mjs\\" agent-hook /.test(readText(path.join(root, file)));
   return {
     claude: has(AGENT_FILES.claude),
+    copilot: has(AGENT_FILES.copilot),
     codex: has(AGENT_FILES.codex),
     opencode: fs.existsSync(path.join(root, AGENT_FILES.opencode)),
   };
@@ -717,6 +724,8 @@ function fenceFiles(root, home, homedir = os.homedir()) {
     inHome('.codex/hooks.json'),
     inHome('.codex/plugins', true),
     inHome('.config/opencode', true),
+    inHome('.copilot/config.json'),
+    inHome('.copilot/installed-plugins', true),
     ...designFiles(root).map(entry => ({...inRoot(entry.file), why: entry.why})),
   ];
 }
@@ -770,7 +779,8 @@ function gateReason(root, tool, input, homedir = os.homedir()) {
     return '';
   }
   // What the edit writes: an Edit's new text, a Write's content, a patch's added lines.
-  const written = [input?.new_string, input?.newString, input?.content, ...(Array.isArray(input?.edits) ? input.edits.map(edit => edit?.new_string ?? edit?.newString) : [])].filter(text => typeof text === 'string');
+  // (Copilot's edit tools name them `file_text` and `new_str`.)
+  const written = [input?.new_string, input?.newString, input?.content, input?.file_text, input?.new_str, ...(Array.isArray(input?.edits) ? input.edits.map(edit => edit?.new_string ?? edit?.newString) : [])].filter(text => typeof text === 'string');
   const patch = Object.values(input ?? {}).filter(value => typeof value === 'string' && /^\*\*\* (?:Add|Update) File:/m.test(value)).map(text => text.split('\n').filter(line => line.startsWith('+')).join('\n'));
   // Already approved before this edit: not this edit's doing.
   const was = files.every(file => approves(readText(path.join(root, file))));
@@ -1100,6 +1110,10 @@ function runHook(name, input, {home, plugin = false, env = process.env, cwd = pr
     // with every tool call. Other tools load Claude Code's hooks from `.claude/settings.json` (Cursor, Copilot) and
     // some set the variable too, without honouring "ask": there, as in Codex, a refusal with the way out.
     const asks = tool === 'claude' && Boolean(env.CLAUDE_PROJECT_DIR) && 'permission_mode' in payload;
+    // GitHub Copilot's CLI, running Claude Code's hooks: it refuses on exit 2 but tells its agent only "hook exited
+    // with code 2"; the reason reaches the agent as Claude Code's JSON refusal, on exit 0 (tried on 1.0.109 with
+    // harness/probe.mjs --answers; Claude Code honours that form too). It gives its agent no context from hooks.
+    const copilot = tool === 'claude' && !asks && Boolean(env.COPILOT_CLI);
     const event = fromHookInput(payload, name);
     // Context is given once: by the project's own hooks where it has them for this tool.
     const wired = plugin && agentHooksState(root)[tool];
@@ -1112,7 +1126,11 @@ function runHook(name, input, {home, plugin = false, env = process.env, cwd = pr
       return {code: 0, stdout: JSON.stringify(output)};
     }
     if (decision.deny || decision.ask) {
-      return {code: 2, stderr: decision.deny ?? decision.ask};
+      const reason = decision.deny ?? decision.ask;
+      if (copilot) {
+        return {code: 0, stdout: JSON.stringify({hookSpecificOutput: {hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason}})};
+      }
+      return {code: 2, stderr: reason};
     }
     return decision.context && !(wired && event.name === 'user-prompt') ? {code: 0, stdout: decision.context} : {code: 0};
   } catch (error) {

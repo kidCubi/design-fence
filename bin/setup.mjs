@@ -3,7 +3,7 @@
  * design-fence's installer, for a person in a terminal or for their agent:
  * run in the project's folder,
  *
- *     npx github:kidCubi/design-fence [--agents claude,codex,opencode,other] [--design | --no-design] [--yes]
+ *     npx github:kidCubi/design-fence [--agents claude,codex,opencode,copilot,other] [--design | --no-design] [--yes]
  *
  * it does everything design-fence needs to work, and says what is left for
  * the person to do in their tools (what no command can do for them):
@@ -48,14 +48,14 @@ const MARKETPLACE = 'kidCubi/design-fence';
 /** How a person runs this again (a teammate, after cloning). */
 export const COMMAND = 'npx github:kidCubi/design-fence';
 const NODE_MAJOR = 20;
-const NAMES = {claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode', other: 'Another agent'};
+const NAMES = {claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode', copilot: 'GitHub Copilot', other: 'Another agent'};
 const REFLECT = "Reflect: design-fence's files, installed as they come";
 
 const USAGE = `Installs design-fence into the project in this folder (a git repository).
 
   ${COMMAND} [options]
 
-  --agents <list>   the agent tools you use: claude, codex, opencode, other
+  --agents <list>   the agent tools you use: claude, codex, opencode, copilot, other
                     (comma-separated; asked in a terminal, else those found)
   --design          with the design module (Figma, Storybook); asked in a terminal
   --no-design       without it
@@ -281,7 +281,7 @@ export async function main(argv = process.argv.slice(2)) {
         value,
         label: NAMES[value],
         checked: found.includes(value) || (config.agents ?? []).includes(value),
-        hint: value === 'other' ? 'Cursor, Copilot, Gemini…: AGENTS.md and the git hooks' : found.includes(value) ? 'found on this machine' : '',
+        hint: value === 'other' ? 'Cursor, Gemini…: AGENTS.md and the git hooks' : found.includes(value) ? 'found on this machine' : '',
       })),
     );
   } else {
@@ -299,8 +299,8 @@ export async function main(argv = process.argv.slice(2)) {
   if (interactive) {
     say('');
     say(`  Into ${bold(root)}: design-fence${design ? ' with its design module' : ''}, for ${and(agents.map(name => NAMES[name]))}.`);
-    if (plugins && agents.some(name => AGENTS.includes(name))) {
-      say(`  And its plugin into your own ${and(agents.filter(name => AGENTS.includes(name)).map(name => NAMES[name]))}, outside the project.`);
+    if (plugins && agents.some(name => AGENTS.includes(name) && name !== 'copilot')) {
+      say(`  And its plugin into your own ${and(agents.filter(name => AGENTS.includes(name) && name !== 'copilot').map(name => NAMES[name]))}, outside the project.`);
     }
     if (!(await confirm('Go?', {yes: true}))) {
       say('Nothing done.');
@@ -356,6 +356,11 @@ export async function main(argv = process.argv.slice(2)) {
   let failed = false;
   if (plugins) {
     for (const tool of tools) {
+      if (tool === 'copilot') {
+        // Its plugins exist (copilot plugin install), but design-fence's has not been tried in it: the project's hooks only.
+        ok(`${NAMES[tool]}: no plugin of design-fence's for it yet: the project's hooks are its fence there`);
+        continue;
+      }
       const result = tool === 'claude' ? claudePlugin(marketplace) : tool === 'codex' ? codexPlugin(marketplace) : opencodePlugin(home);
       if (result.ok) {
         ok(`${NAMES[tool]}: ${result.note}`);
@@ -399,6 +404,11 @@ export async function main(argv = process.argv.slice(2)) {
       );
     } else if (tool === 'opencode') {
       left.push(`${restart('OpenCode')}.`);
+    } else if (tool === 'copilot') {
+      left.push(
+        `${restart('GitHub Copilot')}, and trust the folder when it asks: it runs the project's hooks (those of .claude/settings.json) only in a folder you trust; in prompt mode, with --trust-folder.` +
+          (design ? " It reads Figma's server from the project's .mcp.json." : ''),
+      );
     } else {
       left.push(
         'In your other agent: if it does not read AGENTS.md, add one line to its own instructions file: "Read AGENTS.md first."' +

@@ -8,7 +8,7 @@ export default function score({arm, changed, audit, measured}) {
     check('every value bound to a variable', audit && audit.unboundCount === 0, audit ? `${audit.unboundCount} unbound` : ''),
     check('every frame has auto-layout', audit && audit.framesWithoutAutoLayout === 0, audit ? `${audit.framesWithoutAutoLayout} without` : ''),
     check('not built in code', code.length === 0, code.join(', ')),
-    check('one screenshot at most', (measured.screenshots ?? 0) <= 1, `${measured.screenshots} screenshots`),
+    check('one screenshot at most', (measured.screenshotsTaken ?? measured.screenshots ?? 0) <= 1, `${measured.screenshotsTaken ?? measured.screenshots} taken, ${measured.screenshots} asked for`),
     ...(arm === 'without' ? [] : [check('a draft spec is left', changed.some(file => /^design\/components\/.*badge.*\.md$/i.test(file)))]),
   ];
 }

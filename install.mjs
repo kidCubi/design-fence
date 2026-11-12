@@ -78,7 +78,7 @@ const SKILL_DIRS = ['.agents/skills', '.claude/skills'];
 const skillNames = design => (design ? [...SKILLS, ...DESIGN_SKILLS] : SKILLS);
 
 /** The agent tools design-fence wires into a project (`AGENT_FILES`, `MCP_FILES`). */
-export const AGENTS = ['claude', 'codex', 'opencode'];
+export const AGENTS = ['claude', 'codex', 'opencode', 'copilot'];
 
 /**
  * The project's agent tools: `agents` in its `validate.json`, else all
@@ -87,8 +87,11 @@ export const AGENTS = ['claude', 'codex', 'opencode'];
  * Names other than `AGENTS` (`other`) add none.
  */
 export function agentsFor(root, config, add = null) {
-  const wired = () => Object.entries(agentHooksState(root)).filter(([, on]) => on).map(([tool]) => tool);
+  // Copilot runs Claude Code's hooks: their file being there does not say Copilot is one of the project's tools.
+  const wired = () => Object.entries(agentHooksState(root)).filter(([tool, on]) => on && tool !== 'copilot').map(([tool]) => tool);
   const base = Array.isArray(config.agents) ? config.agents : add ? wired() : AGENTS;
+  // No list and no --agents: the tools with files of their own (Copilot's are Claude Code's).
+  if (!Array.isArray(config.agents) && !add) return AGENTS.filter(tool => tool !== 'copilot');
   return AGENTS.filter(tool => base.includes(tool) || (add ?? []).includes(tool));
 }
 
@@ -162,11 +165,15 @@ const AGENT_EVENTS = [
   ['UserPromptSubmit', 'user-prompt'],
   ['PreToolUse', 'pre-tool-use', PRE_TOOL_MATCHER],
 ];
-const agentCommands = relative => ({
-  // Other tools run Claude Code's hooks too (Cursor, Copilot), not all with its variable: the repository's root then.
-  claude: name => `node "\${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
-  codex: name => `node "$(git rev-parse --show-toplevel)/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
-});
+const agentCommands = relative => {
+  // Other tools run Claude Code's hooks too (Copilot, Cursor), not all with its variable: the repository's root then.
+  const claude = name => `node "\${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}/${relative}/bin/design-fence.mjs" agent-hook ${name}`;
+  return {
+    claude,
+    copilot: claude,
+    codex: name => `node "$(git rev-parse --show-toplevel)/${relative}/bin/design-fence.mjs" agent-hook ${name}`,
+  };
+};
 const isAgentHook = hook => /design-fence\.mjs" agent-hook /.test(hook?.command ?? '');
 
 /**
@@ -211,7 +218,7 @@ function installAgentHooks(root, relative, write, tools) {
     const next = `${JSON.stringify(withAgentHooks(settings, command), null, 2)}\n`;
     if (next !== text) {
       write(file, next);
-      written.push(file);
+      if (!written.includes(file)) written.push(file);
     }
   }
   const plugin = read(path.join(HOME, 'harness/opencode/design-fence.js'));
@@ -231,7 +238,7 @@ function installAgentHooks(root, relative, write, tools) {
 const FIGMA_SERVER = {name: 'figma-console', command: 'npx', args: ['-y', FIGMA_CONSOLE]};
 /** design-fence's own declaration of an earlier version (or of `@latest`), which it brings to the pinned one. */
 const isOwnFigmaArgs = args => Array.isArray(args) && args.length === 2 && args[0] === '-y' && /^figma-console-mcp@[\w.]+$/.test(args[1]) && args[1] !== FIGMA_CONSOLE;
-export const MCP_FILES = {claude: '.mcp.json', codex: '.codex/config.toml', opencode: 'opencode.json'};
+export const MCP_FILES = {claude: '.mcp.json', codex: '.codex/config.toml', opencode: 'opencode.json', copilot: '.mcp.json'};
 const CODEX_FIGMA = [
   '',
   "# design-fence's design module: Figma through figma-console's Desktop Bridge (no token needed).",
@@ -279,7 +286,7 @@ function installFigmaServer(root, write, tools) {
     return entry && entry.type === 'local' && entry.command?.[0] === FIGMA_SERVER.command && isOwnFigmaArgs(entry.command.slice(1)) && !entry.environment;
   };
   json(MCP_FILES.claude, settings =>
-    !tools.includes('claude') || (settings?.mcpServers?.[FIGMA_SERVER.name] && !ownClaude(settings))
+    !(tools.includes('claude') || tools.includes('copilot')) || (settings?.mcpServers?.[FIGMA_SERVER.name] && !ownClaude(settings))
       ? null
       : {
           ...settings,
