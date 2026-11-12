@@ -38,6 +38,12 @@ At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`,
 
 ## Plugin API: what surprises
 
+The first three made most of the scripts that failed in design-fence's own measure, on every model.
+
+- The file loads page by page (`documentAccess: dynamic-page`), so what reaches across it has only an async form, and the other throws: `await figma.getNodeByIdAsync(id)`, `await figma.setCurrentPageAsync(page)` (never `figma.currentPage = page`), `await instance.getMainComponentAsync()`, `await figma.variables.getVariableByIdAsync(id)` and `getVariableCollectionByIdAsync`, `await figma.getLocalTextStylesAsync()`.
+- A variant has no `componentPropertyDefinitions`, and reading it throws: read them on its set (`node.parent`), or on a component that is in no set.
+- A property that can be mixed (`fontName`, `fontSize`, `cornerRadius`) may hold the symbol `figma.mixed`, which a script can neither return nor join into a string: return `v === figma.mixed ? 'mixed' : v`.
+- A section is sized with `resizeWithoutConstraints(w, h)`. Nothing is created to try a method out: `typeof figma.createSection().resize` leaves a section on the current page.
 - `clone()` puts the copy on the page, not in the component set: append it to the set before binding the set's properties to it.
 - `resize()` makes an auto-layout frame fixed: set the sizing modes (`layoutSizingHorizontal`, `primaryAxisSizingMode`) after it, not before.
 - A size read in the call that changed the node can be stale: verify sizes in the next call.
