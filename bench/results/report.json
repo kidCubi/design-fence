@@ -2,6 +2,930 @@
  "made": "2026-11-13",
  "rounds": [
   {
+   "round": "r5-opus-5.5",
+   "model": "claude-opus-5-5",
+   "agent": "Claude Code",
+   "agentVersion": "2.1.322",
+   "tree": {
+    "next": {
+     "head": "56ac855",
+     "uncommittedFiles": 10,
+     "id": "78e8059a5b98"
+    },
+    "with": {
+     "ref": "origin/main",
+     "commit": "9579683"
+    },
+    "at": "2026-11-13T11:56:51.491Z"
+   },
+   "tasks": {
+    "component-build": {
+     "runs": {
+      "without": 5,
+      "with": 5
+     },
+     "measures": {
+      "cost": {
+       "without": {
+        "median": 1.4498873999999997,
+        "min": 1.2203727,
+        "max": 1.5991870000000001
+       },
+       "with": {
+        "median": 1.0884064,
+        "min": 0.9941556000000001,
+        "max": 1.3166213999999998
+       },
+       "percent": -25,
+       "shown": false
+      },
+      "seconds": {
+       "without": {
+        "median": 252,
+        "min": 211,
+        "max": 279
+       },
+       "with": {
+        "median": 178,
+        "min": 173,
+        "max": 249
+       },
+       "percent": -29,
+       "shown": false
+      },
+      "tokens": {
+       "without": {
+        "median": 1906649,
+        "min": 1507154,
+        "max": 2617932
+       },
+       "with": {
+        "median": 1633443,
+        "min": 1367411,
+        "max": 1993569
+       },
+       "percent": -14,
+       "shown": false
+      },
+      "calls": {
+       "without": {
+        "median": 36,
+        "min": 32,
+        "max": 52
+       },
+       "with": {
+        "median": 30,
+        "min": 26,
+        "max": 40
+       },
+       "percent": -17,
+       "shown": false
+      },
+      "figmaCalls": {
+       "without": {
+        "median": 8,
+        "min": 5,
+        "max": 10
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": -100,
+       "shown": true
+      },
+      "screenshots": {
+       "without": {
+        "median": 3,
+        "min": 1,
+        "max": 3
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": -100,
+       "shown": true
+      }
+     },
+     "holds": {
+      "without": {
+       "held": 3,
+       "of": 5
+      },
+      "with": {
+       "held": 5,
+       "of": 5
+      }
+     },
+     "spent": {
+      "without": 7.093120299999999,
+      "with": 5.6600766
+     },
+     "checks": {
+      "the element df-command is defined": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "its stories are titled Components/Command": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "a story with the copy button and one without": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "no value written raw": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "the design's tokens, all of them": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "no token the design does not use": {
+       "without": {
+        "passed": 4,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "the copy button is the library's Button": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "a pre holding a code (the spec's accessibility)": {
+       "without": {
+        "passed": 4,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "nothing else in the project changed": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "the report names what it checked": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "nothing else in the Figma file changed": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      }
+     }
+    },
+    "drift-probe": {
+     "runs": {
+      "without": 5,
+      "with": 5
+     },
+     "measures": {
+      "cost": {
+       "without": {
+        "median": 0.5541887,
+        "min": 0.34347449999999996,
+        "max": 0.6174571000000001
+       },
+       "with": {
+        "median": 0.6743447,
+        "min": 0.5662793,
+        "max": 0.8900839
+       },
+       "percent": 22,
+       "shown": false
+      },
+      "seconds": {
+       "without": {
+        "median": 83,
+        "min": 41,
+        "max": 108
+       },
+       "with": {
+        "median": 98,
+        "min": 79,
+        "max": 162
+       },
+       "percent": 18,
+       "shown": false
+      },
+      "tokens": {
+       "without": {
+        "median": 741254,
+        "min": 378799,
+        "max": 851849
+       },
+       "with": {
+        "median": 662816,
+        "min": 463670,
+        "max": 1077453
+       },
+       "percent": -11,
+       "shown": false
+      },
+      "calls": {
+       "without": {
+        "median": 19,
+        "min": 8,
+        "max": 22
+       },
+       "with": {
+        "median": 25,
+        "min": 18,
+        "max": 29
+       },
+       "percent": 32,
+       "shown": false
+      },
+      "figmaCalls": {
+       "without": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": null,
+       "shown": false
+      },
+      "screenshots": {
+       "without": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": null,
+       "shown": false
+      }
+     },
+     "holds": {
+      "without": {
+       "held": 0,
+       "of": 5
+      },
+      "with": {
+       "held": 5,
+       "of": 5
+      }
+     },
+     "spent": {
+      "without": 2.6368447,
+      "with": 3.5212071000000007
+     },
+     "checks": {
+      "no visual reached the code without a design": {
+       "without": {
+        "passed": 0,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "no value written raw": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "says what is left (a design to approve)": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      }
+     }
+    },
+    "figma-badge": {
+     "runs": {
+      "without": 5,
+      "with": 5
+     },
+     "measures": {
+      "cost": {
+       "without": {
+        "median": 0.9267993,
+        "min": 0.8333843,
+        "max": 1.0315347000000001
+       },
+       "with": {
+        "median": 1.0485163000000002,
+        "min": 0.8790258,
+        "max": 1.1942917000000002
+       },
+       "percent": 13,
+       "shown": false
+      },
+      "seconds": {
+       "without": {
+        "median": 125,
+        "min": 118,
+        "max": 148
+       },
+       "with": {
+        "median": 166,
+        "min": 121,
+        "max": 208
+       },
+       "percent": 33,
+       "shown": false
+      },
+      "tokens": {
+       "without": {
+        "median": 1246818,
+        "min": 898973,
+        "max": 1295889
+       },
+       "with": {
+        "median": 1084421,
+        "min": 969294,
+        "max": 1484666
+       },
+       "percent": -13,
+       "shown": false
+      },
+      "calls": {
+       "without": {
+        "median": 20,
+        "min": 16,
+        "max": 21
+       },
+       "with": {
+        "median": 25,
+        "min": 20,
+        "max": 28
+       },
+       "percent": 25,
+       "shown": false
+      },
+      "figmaCalls": {
+       "without": {
+        "median": 17,
+        "min": 13,
+        "max": 18
+       },
+       "with": {
+        "median": 5,
+        "min": 5,
+        "max": 7
+       },
+       "percent": -71,
+       "shown": true
+      },
+      "screenshots": {
+       "without": {
+        "median": 4,
+        "min": 3,
+        "max": 5
+       },
+       "with": {
+        "median": 1,
+        "min": 1,
+        "max": 1
+       },
+       "percent": -75,
+       "shown": true
+      }
+     },
+     "holds": {
+      "without": {
+       "held": 5,
+       "of": 5
+      },
+      "with": {
+       "held": 5,
+       "of": 5
+      }
+     },
+     "spent": {
+      "without": 4.6239289,
+      "with": 5.152198100000001
+     },
+     "checks": {
+      "the design is there (its page was found)": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "every value bound to a variable": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "every frame has auto-layout": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "not built in code": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "one screenshot at most": {
+       "without": {
+        "passed": 0,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": true
+      },
+      "nothing else in the Figma file changed": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      }
+     }
+    },
+    "review": {
+     "runs": {
+      "without": 5,
+      "with": 5
+     },
+     "measures": {
+      "cost": {
+       "without": {
+        "median": 0.2971722,
+        "min": 0.2875697,
+        "max": 0.3225219
+       },
+       "with": {
+        "median": 0.3970939,
+        "min": 0.3532359,
+        "max": 0.40407249999999995
+       },
+       "percent": 34,
+       "shown": true
+      },
+      "seconds": {
+       "without": {
+        "median": 37,
+        "min": 34,
+        "max": 41
+       },
+       "with": {
+        "median": 44,
+        "min": 38,
+        "max": 47
+       },
+       "percent": 19,
+       "shown": false
+      },
+      "tokens": {
+       "without": {
+        "median": 234167,
+        "min": 233340,
+        "max": 239585
+       },
+       "with": {
+        "median": 315975,
+        "min": 259646,
+        "max": 320066
+       },
+       "percent": 35,
+       "shown": true
+      },
+      "calls": {
+       "without": {
+        "median": 4,
+        "min": 4,
+        "max": 5
+       },
+       "with": {
+        "median": 6,
+        "min": 4,
+        "max": 6
+       },
+       "percent": 50,
+       "shown": false
+      },
+      "figmaCalls": {
+       "without": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": null,
+       "shown": false
+      },
+      "screenshots": {
+       "without": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": null,
+       "shown": false
+      }
+     },
+     "holds": {
+      "without": {
+       "held": 5,
+       "of": 5
+      },
+      "with": {
+       "held": 5,
+       "of": 5
+      }
+     },
+     "spent": {
+      "without": 1.5018742,
+      "with": 1.9423192
+     },
+     "checks": {
+      "says it cannot be committed as it is": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "finds that the kind was never designed (no spec, no approved design)": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "finds the padding written raw": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "finds the primitive where a role belongs": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "finds the motion without reduced motion": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "finds the label against the voice": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "changed nothing": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      }
+     }
+    },
+    "ship-issue": {
+     "runs": {
+      "without": 5,
+      "with": 5
+     },
+     "measures": {
+      "cost": {
+       "without": {
+        "median": 0.3031605,
+        "min": 0.2797763,
+        "max": 0.3256927
+       },
+       "with": {
+        "median": 0.47219969999999994,
+        "min": 0.43121729999999997,
+        "max": 0.5211361
+       },
+       "percent": 56,
+       "shown": true
+      },
+      "seconds": {
+       "without": {
+        "median": 31,
+        "min": 27,
+        "max": 36
+       },
+       "with": {
+        "median": 53,
+        "min": 48,
+        "max": 60
+       },
+       "percent": 71,
+       "shown": true
+      },
+      "tokens": {
+       "without": {
+        "median": 277043,
+        "min": 229721,
+        "max": 327737
+       },
+       "with": {
+        "median": 470501,
+        "min": 373070,
+        "max": 648289
+       },
+       "percent": 70,
+       "shown": true
+      },
+      "calls": {
+       "without": {
+        "median": 7,
+        "min": 4,
+        "max": 9
+       },
+       "with": {
+        "median": 15,
+        "min": 10,
+        "max": 18
+       },
+       "percent": 114,
+       "shown": true
+      },
+      "figmaCalls": {
+       "without": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": null,
+       "shown": false
+      },
+      "screenshots": {
+       "without": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "with": {
+        "median": 0,
+        "min": 0,
+        "max": 0
+       },
+       "percent": null,
+       "shown": false
+      }
+     },
+     "holds": {
+      "without": {
+       "held": 5,
+       "of": 5
+      },
+      "with": {
+       "held": 5,
+       "of": 5
+      }
+     },
+     "spent": {
+      "without": 1.5081493,
+      "with": 2.3604571
+     },
+     "checks": {
+      "the issue is fixed (its own test)": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "the project's tests pass": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "a test covers the fix": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "nothing else changed": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "not committed": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      },
+      "the report names what ran": {
+       "without": {
+        "passed": 5,
+        "of": 5
+       },
+       "with": {
+        "passed": 5,
+        "of": 5
+       },
+       "ownRule": false
+      }
+     }
+    }
+   },
+   "label": "claude-opus-5-5"
+  },
+  {
    "round": "r5-haiku-5.5",
    "model": "claude-haiku-5-5",
    "agent": "Claude Code",
@@ -2779,6 +3703,26 @@
  "shown": [
   {
    "task": "figma-badge",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Figma calls",
+   "percent": -71,
+   "without": 17,
+   "with": 5
+  },
+  {
+   "task": "figma-badge",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Screenshots",
+   "percent": -75,
+   "without": 4,
+   "with": 1
+  },
+  {
+   "task": "figma-badge",
    "model": "claude-haiku-5-5",
    "round": "r5-haiku-5.5",
    "label": "claude-haiku-5-5",
@@ -2816,6 +3760,26 @@
    "percent": -75,
    "without": 4,
    "with": 1
+  },
+  {
+   "task": "component-build",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Figma calls",
+   "percent": -100,
+   "without": 8,
+   "with": 0
+  },
+  {
+   "task": "component-build",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Screenshots",
+   "percent": -100,
+   "without": 3,
+   "with": 0
   },
   {
    "task": "component-build",
@@ -2939,6 +3903,26 @@
   },
   {
    "task": "review",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Cost",
+   "percent": 34,
+   "without": 0.2971722,
+   "with": 0.3970939
+  },
+  {
+   "task": "review",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Tokens",
+   "percent": 35,
+   "without": 234167,
+   "with": 315975
+  },
+  {
+   "task": "review",
    "model": "claude-haiku-5-5",
    "round": "r5-haiku-5.5",
    "label": "claude-haiku-5-5",
@@ -2956,6 +3940,46 @@
    "percent": 23,
    "without": 160497,
    "with": 196775
+  },
+  {
+   "task": "ship-issue",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Cost",
+   "percent": 56,
+   "without": 0.3031605,
+   "with": 0.47219969999999994
+  },
+  {
+   "task": "ship-issue",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Seconds",
+   "percent": 71,
+   "without": 31,
+   "with": 53
+  },
+  {
+   "task": "ship-issue",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Tokens",
+   "percent": 70,
+   "without": 277043,
+   "with": 470501
+  },
+  {
+   "task": "ship-issue",
+   "model": "claude-opus-5-5",
+   "round": "r5-opus-5.5",
+   "label": "claude-opus-5-5",
+   "measure": "Tool calls",
+   "percent": 114,
+   "without": 7,
+   "with": 15
   },
   {
    "task": "ship-issue",
