@@ -28,7 +28,7 @@ const PLAYBOOKS = {
   'figma-more.md': 2400,
   'ship.md': 5600,
   'ship-more.md': 3100,
-  'reflect.md': 7100,
+  'reflect.md': 7400, // 7100 until step 3 got its first point, the project's own rules held to the diff one by one: a cheap model's review dropped one of them every time
 };
 
 test('each playbook stays under its ceiling, and every playbook has one', () => {
@@ -46,7 +46,7 @@ test('what every session loads: the block of AGENTS.md', () => {
 test('what a request reads before its first step', () => {
   const upFront = {design: ['design.md', 'figma.md'], ship: ['ship.md'], reflect: ['reflect.md'], component: ['component.md', 'figma.md'], flows: ['flows.md', 'design.md', 'figma.md']};
   // design, component and flows read figma.md: their ceilings follow its own (1100 more).
-  const ceilings = {design: 19500, ship: 5600, reflect: 7100, component: 16100, flows: 21700};
+  const ceilings = {design: 19500, ship: 5600, reflect: 7400, component: 16100, flows: 21700};
   for (const [way, files] of Object.entries(upFront)) {
     const total = files.reduce((sum, name) => sum + size(name), 0);
     assert.ok(total <= ceilings[way], `${way}: ${total} bytes, ceiling ${ceilings[way]}`);

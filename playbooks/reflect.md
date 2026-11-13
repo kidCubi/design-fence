@@ -26,6 +26,10 @@ Do not review from memory of having written it.
 
 Go through each point and note concrete findings with `file:line`. A point with nothing to report needs no comment.
 
+**The project's rules**
+
+- Every rule `AGENTS.md` gives for this kind of file holds in each changed line. Write those rules down first, one line each (accessibility, motion, tokens, names), then take them one by one against the diff: neither a passing check nor a larger finding stands in for them.
+
 **Structure**
 
 - Each piece is where the codebase would put it (model, controller, view, pure geometry, control), and does one job. Logic that needs no DOM or GPU is in a module without them, so it can be tested.
