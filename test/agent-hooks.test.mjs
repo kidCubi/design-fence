@@ -87,6 +87,8 @@ test('a figma/ script pasted into an execute call is found', () => {
   const lint = fs.readFileSync(path.join(HOME, 'figma/lint-gaps.js'), 'utf8');
   assert.equal(pastedScript('mcp__figma-console__figma_execute', {code: `${lint}\nreturn await lintGaps('1:2');`}), 'lint-gaps');
   assert.equal(pastedScript('mcp__claude_ai_Figma__use_figma', {code: 'async function tokens() {}'}), 'tokens');
+  assert.equal(pastedScript('mcp__figma-console__figma_execute', {code: `${fs.readFileSync(path.join(HOME, 'figma/read.js'), 'utf8')}\nreturn await readDesign('4:568');`}), 'read');
+  assert.equal(pastedScript('mcp__figma-console__figma_execute', {code: 'async function read(id) {}'}), '', "an agent's own read is not design-fence's");
   assert.equal(pastedScript('mcp__figma-console__figma_execute', {code: 'return figma.currentPage.name'}), '');
   assert.equal(pastedScript('Bash', {command: 'async function sources() {}'}), '');
 });

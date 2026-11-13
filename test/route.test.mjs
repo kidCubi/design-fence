@@ -92,7 +92,16 @@ test("the route names the project's own files for the request, in a few lines", 
   const build = route(FIXTURE, 'Build the Command component in Storybook', config(FIXTURE));
   assert.equal(build.way, 'component');
   assert.deepEqual(build.read, ['design/index.md', 'design/components/command.md']);
+  // A design is made in Figma, call by call; a build reads its design with one command (component.md, step 1).
+  assert.match(text, /Before any Figma call: \.agents\/design-fence\/playbooks\/figma\.md, "Connect"\. Before committing code: \.agents\/design-fence\/playbooks\/reflect\.md\./);
+  assert.doesNotMatch(routeText(build), /figma\.md/);
+  assert.match(routeText(build), /Before committing code: \.agents\/design-fence\/playbooks\/reflect\.md\./);
   assert.equal(routeText(route(FIXTURE, 'thanks', config(FIXTURE))), '');
+  // Work that builds is given the playbook's tests and checks as part of the request; a ticket alone is not.
+  const asks = /The request includes the tests and the checks that playbook names: write them, run them\./;
+  assert.match(routeText(route(FIXTURE, 'Fix the open issue "The outline keeps the copy\'s markers"', config(FIXTURE))), asks);
+  assert.doesNotMatch(routeText(route(FIXTURE, 'Write a ticket for the outline keeping the copy\'s markers', config(FIXTURE))), asks);
+  assert.doesNotMatch(routeText(build), asks);
   const tokens = route(FIXTURE, 'Change the link hover colour', config(FIXTURE));
   assert.ok(tokens.read.includes('src/tokens.css'));
 });

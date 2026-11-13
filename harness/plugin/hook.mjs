@@ -561,10 +561,17 @@ function routeText(result, home = '.agents/design-fence') {
     // rest: the same model then read the project's every document and cost twice as much on a small request.
     lines.push(`In the project, read these and no others, unless a step of the playbook names one: ${result.read.join(', ')}.`);
   }
-  if (['design', 'flows', 'component'].includes(result.way)) {
+  if (['design', 'flows'].includes(result.way)) {
     lines.push(`Before any Figma call: ${at('figma.md')}, "Connect". Before committing code: ${at('reflect.md')}.`);
-  } else if (result.way === 'ship') {
+  } else if (['ship', 'component'].includes(result.way)) {
+    // A build reads its design with one command (component.md, step 1) and makes no Figma call of its own.
     lines.push(`Before committing code: ${at('reflect.md')}.`);
+  }
+  if (result.way === 'ship' && ['full', 'quick'].includes(result.mode)) {
+    // Measured. A tool may tell its model to add or run tests only when the user asks (Codex, GPT 6 Luna): the
+    // playbook, read from a file, then did not count as asking in ten runs of thirty-five, and the fix was left
+    // untested. The route is given with the request: said here, ten runs of ten wrote the test and ran the checks.
+    lines.push('The request includes the tests and the checks that playbook names: write them, run them.');
   }
   if (!result.sure) {
     lines.push(
@@ -629,7 +636,7 @@ const SCREENSHOT = /(?:^|[_.:-])(?:figma_take_screenshot|figma_capture_screensho
 const EXECUTE = /(?:^|[_.:-])(?:figma_execute|use_figma)$/;
 
 /** design-fence's Figma scripts, by the function each one defines, and the command that runs it. */
-const SCRIPTS = {lintGaps: 'lint-gaps', tokens: 'tokens', sources: 'sources', bound: 'bound'};
+const SCRIPTS = {lintGaps: 'lint-gaps', tokens: 'tokens', sources: 'sources', bound: 'bound', readDesign: 'read'};
 const SCRIPT_START = new RegExp(`\\basync function (${Object.keys(SCRIPTS).join('|')})\\s*\\(`);
 
 /** Git's commands whose short `-n` is `--no-verify`. */

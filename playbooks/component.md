@@ -16,7 +16,7 @@ Then `.agents/validate.json`'s `design` section names Storybook's index (`storyb
 ## 1. Ground
 
 1. The spec (`design/components/<name>.md`, `status: approved`): its `figma` node and `figma_version`. Not approved: stop. A component is built only from an approved design (`PROCESS.md`, non-negotiable 9).
-2. The approved design, read **once** through the bridge (`figma.md`), in one `figma_execute` on the spec's node: per variant, the layout of each part (direction, sizing, gap and padding), the variables bound to each part by name, the text properties, the instances it composes. That one read is what the build and the check compare against; nothing else comes out of Figma.
+2. The approved design, read **once**: `design-fence figma read --spec <name>` gives its properties and, per variant, each part's layout (direction, sizing, gap and padding), its variables by name, its text and the instances it composes. It connects by itself: no script, no Figma call of your own, no `figma.md`. That one read is what the build and the check compare against; nothing else comes out of Figma.
 3. One or two components of the library that do the same kind of job: the code should read as if the same person wrote both.
 
 ## 2. Tokens

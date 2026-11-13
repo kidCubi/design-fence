@@ -215,6 +215,95 @@ test("bound: the variables of a component's own layers, every variant, not its s
   assert.equal((await bound('9:9')).error, 'not found');
 });
 
+test("readDesign: a component's properties, its first variant part by part with what is set on each (a bound value by its variable's name), the others by what differs", async () => {
+  const readDesign = new Function(`${fs.readFileSync(path.join(HOME, 'figma/read.js'), 'utf8')}\nreturn readDesign;`)();
+  const names = {s4: 'space/4', s6: 'space/6', frame: 'line/frame', muted: 'text/muted', small: 'font-size/small', mono: 'font/family-mono', light: 'font/weight-text', soft: 'shadow/soft'};
+  const solid = (id, extra = {}) => ({type: 'SOLID', color: {r: 0, g: 0.5, b: 1}, ...(id ? {boundVariables: {color: {id}}} : {}), ...extra});
+  const code = {
+    type: 'TEXT', name: 'Code', characters: 'npx design-fence', fills: [solid('muted')], layoutSizingHorizontal: 'FILL', layoutSizingVertical: 'HUG', width: 400, height: 20,
+    fontName: {family: 'JetBrains Mono', style: 'Light'}, fontSize: 14, lineHeight: {unit: 'AUTO'}, letterSpacing: {unit: 'PERCENT', value: 0},
+    // On a text, each binding is a list.
+    boundVariables: {fontSize: [{id: 'small'}], fontFamily: [{id: 'mono'}], fontWeight: [{id: 'light'}]},
+    componentPropertyReferences: {characters: 'Text#4:30'},
+  };
+  const button = {
+    type: 'INSTANCE', name: 'Button', visible: false, layoutSizingHorizontal: 'HUG', layoutSizingVertical: 'HUG', componentPropertyReferences: {visible: 'Copy#4:31'},
+    componentProperties: {'Label#2:4': {type: 'TEXT', value: 'Copy'}, Kind: {type: 'VARIANT', value: 'Secondary'}},
+    getMainComponentAsync: async () => ({name: 'Kind=Secondary', parent: {type: 'COMPONENT_SET', name: 'Button'}}),
+    // Its insides are the Button's own: not read.
+    fills: [solid('frame')], children: [{type: 'TEXT', name: 'Label', characters: 'Copy'}],
+  };
+  const desktop = {
+    type: 'COMPONENT', name: 'Viewport=Desktop', layoutMode: 'HORIZONTAL', itemSpacing: 24, counterAxisAlignItems: 'CENTER', primaryAxisAlignItems: 'MIN',
+    paddingTop: 16, paddingBottom: 16, paddingLeft: 24, paddingRight: 24, layoutSizingHorizontal: 'FIXED', layoutSizingVertical: 'HUG', width: 590.0000610351562, height: 72,
+    boundVariables: {itemSpacing: {id: 's6'}, paddingTop: {id: 's4'}, paddingBottom: {id: 's4'}, paddingLeft: {id: 's6'}, paddingRight: {id: 's6'}},
+    fills: [], strokes: [solid('frame')], strokeWeight: 1, strokeAlign: 'INSIDE', cornerRadius: 0, topLeftRadius: 0, topRightRadius: 0, bottomRightRadius: 0, bottomLeftRadius: 0, opacity: 1, effects: [],
+    children: [code, button],
+  };
+  const styled = {type: 'TEXT', name: 'Note', characters: 'x'.repeat(130), fills: Symbol('mixed'), textStyleId: 'S:1', fontName: {family: 'Public Sans', style: 'Regular'}, fontSize: 12, lineHeight: {unit: 'PIXELS', value: 18}, letterSpacing: {unit: 'PIXELS', value: 0.5}, textAlignHorizontal: 'CENTER', textCase: 'UPPER', layoutSizingHorizontal: 'HUG', layoutSizingVertical: 'HUG'};
+  const box = {
+    type: 'RECTANGLE', name: 'Mark', layoutSizingHorizontal: 'FIXED', layoutSizingVertical: 'FIXED', width: 8, height: 8, layoutPositioning: 'ABSOLUTE', x: 4, y: 6.004,
+    fills: [solid(null, {opacity: 0.5}), {type: 'GRADIENT_LINEAR'}, solid('frame', {visible: false})], strokes: [],
+    cornerRadius: Symbol('mixed'), topLeftRadius: 4, topRightRadius: 4, bottomRightRadius: 0, bottomLeftRadius: 0, opacity: 0.5,
+    effects: [{type: 'DROP_SHADOW', color: {r: 0, g: 0, b: 0, a: 0.25}, offset: {x: 0, y: 2}, radius: 4, spread: 0, boundVariables: {radius: {id: 'soft'}}}, {type: 'LAYER_BLUR', radius: 2, visible: false}],
+  };
+  const mobile = {
+    type: 'COMPONENT', name: 'Viewport=Mobile', layoutMode: 'VERTICAL', itemSpacing: 12, primaryAxisAlignItems: 'SPACE_BETWEEN', counterAxisAlignItems: 'MIN',
+    paddingTop: 16, paddingBottom: 16, paddingLeft: 16, paddingRight: 16, boundVariables: {paddingTop: {id: 's4'}, paddingBottom: {id: 's4'}, paddingLeft: {id: 's4'}, paddingRight: {id: 's4'}},
+    layoutSizingHorizontal: 'FILL', layoutSizingVertical: 'HUG', minWidth: 320, maxWidth: null, width: 343, height: 120,
+    fills: [solid(null)], strokes: [solid('frame')], strokeWeight: Symbol('mixed'), strokeTopWeight: 1, strokeRightWeight: 0, strokeBottomWeight: 1, strokeLeftWeight: 0, strokeAlign: 'CENTER',
+    children: [styled, box],
+  };
+  // A third variant: the first with another gap, its text another colour, its button shown.
+  const wide = {...desktop, name: 'Viewport=Wide', boundVariables: {...desktop.boundVariables, itemSpacing: {id: 's4'}}, children: [{...code, fills: [solid('frame')]}, {...button, visible: true}]};
+  const set = {
+    type: 'COMPONENT_SET', name: 'Command', children: [desktop, mobile, wide],
+    componentPropertyDefinitions: {Viewport: {type: 'VARIANT', defaultValue: 'Desktop', variantOptions: ['Desktop', 'Mobile']}, 'Text#4:30': {type: 'TEXT', defaultValue: 'npx design-fence'}, 'Copy#4:31': {type: 'BOOLEAN', defaultValue: true}},
+  };
+  desktop.parent = set;
+  // A variant has no definitions of its own, and reading them throws, as in Figma.
+  Object.defineProperty(desktop, 'componentPropertyDefinitions', {get: () => { throw new Error('Can only get definitions of a component set or non-variant component'); }});
+  globalThis.figma = {
+    getNodeByIdAsync: async id => ({'4:568': set, '4:244': desktop, '1:2': {type: 'FRAME', name: 'Hero'}})[id] ?? null,
+    getStyleByIdAsync: async () => ({name: 'Note/Small', boundVariables: {fontSize: {id: 'small'}}}),
+    variables: {getVariableByIdAsync: async id => (names[id] ? {name: names[id]} : null)},
+  };
+  const properties = {Viewport: {type: 'variant', default: 'Desktop', values: ['Desktop', 'Mobile']}, Text: {type: 'text', default: 'npx design-fence'}, Copy: {type: 'boolean', default: true}};
+  const first = {
+    name: 'Viewport=Desktop', width: 590, height: 'hug', layout: 'horizontal', gap: 'space/6', padding: ['space/4', 'space/6'], align: 'center', stroke: 'line/frame', strokeWeight: 1,
+    children: [
+      {name: 'Code', type: 'text', follows: {text: 'Text'}, width: 'fill', height: 'hug', fill: 'text/muted', text: 'npx design-fence', font: {family: 'font/family-mono', weight: 'font/weight-text', size: 'font-size/small'}},
+      {name: 'Button', type: 'instance', hidden: true, follows: {visible: 'Copy'}, width: 'hug', height: 'hug', component: 'Button', properties: {Label: 'Copy', Kind: 'Secondary'}},
+    ],
+  };
+  assert.deepEqual(await readDesign('4:568'), {
+    node: '4:568',
+    name: 'Command',
+    properties,
+    variants: [
+      first,
+      {
+        name: 'Viewport=Mobile',
+        sameAs: 'Viewport=Desktop',
+        // What the first sets and this one does not is null; other parts are given whole.
+        except: {
+          width: 'fill', minWidth: 320, layout: 'vertical', gap: null, padding: 'space/4', justify: 'space-between', align: null, fill: '#0080ff', strokeWeight: [1, 0], strokeAlign: 'center',
+          children: [
+            {name: 'Note', type: 'text', width: 'hug', height: 'hug', fill: 'mixed', text: `${'x'.repeat(120)}…`, style: 'Note/Small', font: {family: 'Public Sans', weight: 'Regular', size: 'font-size/small', lineHeight: '18px', letterSpacing: '0.5px'}, textAlign: 'center', case: 'upper'},
+            {name: 'Mark', type: 'rectangle', absolute: true, x: 4, y: 6, width: 8, height: 8, fill: ['#0080ff 50%', 'gradient linear'], radius: [4, 4, 0, 0], opacity: 0.5, effects: [{type: 'drop shadow', y: 2, blur: 'shadow/soft', color: '#000000 25%'}]},
+          ],
+        },
+      },
+      // The same parts: only those that differ, by name, with what differs.
+      {name: 'Viewport=Wide', sameAs: 'Viewport=Desktop', except: {gap: 'space/4', children: [{name: 'Code', fill: 'line/frame'}, {name: 'Button', hidden: null}]}},
+    ],
+  });
+  // One variant, named by its own id: its set's properties, itself alone.
+  assert.deepEqual(await readDesign('4:244'), {node: '4:244', name: 'Viewport=Desktop', properties, variants: [first]});
+  assert.match((await readDesign('1:2')).error, /a frame, not a component/);
+  assert.equal((await readDesign('9:9')).error, 'not found');
+});
+
 test('each script ends with its call, from the command line arguments', () => {
   const tail = (name, argv) => scriptCode(name, parseArgs(argv)).split('\n').at(-1);
   assert.equal(tail('lint-gaps', ['12:34', '--properties', 'Label, Tone']), 'return await lintGaps("12:34", {"properties":["Label","Tone"]});');
@@ -222,6 +311,8 @@ test('each script ends with its call, from the command line arguments', () => {
   assert.equal(tail('sources', []), 'return await sources();');
   assert.equal(tail('bound', ['2:193', '--out']), 'return await bound("2:193");');
   assert.throws(() => scriptCode('bound', parseArgs(['--out'])), /Name the node or the component/);
+  assert.equal(tail('read', ['4:568']), 'return await readDesign("4:568");');
+  assert.throws(() => scriptCode('read', parseArgs([])), /design-fence figma read <node id>, or --spec <component>/);
   assert.equal(
     tail('tokens', ['--format', 'css', '--px', 'space/,radius/', '--hash-only', '--out', 'src/tokens.css']),
     'return await tokens({"format":"css","px":["space/","radius/"],"ms":[],"hashOnly":true});',

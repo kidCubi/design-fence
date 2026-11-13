@@ -44,9 +44,10 @@ test('what every session loads: the block of AGENTS.md', () => {
 });
 
 test('what a request reads before its first step', () => {
-  const upFront = {design: ['design.md', 'figma.md'], ship: ['ship.md'], reflect: ['reflect.md'], component: ['component.md', 'figma.md'], flows: ['flows.md', 'design.md', 'figma.md']};
-  // design, component and flows read figma.md: their ceilings follow its own (1100 more).
-  const ceilings = {design: 19500, ship: 5600, reflect: 7400, component: 16100, flows: 21700};
+  const upFront = {design: ['design.md', 'figma.md'], ship: ['ship.md'], reflect: ['reflect.md'], component: ['component.md'], flows: ['flows.md', 'design.md', 'figma.md']};
+  // design and flows read figma.md: their ceilings follow its own (1100 more). A build does not: it reads its design
+  // with one command (16100 while it read figma.md too).
+  const ceilings = {design: 19500, ship: 5600, reflect: 7400, component: 6900, flows: 21700};
   for (const [way, files] of Object.entries(upFront)) {
     const total = files.reduce((sum, name) => sum + size(name), 0);
     assert.ok(total <= ceilings[way], `${way}: ${total} bytes, ceiling ${ceilings[way]}`);
