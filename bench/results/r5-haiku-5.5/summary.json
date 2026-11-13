@@ -1,0 +1,1002 @@
+{
+ "round": "r5-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "component-build": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.03900813,
+       "min": 0.03632193,
+       "max": 0.04209959
+      },
+      "tokens": {
+       "median": 1516239,
+       "min": 1224619,
+       "max": 1536607
+      },
+      "fresh": {
+       "median": 91470,
+       "min": 87895,
+       "max": 109610
+      },
+      "calls": {
+       "median": 26,
+       "min": 22,
+       "max": 28
+      },
+      "figmaCalls": {
+       "median": 8,
+       "min": 6,
+       "max": 11
+      },
+      "screenshots": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "turns": {
+       "median": 27,
+       "min": 23,
+       "max": 29
+      },
+      "seconds": {
+       "median": 125,
+       "min": 123,
+       "max": 151
+      }
+     },
+     "score": {
+      "passed": 44,
+      "of": 55,
+      "share": 0.8,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 5,
+        "of": 5
+       },
+       "its stories are titled Components/Command": {
+        "passed": 5,
+        "of": 5
+       },
+       "a story with the copy button and one without": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 4,
+        "of": 5
+       },
+       "the design's tokens, all of them": {
+        "passed": 0,
+        "of": 5
+       },
+       "no token the design does not use": {
+        "passed": 5,
+        "of": 5
+       },
+       "the copy button is the library's Button": {
+        "passed": 5,
+        "of": 5
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 0,
+        "of": 5
+       },
+       "nothing else in the project changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what it checked": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.05073815,
+       "min": 0.03218672,
+       "max": 0.05530460000000001
+      },
+      "tokens": {
+       "median": 1874784,
+       "min": 1032108,
+       "max": 2256466
+      },
+      "fresh": {
+       "median": 114039,
+       "min": 84816,
+       "max": 122650
+      },
+      "calls": {
+       "median": 32,
+       "min": 19,
+       "max": 38
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 33,
+       "min": 20,
+       "max": 39
+      },
+      "seconds": {
+       "median": 209,
+       "min": 132,
+       "max": 248
+      }
+     },
+     "score": {
+      "passed": 55,
+      "of": 55,
+      "share": 1,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 5,
+        "of": 5
+       },
+       "its stories are titled Components/Command": {
+        "passed": 5,
+        "of": 5
+       },
+       "a story with the copy button and one without": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "the design's tokens, all of them": {
+        "passed": 5,
+        "of": 5
+       },
+       "no token the design does not use": {
+        "passed": 5,
+        "of": 5
+       },
+       "the copy button is the library's Button": {
+        "passed": 5,
+        "of": 5
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the project changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what it checked": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": 30,
+      "shown": false
+     },
+     "tokens": {
+      "percent": 24,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 25,
+      "shown": false
+     },
+     "calls": {
+      "percent": 23,
+      "shown": false
+     },
+     "figmaCalls": {
+      "percent": -100,
+      "shown": true
+     },
+     "screenshots": {
+      "percent": -100,
+      "shown": true
+     },
+     "turns": {
+      "percent": 22,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 67,
+      "shown": false
+     }
+    }
+   }
+  },
+  "drift-probe": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01063426,
+       "min": 0.01038163,
+       "max": 0.011960160000000001
+      },
+      "tokens": {
+       "median": 338741,
+       "min": 297801,
+       "max": 443173
+      },
+      "fresh": {
+       "median": 32810,
+       "min": 31448,
+       "max": 34145
+      },
+      "calls": {
+       "median": 8,
+       "min": 7,
+       "max": 10
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 9,
+       "min": 8,
+       "max": 11
+      },
+      "seconds": {
+       "median": 28,
+       "min": 27,
+       "max": 31
+      }
+     },
+     "score": {
+      "passed": 10,
+      "of": 15,
+      "share": 0.6666666666666666,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 0,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01448975,
+       "min": 0.01306212,
+       "max": 0.018833700000000002
+      },
+      "tokens": {
+       "median": 347430,
+       "min": 330755,
+       "max": 606066
+      },
+      "fresh": {
+       "median": 47235,
+       "min": 41873,
+       "max": 53905
+      },
+      "calls": {
+       "median": 15,
+       "min": 12,
+       "max": 17
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 16,
+       "min": 13,
+       "max": 18
+      },
+      "seconds": {
+       "median": 39,
+       "min": 35,
+       "max": 58
+      }
+     },
+     "score": {
+      "passed": 25,
+      "of": 25,
+      "share": 1,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the need is written down (a spec, drafted or amended)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing approved by the agent itself": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": 36,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 3,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 44,
+      "shown": true
+     },
+     "calls": {
+      "percent": 88,
+      "shown": true
+     },
+     "turns": {
+      "percent": 78,
+      "shown": true
+     },
+     "seconds": {
+      "percent": 39,
+      "shown": true
+     }
+    }
+   }
+  },
+  "figma-badge": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.03385094,
+       "min": 0.0287895,
+       "max": 0.04142081
+      },
+      "tokens": {
+       "median": 1129839,
+       "min": 944368,
+       "max": 1546413
+      },
+      "fresh": {
+       "median": 86075,
+       "min": 77693,
+       "max": 125864
+      },
+      "calls": {
+       "median": 17,
+       "min": 15,
+       "max": 21
+      },
+      "figmaCalls": {
+       "median": 14,
+       "min": 13,
+       "max": 17
+      },
+      "screenshots": {
+       "median": 2,
+       "min": 1,
+       "max": 4
+      },
+      "turns": {
+       "median": 18,
+       "min": 16,
+       "max": 22
+      },
+      "seconds": {
+       "median": 98,
+       "min": 73,
+       "max": 131
+      }
+     },
+     "score": {
+      "passed": 24,
+      "of": 30,
+      "share": 0.8,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 5,
+        "of": 5
+       },
+       "every value bound to a variable": {
+        "passed": 3,
+        "of": 5
+       },
+       "every frame has auto-layout": {
+        "passed": 5,
+        "of": 5
+       },
+       "not built in code": {
+        "passed": 5,
+        "of": 5
+       },
+       "one screenshot at most": {
+        "passed": 1,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.03223023,
+       "min": 0.0310232,
+       "max": 0.04018087
+      },
+      "tokens": {
+       "median": 948547,
+       "min": 876068,
+       "max": 1394229
+      },
+      "fresh": {
+       "median": 90201,
+       "min": 87211,
+       "max": 99232
+      },
+      "calls": {
+       "median": 14,
+       "min": 12,
+       "max": 19
+      },
+      "figmaCalls": {
+       "median": 6,
+       "min": 5,
+       "max": 8
+      },
+      "screenshots": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "turns": {
+       "median": 15,
+       "min": 13,
+       "max": 20
+      },
+      "seconds": {
+       "median": 99,
+       "min": 97,
+       "max": 139
+      }
+     },
+     "score": {
+      "passed": 35,
+      "of": 35,
+      "share": 1,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 5,
+        "of": 5
+       },
+       "every value bound to a variable": {
+        "passed": 5,
+        "of": 5
+       },
+       "every frame has auto-layout": {
+        "passed": 5,
+        "of": 5
+       },
+       "not built in code": {
+        "passed": 5,
+        "of": 5
+       },
+       "one screenshot at most": {
+        "passed": 5,
+        "of": 5
+       },
+       "a draft spec is left": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": -5,
+      "shown": false
+     },
+     "tokens": {
+      "percent": -16,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 5,
+      "shown": false
+     },
+     "calls": {
+      "percent": -18,
+      "shown": false
+     },
+     "figmaCalls": {
+      "percent": -57,
+      "shown": true
+     },
+     "screenshots": {
+      "percent": -50,
+      "shown": false
+     },
+     "turns": {
+      "percent": -17,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 1,
+      "shown": false
+     }
+    }
+   }
+  },
+  "review": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01091008,
+       "min": 0.00979501,
+       "max": 0.01165936
+      },
+      "tokens": {
+       "median": 243955,
+       "min": 197999,
+       "max": 257160
+      },
+      "fresh": {
+       "median": 35419,
+       "min": 33598,
+       "max": 38081
+      },
+      "calls": {
+       "median": 5,
+       "min": 4,
+       "max": 5
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 6,
+       "min": 5,
+       "max": 6
+      },
+      "seconds": {
+       "median": 36,
+       "min": 30,
+       "max": 45
+      }
+     },
+     "score": {
+      "passed": 32,
+      "of": 35,
+      "share": 0.9142857142857143,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 4,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 3,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.013261809999999999,
+       "min": 0.01289711,
+       "max": 0.01540025
+      },
+      "tokens": {
+       "median": 288724,
+       "min": 220502,
+       "max": 334837
+      },
+      "fresh": {
+       "median": 45447,
+       "min": 42141,
+       "max": 50189
+      },
+      "calls": {
+       "median": 6,
+       "min": 5,
+       "max": 10
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 7,
+       "min": 6,
+       "max": 11
+      },
+      "seconds": {
+       "median": 45,
+       "min": 41,
+       "max": 63
+      }
+     },
+     "score": {
+      "passed": 35,
+      "of": 35,
+      "share": 1,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 5,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": 22,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 18,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 28,
+      "shown": true
+     },
+     "calls": {
+      "percent": 20,
+      "shown": false
+     },
+     "turns": {
+      "percent": 17,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 25,
+      "shown": false
+     }
+    }
+   }
+  },
+  "ship-issue": {
+   "arms": {
+    "without": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01120924,
+       "min": 0.008898370000000001,
+       "max": 0.012690260000000002
+      },
+      "tokens": {
+       "median": 344107,
+       "min": 235894,
+       "max": 488254
+      },
+      "fresh": {
+       "median": 33628,
+       "min": 29117,
+       "max": 33925
+      },
+      "calls": {
+       "median": 11,
+       "min": 9,
+       "max": 12
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 12,
+       "min": 10,
+       "max": 13
+      },
+      "seconds": {
+       "median": 30,
+       "min": 23,
+       "max": 38
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    },
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01697466,
+       "min": 0.013474090000000001,
+       "max": 0.02481631
+      },
+      "tokens": {
+       "median": 612449,
+       "min": 428178,
+       "max": 993131
+      },
+      "fresh": {
+       "median": 44570,
+       "min": 40329,
+       "max": 59330
+      },
+      "calls": {
+       "median": 11,
+       "min": 8,
+       "max": 20
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 12,
+       "min": 9,
+       "max": 21
+      },
+      "seconds": {
+       "median": 48,
+       "min": 36,
+       "max": 77
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {
+    "next/without": {
+     "cost": {
+      "percent": 51,
+      "shown": true
+     },
+     "tokens": {
+      "percent": 78,
+      "shown": false
+     },
+     "fresh": {
+      "percent": 33,
+      "shown": true
+     },
+     "calls": {
+      "percent": 0,
+      "shown": false
+     },
+     "turns": {
+      "percent": 0,
+      "shown": false
+     },
+     "seconds": {
+      "percent": 60,
+      "shown": false
+     }
+    }
+   }
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "56ac855",
+   "uncommittedFiles": 10,
+   "id": "78e8059a5b98"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T11:56:51.491Z"
+ }
+}
