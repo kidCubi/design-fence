@@ -1,0 +1,13 @@
+{
+ "next": {
+  "head": "56ac855",
+  "uncommittedFiles": 11,
+  "id": "0ec59d2c87ce"
+ },
+ "with": {
+  "ref": "origin/main",
+  "commit": "9579683"
+ },
+ "at": "2026-11-13T11:17:32.430Z",
+ "codexHooks": true
+}

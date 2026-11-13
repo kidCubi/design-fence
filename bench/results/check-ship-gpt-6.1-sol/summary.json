@@ -1,0 +1,98 @@
+{
+ "round": "check-ship-gpt-6.1-sol",
+ "agent": "codex",
+ "agentVersion": "codex-cli 0.167.0",
+ "model": "gpt-6.1-sol",
+ "tasks": {
+  "ship-issue": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.125364,
+       "min": 0.1187928,
+       "max": 0.16296999999999998
+      },
+      "tokens": {
+       "median": 296172,
+       "min": 273694,
+       "max": 339496
+      },
+      "fresh": {
+       "median": 34706,
+       "min": 31646,
+       "max": 57117
+      },
+      "calls": {
+       "median": 20,
+       "min": 15,
+       "max": 30
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 106,
+       "min": 100,
+       "max": 116
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "56ac855",
+   "uncommittedFiles": 11,
+   "id": "0ec59d2c87ce"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T11:17:32.430Z",
+  "codexHooks": true
+ }
+}

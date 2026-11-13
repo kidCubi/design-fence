@@ -1,0 +1,118 @@
+{
+ "round": "check-figma-read-b2-gpt-6.1-sol",
+ "agent": "codex",
+ "agentVersion": "codex-cli 0.167.0",
+ "model": "gpt-6.1-sol",
+ "tasks": {
+  "component-build": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.2965896,
+       "min": 0.2678376,
+       "max": 0.41916600000000004
+      },
+      "tokens": {
+       "median": 906270,
+       "min": 630726,
+       "max": 1256579
+      },
+      "fresh": {
+       "median": 72390,
+       "min": 61467,
+       "max": 105859
+      },
+      "calls": {
+       "median": 38,
+       "min": 32,
+       "max": 44
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 298,
+       "min": 248,
+       "max": 362
+      }
+     },
+     "score": {
+      "passed": 55,
+      "of": 55,
+      "share": 1,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 5,
+        "of": 5
+       },
+       "its stories are titled Components/Command": {
+        "passed": 5,
+        "of": 5
+       },
+       "a story with the copy button and one without": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "the design's tokens, all of them": {
+        "passed": 5,
+        "of": 5
+       },
+       "no token the design does not use": {
+        "passed": 5,
+        "of": 5
+       },
+       "the copy button is the library's Button": {
+        "passed": 5,
+        "of": 5
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the project changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what it checked": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "56ac855",
+   "uncommittedFiles": 10,
+   "id": "0ebf2da6ea19"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T10:32:13.043Z",
+  "codexHooks": true
+ }
+}

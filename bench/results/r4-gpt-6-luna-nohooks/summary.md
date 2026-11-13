@@ -4,6 +4,32 @@ design-fence, "this tree": 9273839 (snapshot a14130a4d842, 2026-11-13); "release
 
 Codex ran each copy untrusted: design-fence's session hooks did not run.
 
+## component-build
+
+| Median (least to most) | With design-fence (this tree), 5 of 5 runs |
+| --- | --- |
+| Cost (USD, list price) | $0.018 ($0.014 to $0.028) |
+| Tokens | 844k (641k to 1.66M) |
+| Tokens not from cache | 75k (51k to 91k) |
+| Tool calls | 31 (14 to 39) |
+| Figma calls | 2 (2 to 4) |
+| Seconds | 208 (191 to 274) |
+| Score (checks passed) | 55 of 55 |
+
+| Check (runs that pass) | With design-fence (this tree) |
+| --- | --- |
+| the element df-command is defined | 5 of 5 |
+| its stories are titled Components/Command | 5 of 5 |
+| a story with the copy button and one without | 5 of 5 |
+| no value written raw | 5 of 5 |
+| the design's tokens, all of them | 5 of 5 |
+| no token the design does not use | 5 of 5 |
+| the copy button is the library's Button | 5 of 5 |
+| a pre holding a code (the spec's accessibility) | 5 of 5 |
+| nothing else in the project changed | 5 of 5 |
+| the report names what it checked | 5 of 5 |
+| nothing else in the Figma file changed | 5 of 5 |
+
 ## drift-probe
 
 | Median (least to most) | With design-fence (this tree), 5 of 5 runs |
@@ -22,6 +48,29 @@ Codex ran each copy untrusted: design-fence's session hooks did not run.
 | says what is left (a design to approve) | 5 of 5 |
 | the need is written down (a spec, drafted or amended) | 5 of 5 |
 | nothing approved by the agent itself | 5 of 5 |
+
+## figma-badge
+
+| Median (least to most) | With design-fence (this tree), 5 of 5 runs |
+| --- | --- |
+| Cost (USD, list price) | $0.026 ($0.024 to $0.043) |
+| Tokens | 1.17M (1.13M to 2.04M) |
+| Tokens not from cache | 73k (67k to 129k) |
+| Tool calls | 24 (23 to 35) |
+| Figma calls | 18 (13 to 25) |
+| Screenshots taken | 1 (1 to 1) |
+| Seconds | 402 (330 to 559) |
+| Score (checks passed) | 34 of 35 |
+
+| Check (runs that pass) | With design-fence (this tree) |
+| --- | --- |
+| the design is there (its page was found) | 5 of 5 |
+| every value bound to a variable | 4 of 5 |
+| every frame has auto-layout | 5 of 5 |
+| not built in code | 5 of 5 |
+| one screenshot at most | 5 of 5 |
+| a draft spec is left | 5 of 5 |
+| nothing else in the Figma file changed | 5 of 5 |
 
 ## review
 

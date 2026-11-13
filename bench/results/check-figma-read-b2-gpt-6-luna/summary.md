@@ -1,0 +1,31 @@
+# check-figma-read-b2-gpt-6-luna: gpt-6-luna (Codex codex-cli 0.167.0)
+
+design-fence, "this tree": 56ac855 with 10 uncommitted file(s) (snapshot 0ebf2da6ea19, 2026-11-13); "released": origin/main (9579683).
+
+Codex ran each copy as a trusted project: design-fence's session hooks on.
+
+## component-build
+
+| Median (least to most) | With design-fence (this tree), 5 of 5 runs |
+| --- | --- |
+| Cost (USD, list price) | $0.013 ($0.012 to $0.018) |
+| Tokens | 547k (406k to 705k) |
+| Tokens not from cache | 53k (43k to 75k) |
+| Tool calls | 20 (15 to 32) |
+| Seconds | 176 (166 to 262) |
+| Score (checks passed) | 55 of 55 |
+
+| Check (runs that pass) | With design-fence (this tree) |
+| --- | --- |
+| the element df-command is defined | 5 of 5 |
+| its stories are titled Components/Command | 5 of 5 |
+| a story with the copy button and one without | 5 of 5 |
+| no value written raw | 5 of 5 |
+| the design's tokens, all of them | 5 of 5 |
+| no token the design does not use | 5 of 5 |
+| the copy button is the library's Button | 5 of 5 |
+| a pre holding a code (the spec's accessibility) | 5 of 5 |
+| nothing else in the project changed | 5 of 5 |
+| the report names what it checked | 5 of 5 |
+| nothing else in the Figma file changed | 5 of 5 |
+

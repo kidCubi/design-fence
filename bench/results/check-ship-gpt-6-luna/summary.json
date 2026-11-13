@@ -1,0 +1,98 @@
+{
+ "round": "check-ship-gpt-6-luna",
+ "agent": "codex",
+ "agentVersion": "codex-cli 0.167.0",
+ "model": "gpt-6-luna",
+ "tasks": {
+  "ship-issue": {
+   "arms": {
+    "next": {
+     "runs": 10,
+     "counted": 10,
+     "measures": {
+      "cost": {
+       "median": 0.00667514,
+       "min": 0.00513184,
+       "max": 0.01413596
+      },
+      "tokens": {
+       "median": 237804,
+       "min": 200444,
+       "max": 640670
+      },
+      "fresh": {
+       "median": 27180,
+       "min": 23420,
+       "max": 50974
+      },
+      "calls": {
+       "median": 12,
+       "min": 8,
+       "max": 39
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 79.5,
+       "min": 59,
+       "max": 169
+      }
+     },
+     "score": {
+      "passed": 58,
+      "of": 60,
+      "share": 0.9666666666666667,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 10,
+        "of": 10
+       },
+       "the project's tests pass": {
+        "passed": 10,
+        "of": 10
+       },
+       "a test covers the fix": {
+        "passed": 9,
+        "of": 10
+       },
+       "nothing else changed": {
+        "passed": 10,
+        "of": 10
+       },
+       "not committed": {
+        "passed": 10,
+        "of": 10
+       },
+       "the report names what ran": {
+        "passed": 9,
+        "of": 10
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "56ac855",
+   "uncommittedFiles": 11,
+   "id": "0ec59d2c87ce"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T10:58:40.858Z",
+  "codexHooks": true
+ }
+}

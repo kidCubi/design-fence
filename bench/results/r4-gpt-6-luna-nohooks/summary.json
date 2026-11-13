@@ -4,6 +4,103 @@
  "agentVersion": "codex-cli 0.167.0",
  "model": "gpt-6-luna",
  "tasks": {
+  "component-build": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.018401740000000003,
+       "min": 0.01437138,
+       "max": 0.028037660000000002
+      },
+      "tokens": {
+       "median": 843982,
+       "min": 640605,
+       "max": 1659459
+      },
+      "fresh": {
+       "median": 74563,
+       "min": 51037,
+       "max": 91343
+      },
+      "calls": {
+       "median": 31,
+       "min": 14,
+       "max": 39
+      },
+      "figmaCalls": {
+       "median": 2,
+       "min": 2,
+       "max": 4
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 208,
+       "min": 191,
+       "max": 274
+      }
+     },
+     "score": {
+      "passed": 55,
+      "of": 55,
+      "share": 1,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 5,
+        "of": 5
+       },
+       "its stories are titled Components/Command": {
+        "passed": 5,
+        "of": 5
+       },
+       "a story with the copy button and one without": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "the design's tokens, all of them": {
+        "passed": 5,
+        "of": 5
+       },
+       "no token the design does not use": {
+        "passed": 5,
+        "of": 5
+       },
+       "the copy button is the library's Button": {
+        "passed": 5,
+        "of": 5
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the project changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what it checked": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
   "drift-probe": {
    "arms": {
     "next": {
@@ -68,6 +165,87 @@
         "of": 5
        },
        "nothing approved by the agent itself": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "figma-badge": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.026498839999999996,
+       "min": 0.024121160000000003,
+       "max": 0.04283262
+      },
+      "tokens": {
+       "median": 1174686,
+       "min": 1130099,
+       "max": 2035035
+      },
+      "fresh": {
+       "median": 73006,
+       "min": 67230,
+       "max": 129243
+      },
+      "calls": {
+       "median": 24,
+       "min": 23,
+       "max": 35
+      },
+      "figmaCalls": {
+       "median": 18,
+       "min": 13,
+       "max": 25
+      },
+      "screenshots": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "seconds": {
+       "median": 402,
+       "min": 330,
+       "max": 559
+      }
+     },
+     "score": {
+      "passed": 34,
+      "of": 35,
+      "share": 0.9714285714285714,
+      "checks": {
+       "the design is there (its page was found)": {
+        "passed": 5,
+        "of": 5
+       },
+       "every value bound to a variable": {
+        "passed": 4,
+        "of": 5
+       },
+       "every frame has auto-layout": {
+        "passed": 5,
+        "of": 5
+       },
+       "not built in code": {
+        "passed": 5,
+        "of": 5
+       },
+       "one screenshot at most": {
+        "passed": 5,
+        "of": 5
+       },
+       "a draft spec is left": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
         "passed": 5,
         "of": 5
        }

@@ -1,0 +1,122 @@
+{
+ "round": "check-figma-read-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "component-build": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.03919467,
+       "min": 0.033829410000000004,
+       "max": 0.054045449999999995
+      },
+      "tokens": {
+       "median": 1559632,
+       "min": 1181447,
+       "max": 2301871
+      },
+      "fresh": {
+       "median": 94359,
+       "min": 87046,
+       "max": 114296
+      },
+      "calls": {
+       "median": 26,
+       "min": 22,
+       "max": 34
+      },
+      "figmaCalls": {
+       "median": 1,
+       "min": 1,
+       "max": 1
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 27,
+       "min": 23,
+       "max": 35
+      },
+      "seconds": {
+       "median": 156,
+       "min": 126,
+       "max": 211
+      }
+     },
+     "score": {
+      "passed": 55,
+      "of": 55,
+      "share": 1,
+      "checks": {
+       "the element df-command is defined": {
+        "passed": 5,
+        "of": 5
+       },
+       "its stories are titled Components/Command": {
+        "passed": 5,
+        "of": 5
+       },
+       "a story with the copy button and one without": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "the design's tokens, all of them": {
+        "passed": 5,
+        "of": 5
+       },
+       "no token the design does not use": {
+        "passed": 5,
+        "of": 5
+       },
+       "the copy button is the library's Button": {
+        "passed": 5,
+        "of": 5
+       },
+       "a pre holding a code (the spec's accessibility)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the project changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what it checked": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else in the Figma file changed": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "56ac855",
+   "uncommittedFiles": 9,
+   "id": "81bb9694705f"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T09:26:49.332Z"
+ }
+}

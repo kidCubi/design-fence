@@ -1,0 +1,102 @@
+{
+ "round": "check-ship-haiku-5.5",
+ "agent": "claude",
+ "agentVersion": "2.1.322",
+ "model": "claude-haiku-5-5",
+ "tasks": {
+  "ship-issue": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.01641595,
+       "min": 0.01281552,
+       "max": 0.02122913
+      },
+      "tokens": {
+       "median": 504018,
+       "min": 372896,
+       "max": 846197
+      },
+      "fresh": {
+       "median": 44790,
+       "min": 39904,
+       "max": 52084
+      },
+      "calls": {
+       "median": 13,
+       "min": 9,
+       "max": 15
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "turns": {
+       "median": 14,
+       "min": 10,
+       "max": 16
+      },
+      "seconds": {
+       "median": 50,
+       "min": 35,
+       "max": 71
+      }
+     },
+     "score": {
+      "passed": 30,
+      "of": 30,
+      "share": 1,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "56ac855",
+   "uncommittedFiles": 11,
+   "id": "0ec59d2c87ce"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T11:13:11.471Z"
+ }
+}
