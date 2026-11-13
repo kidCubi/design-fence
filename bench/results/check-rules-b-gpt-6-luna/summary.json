@@ -1,0 +1,179 @@
+{
+ "round": "check-rules-b-gpt-6-luna",
+ "agent": "codex",
+ "agentVersion": "codex-cli 0.167.0",
+ "model": "gpt-6-luna",
+ "tasks": {
+  "review": {
+   "arms": {
+    "next": {
+     "runs": 10,
+     "counted": 10,
+     "measures": {
+      "cost": {
+       "median": 0.00505567,
+       "min": 0.0034168000000000002,
+       "max": 0.00617272
+      },
+      "tokens": {
+       "median": 145625.5,
+       "min": 94456,
+       "max": 203124
+      },
+      "fresh": {
+       "median": 24946,
+       "min": 19067,
+       "max": 35378
+      },
+      "calls": {
+       "median": 8,
+       "min": 5,
+       "max": 26
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 62.5,
+       "min": 39,
+       "max": 88
+      }
+     },
+     "score": {
+      "passed": 62,
+      "of": 70,
+      "share": 0.8857142857142857,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 10,
+        "of": 10
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 10,
+        "of": 10
+       },
+       "finds the padding written raw": {
+        "passed": 10,
+        "of": 10
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 9,
+        "of": 10
+       },
+       "finds the motion without reduced motion": {
+        "passed": 7,
+        "of": 10
+       },
+       "finds the label against the voice": {
+        "passed": 6,
+        "of": 10
+       },
+       "changed nothing": {
+        "passed": 10,
+        "of": 10
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "ship-issue": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.00628134,
+       "min": 0.00569372,
+       "max": 0.009003820000000001
+      },
+      "tokens": {
+       "median": 234385,
+       "min": 186574,
+       "max": 305071
+      },
+      "fresh": {
+       "median": 33102,
+       "min": 25009,
+       "max": 47279
+      },
+      "calls": {
+       "median": 9,
+       "min": 9,
+       "max": 12
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 88,
+       "min": 53,
+       "max": 96
+      }
+     },
+     "score": {
+      "passed": 28,
+      "of": 30,
+      "share": 0.9333333333333333,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 4,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 4,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "9273839",
+   "uncommittedFiles": 1,
+   "id": "04e747f00208"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T05:34:05.395Z",
+  "codexHooks": true
+ }
+}

@@ -38,7 +38,7 @@
       "cachedInput": 0.01,
       "cacheWrite": 0.125,
       "output": 0.5,
-      "source": "Price aggregators (benchlm.ai/models/gpt-6-luna, techjacksolutions.com, teamorouter.com), 2026-11-12: not read from OpenAI's own pricing page; confirm at https://developers.openai.com/api/docs/pricing before quoting a cost. Over 272k input tokens in a request: 0.2 and 0.75, which Codex's log cannot show per request."
+      "source": "https://developers.openai.com/api/docs/pricing, read 2026-11-13 (standard; over 272k input tokens in a request: 0.2, 0.02, 0.25 and 0.75, which Codex's log cannot show per request)"
     }
   }
 }

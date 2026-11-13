@@ -1,0 +1,252 @@
+{
+ "round": "r4-gpt-6-luna-nohooks",
+ "agent": "codex",
+ "agentVersion": "codex-cli 0.167.0",
+ "model": "gpt-6-luna",
+ "tasks": {
+  "drift-probe": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.00782258,
+       "min": 0.0052808,
+       "max": 0.01126694
+      },
+      "tokens": {
+       "median": 242565,
+       "min": 177584,
+       "max": 328742
+      },
+      "fresh": {
+       "median": 34470,
+       "min": 23708,
+       "max": 62911
+      },
+      "calls": {
+       "median": 9,
+       "min": 5,
+       "max": 13
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 91,
+       "min": 74,
+       "max": 124
+      }
+     },
+     "score": {
+      "passed": 25,
+      "of": 25,
+      "share": 1,
+      "checks": {
+       "no visual reached the code without a design": {
+        "passed": 5,
+        "of": 5
+       },
+       "no value written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "says what is left (a design to approve)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the need is written down (a spec, drafted or amended)": {
+        "passed": 5,
+        "of": 5
+       },
+       "nothing approved by the agent itself": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "review": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.0048052400000000006,
+       "min": 0.0041766600000000004,
+       "max": 0.00633888
+      },
+      "tokens": {
+       "median": 117985,
+       "min": 115857,
+       "max": 170916
+      },
+      "fresh": {
+       "median": 28990,
+       "min": 21009,
+       "max": 37028
+      },
+      "calls": {
+       "median": 4,
+       "min": 4,
+       "max": 6
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 64,
+       "min": 55,
+       "max": 75
+      }
+     },
+     "score": {
+      "passed": 29,
+      "of": 35,
+      "share": 0.8285714285714286,
+      "checks": {
+       "says it cannot be committed as it is": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds that the kind was never designed (no spec, no approved design)": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the padding written raw": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the primitive where a role belongs": {
+        "passed": 5,
+        "of": 5
+       },
+       "finds the motion without reduced motion": {
+        "passed": 1,
+        "of": 5
+       },
+       "finds the label against the voice": {
+        "passed": 3,
+        "of": 5
+       },
+       "changed nothing": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  },
+  "ship-issue": {
+   "arms": {
+    "next": {
+     "runs": 5,
+     "counted": 5,
+     "measures": {
+      "cost": {
+       "median": 0.0074731400000000005,
+       "min": 0.005418060000000001,
+       "max": 0.01059334
+      },
+      "tokens": {
+       "median": 314663,
+       "min": 190307,
+       "max": 362991
+      },
+      "fresh": {
+       "median": 29685,
+       "min": 23892,
+       "max": 50927
+      },
+      "calls": {
+       "median": 11,
+       "min": 8,
+       "max": 13
+      },
+      "figmaCalls": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "screenshots": {
+       "median": 0,
+       "min": 0,
+       "max": 0
+      },
+      "seconds": {
+       "median": 90,
+       "min": 69,
+       "max": 132
+      }
+     },
+     "score": {
+      "passed": 29,
+      "of": 30,
+      "share": 0.9666666666666667,
+      "checks": {
+       "the issue is fixed (its own test)": {
+        "passed": 5,
+        "of": 5
+       },
+       "the project's tests pass": {
+        "passed": 5,
+        "of": 5
+       },
+       "a test covers the fix": {
+        "passed": 4,
+        "of": 5
+       },
+       "nothing else changed": {
+        "passed": 5,
+        "of": 5
+       },
+       "not committed": {
+        "passed": 5,
+        "of": 5
+       },
+       "the report names what ran": {
+        "passed": 5,
+        "of": 5
+       }
+      }
+     }
+    }
+   },
+   "differences": {}
+  }
+ },
+ "tree": {
+  "next": {
+   "head": "9273839",
+   "uncommittedFiles": 0,
+   "id": "a14130a4d842"
+  },
+  "with": {
+   "ref": "origin/main",
+   "commit": "9579683"
+  },
+  "at": "2026-11-13T06:16:37.761Z",
+  "codexHooks": false
+ }
+}
