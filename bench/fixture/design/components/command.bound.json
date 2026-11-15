@@ -1,0 +1,18 @@
+{
+  "component": "Command",
+  "figma": "4:568",
+  "tokens": [
+    "font-size/small",
+    "font/family-mono",
+    "font/weight-text",
+    "line-width/hairline",
+    "line/frame",
+    "radius/none",
+    "space/4",
+    "space/6",
+    "text/muted"
+  ],
+  "instances": [
+    "Button"
+  ]
+}

@@ -1,2 +1,11 @@
 node_modules
 .DS_Store
+# The benchmark stays on its owner's machine. What is tracked of bench/ is the sample
+# project and the router's cases, which design-fence's own tests run on.
+bench/*
+!bench/fixture/
+!bench/routing*.jsonl
+bench/fixture/node_modules/
+bench/fixture/package-lock.json
+bench/fixture/storybook-static/
+test/bench.test.mjs

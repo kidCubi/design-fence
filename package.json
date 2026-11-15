@@ -1,0 +1,23 @@
+{
+  "name": "design-fence",
+  "version": "0.2.0",
+  "description": "A workflow for designing with AI agents, and the harness that holds an agent to it: your design rules in the repository, each design approved by a person in Figma, enforced by git, CI and the agent tools' hooks. npx design-fence installs it.",
+  "bin": {
+    "design-fence": "bin/setup.mjs"
+  },
+  "files": [
+    "bin/setup.mjs",
+    "install.mjs",
+    "lib/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kidCubi/design-fence.git"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

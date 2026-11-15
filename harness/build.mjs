@@ -23,7 +23,7 @@ import {fileURLToPath} from 'node:url';
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 /** `lib/`'s modules the plugins carry, each after those it imports. */
-const LIB = ['lib/git.mjs', 'lib/fence.mjs', 'lib/agent-hooks.mjs'];
+const LIB = ['lib/git.mjs', 'lib/fence.mjs', 'lib/specs.mjs', 'lib/route.mjs', 'lib/agent-hooks.mjs'];
 
 /** Each plugin's file, from its adapter. */
 export const TARGETS = {

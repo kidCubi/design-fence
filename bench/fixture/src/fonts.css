@@ -1,0 +1,10 @@
+/* The headings' family, `--font-family-display` (design/tokens.md): Season Serif, Light, the one weight the page
+   uses. A trial font: its file is git-ignored until it is licensed, so a fresh clone draws the headings in the
+   browser's serif instead. Public Sans and JetBrains Mono come from @fontsource (src/page.js). */
+@font-face {
+  font-family: 'Season Serif-TRIAL';
+  src: url('./assets/fonts/season-serif-trial/SeasonSerif-TRIAL-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}

@@ -2,7 +2,7 @@
 
 A playbook for any agent or person, with the design module on: phases D1 to D5 of the design loop (`PROCESS.md`). Take a request for something users see, write or amend its spec, build it in Figma, bring it to the human's gate, and record it in the repo once approved (the spec, and the tokens file when a variable changed). Use it for a new component, a change to one (a variant, a state, its layout), a new or changed token, or a view's design. `component.md` takes it to Storybook after.
 
-`AGENTS.md` names the Figma file, its pages (where work in progress goes), the tokens file and its format; `playbooks/figma.md` is how to work in Figma.
+`AGENTS.md` names the Figma file, its pages (where work in progress goes), the tokens file and its format; `playbooks/figma.md` is how to work in Figma. `design-fence …` below is `node .agents/design-fence/bin/design-fence.mjs …`, run from the project.
 
 ## 1. Ground
 
@@ -68,4 +68,4 @@ Four calls, from the connection to the gate: the build, one lint, the fixes if a
 2. The spec: `status: approved`, `figma` (the node id), `figma_version`, `approved_by`, and anything decided at the gate that it does not say yet. The spec and the Figma node are now the component's record until it is built; nothing else is copied out of Figma.
 3. The tokens file, when the work added or changed a variable: `design-fence figma tokens --format <format> --px <prefixes> [--ms <prefixes>] --out <tokens file>`, which runs design-fence's `figma/tokens.js` through the bridge and writes the file as it comes, never edited by hand, its text never through the conversation. The format is the one `AGENTS.md` names (`dtcg` for a project whose pipeline builds its code tokens from W3C design tokens, `css` for one whose tokens file is CSS custom properties), with the `px` prefixes it lists (`space/`, `radius/`, …: a number variable scoped to all uses says nothing about its unit), and its `ms` prefixes (`duration/`) when its durations are written with their unit. To only learn whether the file is current: `--hash-only`, against `design-fence hash <tokens file>`.
 4. `design/index.md`: the row's status and its Figma node; "Sources" again from `design-fence figma sources` when the work imported something.
-5. `design-fence specs` holds (`PROCESS.md`, "Enforcement"). Commit the spec (and the tokens file) with their `Reflect:` line (`reflect.md`). Then `component.md`.
+5. `design-fence design` holds (`PROCESS.md`, "Enforcement"). Marking the spec approved is the human's word: the agent tools' hooks ask them for it. Commit the spec (and the tokens file) with their `Reflect:` line (`reflect.md`). Then `component.md`.

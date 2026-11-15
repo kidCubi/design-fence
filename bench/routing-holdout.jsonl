@@ -1,0 +1,41 @@
+{"request": "The anchor function lowercases accented letters wrongly, fix that", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Add TypeScript types to the outline module", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Why does npm test print a deprecation warning? Get rid of it", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Cache the parsed markdown so the outline runs faster", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Make outline.mjs exit with code 1 when the file is missing", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Document the outline command in the README", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Pin the GitHub Actions to commit SHAs", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Les tests échouent sur Windows à cause des fins de ligne, corrige", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Extract the heading parser into its own module", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Add a changelog file and a script that updates it", "project": "fixture", "way": "ship", "mode": "full"}
+{"request": "Quick: see if we can generate the outline at build time", "project": "fixture", "way": "ship", "mode": "quick"}
+{"request": "Open a ticket: anchors collide when two headings match", "project": "fixture", "way": "ship", "mode": "ticket"}
+{"request": "Take a critical look at what you just wrote before we commit", "project": "fixture", "way": "reflect"}
+{"request": "Review this branch against main", "project": "fixture", "way": "reflect"}
+{"request": "Peux-tu relire mon dernier changement ?", "project": "fixture", "way": "reflect"}
+{"request": "Is the work I just did up to the bar? Reflect on it", "project": "fixture", "way": "reflect"}
+{"request": "The primary button should feel more prominent", "project": "fixture", "way": "design"}
+{"request": "Use a lighter grey for muted text", "project": "fixture", "way": "design"}
+{"request": "Add a secondary style to the Link", "project": "fixture", "way": "design"}
+{"request": "Section headings are too close to the paragraph below", "project": "fixture", "way": "design"}
+{"request": "We need an avatar component", "project": "fixture", "way": "design"}
+{"request": "Add a search field to the top bar", "project": "fixture", "way": "design"}
+{"request": "Swap the order of the wordmark and the link in the top bar on phones", "project": "fixture", "way": "design"}
+{"request": "Make focus rings more visible everywhere", "project": "fixture", "way": "design"}
+{"request": "The statement sections should use a bigger font size", "project": "fixture", "way": "design"}
+{"request": "Rends le bouton plus arrondi", "project": "fixture", "way": "design"}
+{"request": "Add a 'New' pill to section titles", "project": "fixture", "way": "design"}
+{"request": "Change text/muted to a warmer tone", "project": "fixture", "way": "design"}
+{"request": "Show a success message after the copy button is pressed", "project": "fixture", "way": "design"}
+{"request": "Give the page a max width of 1100", "project": "fixture", "way": "design"}
+{"request": "Add a divider line between sections", "project": "fixture", "way": "design"}
+{"request": "Design an alert component with info and warning kinds", "project": "fixture", "way": "design"}
+{"request": "Command has been approved, please implement it in the library", "project": "fixture", "way": "component"}
+{"request": "Bring the approved Command design into Storybook", "project": "fixture", "way": "component"}
+{"request": "Add a contact page", "project": "fixture", "way": "flows"}
+{"request": "Create a docs view listing every playbook", "project": "fixture", "way": "flows"}
+{"request": "We need a new screen that shows the benchmark results", "project": "fixture", "way": "flows"}
+{"request": "Move the 'How it works' section to its own page", "project": "fixture", "way": "flows"}
+{"request": "perfect, thanks", "project": "fixture", "way": "none"}
+{"request": "no", "project": "fixture", "way": "none"}
+{"request": "d'accord", "project": "fixture", "way": "none"}

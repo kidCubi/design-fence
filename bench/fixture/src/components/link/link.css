@@ -1,0 +1,31 @@
+/* Link (design/components/link.md): tokens only. */
+:host {
+  display: inline-flex;
+  /* Its font's own line height, as in Figma, wherever it is placed (a section's text sets the body's). */
+  line-height: normal;
+}
+
+a {
+  color: var(--text-default);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-text);
+  text-decoration: none;
+  outline: none;
+}
+
+.underline {
+  display: inline-flex;
+  padding-bottom: var(--space-1);
+  border-bottom: var(--line-width-hairline) solid var(--line-frame);
+}
+
+a:hover .underline {
+  border-bottom-color: var(--line-focus);
+}
+
+/* Focus: the underline dotted in place of the solid one, no frame. */
+a:focus-visible .underline {
+  border-bottom-style: dotted;
+  border-bottom-color: var(--line-focus);
+}

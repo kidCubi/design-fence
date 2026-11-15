@@ -1,21 +1,17 @@
 # Working in Figma
 
-A playbook for any agent with the figma-console MCP server: connect (and fix the connection), read and change nodes and variables, verify without screenshot loops, export the tokens, import images, capture HTML into Figma. Use it before any Figma read or write, when the bridge is not connected, or when exporting variables or components to the repo.
+A playbook for any agent with the figma-console MCP server: connect, read and change nodes and variables, verify without screenshot loops, export the tokens. Use it before any Figma read or write, or when exporting variables or components to the repo. What is rarely needed is in `figma-more.md`: fixing a connection, importing images, capturing HTML into Figma.
 
-The project's `AGENTS.md` names the file (file key, pages), the tokens file and its format. This playbook is how to work in it.
+The project's `AGENTS.md` names the file (file key, pages), the tokens file and its format. This playbook is how to work in it. `design-fence …` below is `node .agents/design-fence/bin/design-fence.mjs …`, run from the project.
 
 ## Connect first, over the bridge only
 
-The server is figma-console, which `install.mjs --design` declares for Claude Code (`.mcp.json`), Codex (`.codex/config.toml`) and OpenCode (`opencode.json`); its Desktop Bridge needs no token. Not among the agent's tools: the human approves it (Claude Code asks at the start of a session; Codex once the project is trusted) and starts a new session.
+The server is figma-console, at the version design-fence was tried with, which `install.mjs --design` declares for Claude Code (`.mcp.json`), Codex (`.codex/config.toml`) and OpenCode (`opencode.json`); its Desktop Bridge needs no token. Not among the agent's tools: the human approves it (Claude Code asks at the start of a session; Codex once the project is trusted) and starts a new session.
 
 1. Call `figma_get_status` with `probe: true` before the first Figma call of the session, and again only when a call fails.
 2. Healthy: `setup.valid: true`, `transport.active: "websocket"`, the probe succeeds, and the connected file is the one `AGENTS.md` names. Check the file name before writing: several files may have the plugin open.
-   - The plugin is current: the connected file's `pluginVersion` equals the server's `bundledPluginVersion` (`pluginUpdateAvailable` is not true). An older plugin answers the commands it does not know with "Unknown method" (creating a slot needs 1.41 or later): before any new kind of call, ask the human to re-import the manifest (step 3.3) and run the plugin again.
-3. Not connected (`transport.active: "none"`): **stop and tell the human**, with the fix. Do not fall back to REST tools or another server.
-   1. Figma Desktop (not the browser), the file open.
-   2. Plugins → Development → Figma Desktop Bridge → Run; wait a few seconds.
-   3. Not in the menu: Plugins → Development → Import plugin from manifest → `~/.figma-console-mcp/plugin/manifest.json` (hidden folder on macOS: Cmd+Shift+G in the dialog).
-   4. Still failing: the server falls back to ports 9224–9232 when 9223 is taken, and old servers from other sessions hold ports (`otherInstances` in the status, `lsof -i :9223`). Re-import the manifest, restart the plugin, then restart the agent's session.
+   - The plugin is current: the connected file's `pluginVersion` equals the server's `bundledPluginVersion` (`pluginUpdateAvailable` is not true). An older plugin answers the commands it does not know with "Unknown method" (creating a slot needs 1.41 or later): before any new kind of call, ask the human to re-import the manifest (`figma-more.md`, "Not connected", step 3) and run the plugin again.
+3. Not connected (`transport.active: "none"`): **stop and tell the human**, with the fix (`figma-more.md`, "Not connected"). Do not fall back to REST tools or another server.
 4. The connection can drop between two calls. When a call fails with "Cannot connect", check the status again rather than retrying blindly.
 
 ## Calls, cheaply
@@ -42,6 +38,12 @@ At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`,
 
 ## Plugin API: what surprises
 
+The first three made most of the scripts that failed in design-fence's own measure, on every model.
+
+- The file loads page by page (`documentAccess: dynamic-page`), so what reaches across it has only an async form, and the other throws: `await figma.getNodeByIdAsync(id)`, `await figma.setCurrentPageAsync(page)` (never `figma.currentPage = page`), `await instance.getMainComponentAsync()`, `await figma.variables.getVariableByIdAsync(id)` and `getVariableCollectionByIdAsync`, `await figma.getLocalTextStylesAsync()`.
+- A variant has no `componentPropertyDefinitions`, and reading it throws: read them on its set (`node.parent`), or on a component that is in no set.
+- A property that can be mixed (`fontName`, `fontSize`, `cornerRadius`) may hold the symbol `figma.mixed`, which a script can neither return nor join into a string: return `v === figma.mixed ? 'mixed' : v`.
+- A section is sized with `resizeWithoutConstraints(w, h)`. Nothing is created to try a method out: `typeof figma.createSection().resize` leaves a section on the current page.
 - `clone()` puts the copy on the page, not in the component set: append it to the set before binding the set's properties to it.
 - `resize()` makes an auto-layout frame fixed: set the sizing modes (`layoutSizingHorizontal`, `primaryAxisSizingMode`) after it, not before.
 - A size read in the call that changed the node can be stale: verify sizes in the next call.
@@ -56,19 +58,4 @@ At most **one** screenshot (`figma_take_screenshot`, `figma_capture_screenshot`,
 - Before changing what exists, and at an approval, save a named version: `await figma.saveVersionHistoryAsync('<title>')` returns its id (`design.md`, steps 3 and 5).
 - Bind a paint with the variable's own colour: `figma.variables.setBoundVariableForPaint({type: 'SOLID', color: <the variable's value for the node>}, 'color', variable)`. A placeholder colour (black) is replaced only when the binding is new; rebinding a paint to the variable it already had keeps the placeholder, and the node shows black (`lint-gaps.js` reports it as `stale-paint`).
 - Change a variable in place (rename rather than delete and recreate: bindings follow its id). The plugin API cannot reorder variables; values come back as float32 (round them).
-- design-fence's scripts (`figma/lint-gaps.js`, `tokens.js`, `sources.js`) run from the command line, `design-fence figma <script>`: it starts its own figma-console server, which the plugin finds within seconds, so the scripts' text and the tokens file stay out of the conversation. Export the tokens with `design-fence figma tokens … --out <tokens file>`, in the format `AGENTS.md` names; `--hash-only` against `design-fence hash <tokens file>` says whether it is current. In a sandbox the server needs the network (it listens on a local port): Codex's `workspace-write` has it with `sandbox_workspace_write.network_access = true`. Through `figma_execute` (the file's text, then its call) only where the command cannot reach the bridge.
-
-## Images
-
-The bridge plugin may fail to load images (`figma_set_image_fill` times out; `createImageAsync` and `fetch` blocked by its network allowlist; base64 typed into code gets corrupted). Then use the official Figma MCP: `create_session`, `upload_assets` with `nodeIds` set to the target nodes, and `curl -F file=@…` each image to its `submitUrl`. Upload serially: bursts return 504s; retry with fresh URLs, re-encode stubborn JPEGs to PNG. Check the fills afterwards through the bridge.
-
-## Capturing HTML into Figma (`html_to_figma`)
-
-Prepare the HTML so the result needs no cleanup:
-
-- **Names** come only from `aria-label`; the importer prefixes roles ("Button - …") and adds wrapper frames for margins and every text run.
-- **CSS grid becomes a Figma grid; flex-wrap gets no auto layout.** Convert to flex rows and columns first; overlapping children become absolute layers.
-- **Colours are auto-bound to any local variable of the exact same value**, mode-dependent ones included. Nudge every colour by 1/255 so nothing matches, then bind by role.
-- SVG `viewBox` is ignored (scale paths to pixels); a canvas must become an `<img>`; icon fonts the file lacks must become SVG or library instances.
-- Nodes land beside the target node, not inside it: move them afterwards.
-- A long bridge script can be stored once with `figma.root.setPluginData` and run from there; clear it afterwards.
+- design-fence's scripts (`figma/lint-gaps.js`, `tokens.js`, `sources.js`, `bound.js`, `read.js`) run from the command line, `design-fence figma <script>`: it starts its own figma-console server, which the plugin finds within seconds, so the scripts' text and the tokens file stay out of the conversation. Export the tokens with `design-fence figma tokens … --out <tokens file>`, in the format `AGENTS.md` names; `--hash-only` against `design-fence hash <tokens file>` says whether it is current. In a sandbox the server needs the network (it listens on a local port): Codex's `workspace-write` has it with `sandbox_workspace_write.network_access = true`. Through `figma_execute` (the file's text, then its call) only where the command cannot reach the bridge.

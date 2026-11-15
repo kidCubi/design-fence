@@ -27,7 +27,7 @@ story: ""                # the Storybook title of its stories (Components/<Name>
 
 ## Properties
 
-<!-- Every variant and property; Figma's name and the code's name for each. Nothing here for later. -->
+<!-- Every variant and property; Figma's name and the code's name for each. Nothing here for later. A property with a list of values (its Default one of them) gets a story for each other value, named with it; one a story is not to show says "no story" in its row, and why. -->
 
 | Property | Values | Default | Figma | Code |
 |---|---|---|---|---|

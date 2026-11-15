@@ -144,7 +144,7 @@ The hooks are on once `node .agents/design-fence/install.mjs` has run in the clo
 
 What is not enforced stays advice: grounding, naming what ran, and, in a tool without the agent hooks, the screenshot budget of `playbooks/figma.md` (one design-tool screenshot per phase, for the human).
 
-With the design module, a git hook cannot see Figma (it needs the bridge), so what it checks is in the repo: `design-fence specs` (each spec's status and what it needs, built specs against Storybook's index, the library's stories against the specs), added to `.agents/validate.json` as a check; no raw value in the code where a token exists, with the project's own linter (a stylelint rule). What happens in Figma (its lint, the tokens file matching it) is advisory in the ledger. The design gate is the human's word, recorded in the spec (`approved_by`), as the `Reflect:` line is the author's.
+With the design module, a git hook cannot see Figma (it needs the bridge), so what it checks is in the repo, with `design-fence design`, which the installer adds to `.agents/validate.json`'s checks: each spec's status and what it needs, built specs against Storybook's index, `design/index.md` against the specs, `flows.yml` holding together, no value written raw in the library's CSS where a token belongs, and the tokens file as the export wrote it. A project adopting design-fence is told what is out of step before it is refused (`design.strict`). In the session, the agent hooks ask the human before a spec is marked approved or the tokens file is edited by hand. What happens in Figma (its lint, the tokens file still matching it) is advisory in the ledger.
 
 ## Cold start
 

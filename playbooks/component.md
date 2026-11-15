@@ -2,21 +2,21 @@
 
 A playbook for any agent or person, with the design module on: phase D6 of the design loop (`PROCESS.md`). Build an approved component in the component library, from its spec and its approved Figma node, with a story for each variant and state, and check it against both. Use it after `design.md` has recorded a component as approved, or to bring an `approved` component that has no story into the library. The app work that uses it is `ship.md` after.
 
-`AGENTS.md` names the library, its Storybook (where it is, its commands, where stories go, the title they take), the tokens file and its format, the visual check, and the neighbours' style.
+`AGENTS.md` names the library, its Storybook (where it is, its commands, where stories go, the title they take), the tokens file and its format, the visual check, and the neighbours' style. `design-fence …` below is `node .agents/design-fence/bin/design-fence.mjs …`, run from the project.
 
 ## 0. Storybook, the first time
 
 Once per project, at the first component built.
 
 - **The project has none.** Storybook is the record of every built component (`PROCESS.md`, "The design module"), so it is set up now, not before: propose it to the human (where it goes, the dependency it adds) and wait for their word, then set it up with Storybook's own installer for web components (`npm create storybook@latest`, Web Components with Vite: `@storybook/web-components-vite`) and write its place, commands and the elements' prefix into `AGENTS.md`. The installer adds sample stories and `lit` at `latest`: remove the samples (no spec stands behind them) and pin `lit`, or drop it when nothing imports it.
-- **The project has one** (adoption, `start.md`): use it as it is; a Storybook of another framework renders the new web components in its stories (React 19, Vue and Angular take custom elements as they are). Its stories, decorators and title hierarchy stay; new stories follow them. `AGENTS.md` says which Storybook is the design system's when there are several, and which folder is the library (its stories have specs; page and app stories belong to the views of `flows.yml`).
+- **The project has one** (adoption, `adopt.md`): use it as it is; a Storybook of another framework renders the new web components in its stories (React 19, Vue and Angular take custom elements as they are). Its stories, decorators and title hierarchy stay; new stories follow them. `AGENTS.md` says which Storybook is the design system's when there are several, and which folder is the library (its stories have specs; page and app stories belong to the views of `flows.yml`).
 
-Then `.agents/validate.json`'s `design` section names Storybook's index (`storybookIndex`, the `index.json` of a build or of the dev server) and the library's folder (`library`), and its checks run `design-fence specs` on the specs and the stories.
+Then `.agents/validate.json`'s `design` section names Storybook's index (`storybookIndex`, the `index.json` of a build or of the dev server) and the library's folder (`library`), and `design-fence design`, among the project's checks, holds the specs, the stories, the index, `flows.yml`, the library's CSS and the tokens file together.
 
 ## 1. Ground
 
 1. The spec (`design/components/<name>.md`, `status: approved`): its `figma` node and `figma_version`. Not approved: stop. A component is built only from an approved design (`PROCESS.md`, non-negotiable 9).
-2. The approved design, read **once** through the bridge (`figma.md`), in one `figma_execute` on the spec's node: per variant, the layout of each part (direction, sizing, gap and padding), the variables bound to each part by name, the text properties, the instances it composes. That one read is what the build and the check compare against; nothing else comes out of Figma.
+2. The approved design, read **once**: `design-fence figma read --spec <name>` gives its properties and, per variant, each part's layout (direction, sizing, gap and padding), its variables by name, its text and the instances it composes. It connects by itself: no script, no Figma call of your own, no `figma.md`. That one read is what the build and the check compare against; nothing else comes out of Figma.
 3. One or two components of the library that do the same kind of job: the code should read as if the same person wrote both.
 
 ## 2. Tokens
@@ -33,17 +33,18 @@ The code's tokens come from the tokens file `design.md` writes (step 5), through
 
 ## 4. Stories
 
-- One story per variant and state the spec lists, with the args Figma's properties have, under the title the library's stories take.
+- Under the title the library's stories take, with the args Figma's properties have: a first story for the defaults (`Default`), then one for each other value the spec's "Properties" lists, named with that value (`Secondary`, `Secondary focus`, `Mobile`); for a property that is on or off, with the property's name (`Wide`). `design-fence design` holds a built component to it. None for a pointer's states (hover, pressed), which a story cannot hold still, nor for a row of the table that says "no story", and why.
 - Each story links its Figma node when the project's Storybook shows designs (`@storybook/addon-designs`, from the spec's `figma`); the spec's `story` field is the stories' title (`Components/Text area`).
 - A component with motion gets a "Tune" story: a control for each of its settings (attributes that default to the spec's values), so the human tunes it where it runs, and the values they settle on go back into the spec.
 - A running Storybook dev server can index a story file while it is still being written and keep the failed parse ("Unable to index files") after it is whole: write each story file in one step, and restart the dev server after adding stories.
 
 ## 5. Check
 
-1. Against the Figma read of step 1, by values: the story's computed sizes, spacing, colours and type against each part's layout and bound variables. Not by eye. Best as a script the project keeps (each story's computed styles against the tokens file, in a headless browser, as its `visual` command): it found bugs a screenshot did not, and it runs again for every later change.
-2. Motion, when the spec has some: run it in Storybook, check what can be measured (it starts, it ends where the spec says, nothing moves with reduced motion), and bring it to the human: its gate is here, not in Figma.
-3. The visual regression of **all** stories (the project's `visual` command): a change in another component's story is a break, unless that component's spec says it changes.
-4. The project's checks (`design-fence check`), `design-fence specs` among them.
+1. `design-fence figma bound --spec <name> --out`: the tokens the design is bound to against those the code reads. It names what differs, and records them: `design-fence design` then holds the code to that record.
+2. By values, not by eye: the story's computed sizes, spacing, colours and type against the Figma read of step 1. Best as a script the project keeps (each story's computed styles against the tokens file, in a headless browser, as its `visual` command): it runs again for every later change.
+3. Motion, when the spec has some: run it in Storybook, check what can be measured (it starts, it ends where the spec says, nothing moves with reduced motion), and bring it to the human: its gate is here, not in Figma.
+4. The visual regression of **all** stories (the project's `visual` command): a change in another component's story is a break, unless that component's spec says it changes.
+5. The project's checks (`design-fence check`), `design-fence design` among them.
 
 ## 6. Record
 

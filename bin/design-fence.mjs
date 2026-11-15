@@ -5,12 +5,28 @@
  *     design-fence check [--all] [--no-cache] [--base <ref>]   the project's checks on what changed
  *     design-fence commits <revs…>                             commits changing code with no Reflect line
  *     design-fence rules                                       the rules, the checks, the ledger, the hooks
- *     design-fence specs                                       the design specs against Storybook's index
+ *     design-fence doctor [--bridge]                           what is in place for design-fence to work here, and the fix
+ *                                                              for what is not (--bridge: also whether Figma's bridge answers)
+ *     design-fence update                                      the submodule to its newest version, the installer run again,
+ *                                                              and the commit to make
+ *     design-fence route "<request>"                           which playbook a request needs, and the project's files it touches
+ *     design-fence design                                      the design module's check: specs against Storybook, the index,
+ *                                                              flows.yml, raw values in the library's CSS, the tokens file
+ *                                                              (`specs`: its earlier name)
+ *     design-fence spec <component>                            one spec's status, Figma node, version, story and properties
  *     design-fence hash <file>                                 a file's FNV-1a, to compare with figma/tokens.js
  *     design-fence figma lint-gaps <node id> [--properties <name,…>]   figma/*.js through the Desktop Bridge,
  *     design-fence figma sources                                       so their text stays out of the agent's
  *     design-fence figma tokens [--format dtcg|css] [--px <prefix,…>] [--ms <prefix,…>] [--hash-only] [--out <file>]
- *                      (each takes --key <file key>: refuse to run on another file)
+ *     design-fence figma bound <node id> | --spec <component> [--out]  the tokens a component's design is bound to;
+ *                      with --spec, against its code (exit 1 when they differ), and with --out, recorded beside
+ *                      the spec for `design-fence design` to hold the code to
+ *     design-fence figma read <node id> | --spec <component>           a component's design, to build it from: its
+ *                      properties and, per variant, each part's layout, sizes, variables by name, text and instances
+ *                      (each takes --key <file key>: refuse to run on another file. From validate.json's `design`,
+ *                      when it has them: the key (`fileKey`), the tokens' format, prefixes and file (`tokens`;
+ *                      `--out` alone writes there); `lint-gaps --spec <component>` takes the node and the
+ *                      properties from its spec)
  *     design-fence hook pre-commit | commit-msg <file> | pre-push   what the git hooks run
  *     design-fence agent-hook session-start | user-prompt | pre-tool-use
  *                      what the agent tools' hooks run (Claude Code, Codex: their JSON on stdin;
@@ -30,8 +46,14 @@ import {CONFIG, loadConfig, runChecks, tail} from '../lib/check.mjs';
 import {parseArgs, runInFigma, scriptCode} from '../lib/figma.mjs';
 import {git, projectRoot, stagedFiles} from '../lib/git.mjs';
 import {section} from '../lib/markdown.mjs';
+import {route, routeText} from '../lib/route.mjs';
 import {adoptionCommit, commitsMissingReflect, needingReview, reflectVerdict} from '../lib/reflect.mjs';
-import {checkSpecs, readSpecs, readStories} from '../lib/specs.mjs';
+import {spawnSync} from 'node:child_process';
+
+import {boundAgainstCode, boundFile, checkDesign, cssName, fnv1a, lockFile} from '../lib/design-check.mjs';
+import {doctor, doctorText} from '../lib/doctor.mjs';
+import {parseStatus} from '../lib/git.mjs';
+import {findSpec} from '../lib/specs.mjs';
 
 const HOME = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ZERO = /^0+$/;
@@ -44,7 +66,7 @@ const short = files => files.slice(0, 5).join(', ') + (files.length > 5 ? `, and
 
 /** Runs the checks and prints their results; true when all passed. */
 function report(root, options, print) {
-  const {node, results} = runChecks(root, {...options, log: line => print(`→ ${line}`)});
+  const {node, results, kept} = runChecks(root, {...options, log: line => print(`→ ${line}`)});
   if (!loadConfig(root)) {
     print(`No ${CONFIG}: nothing to check.`);
     return true;
@@ -60,6 +82,9 @@ function report(root, options, print) {
     if (!result.ok) {
       print(tail(result.output));
     }
+  }
+  if (!kept && results.some(result => result.ok && !result.cached)) {
+    print('The passes are not remembered: .git cannot be written here (a sandbox). The commit runs the checks again.');
   }
   return results.every(result => result.ok);
 }
@@ -148,48 +173,155 @@ function rules(root) {
   return 0;
 }
 
-function specs(root) {
-  const design = loadConfig(root)?.design;
-  if (!design) {
+function design(root) {
+  const config = loadConfig(root)?.design;
+  if (!config) {
     console.log(`The design module is off (no design section in ${CONFIG}).`);
     return 0;
   }
-  const all = readSpecs(root, design);
-  const stories = readStories(root, design);
-  const problems = checkSpecs(all, stories, design);
-  const against = stories ? `${stories.length} stories of ${design.storybookIndex}` : 'no Storybook index (design.storybookIndex)';
-  console.log(`${all.length} spec(s), against ${against}.`);
+  const {problems, warnings, notes} = checkDesign(root, config);
+  console.log(`${notes.join('; ')}.`);
   for (const problem of problems) {
     console.log(`- ${problem}`);
+  }
+  if (warnings.length) {
+    console.log(`Not refused, to bring in step (${warnings.length}; all refused once design.strict is true):`);
+    for (const warning of warnings.slice(0, 20)) {
+      console.log(`  ${warning}`);
+    }
+    if (warnings.length > 20) console.log(`  … and ${warnings.length - 20} more.`);
   }
   return problems.length ? 1 : 0;
 }
 
-/** FNV-1a (32 bits) of a text, in hex: the same as figma/tokens.js computes in Figma. */
-export function fnv1a(text) {
-  let hash = 0x811c9dc5;
-  for (const byte of Buffer.from(text, 'utf8')) {
-    hash ^= byte;
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, '0');
-}
+export {fnv1a};
 
 /**
  * A script of figma/ run through the bridge; its result printed as one line
  * of JSON. A tokens export with --out goes to the file, not to the output.
  */
-async function figmaScript([name, ...argv]) {
+async function figmaScript(root, [name, ...argv]) {
   const parsed = parseArgs(argv);
-  const {file, result} = await runInFigma(scriptCode(name, parsed), {fileKey: parsed.options.key});
+  // What the project's config already says is not asked again: the file, the tokens file and its format, a
+  // component's properties from its spec (`design` in validate.json; README, "The design module").
+  const design = loadConfig(root)?.design ?? {};
+  const options = parsed.options;
+  options.key ??= design.fileKey;
+  if (name === 'tokens' && design.tokens) {
+    options.format ??= design.tokens.format;
+    options.px ??= design.tokens.px?.join(',');
+    options.ms ??= design.tokens.ms?.join(',');
+    if (options.out === true) options.out = design.tokens.file;
+  }
+  if (name === 'lint-gaps' && typeof options.spec === 'string') {
+    const spec = findSpec(root, design, options.spec);
+    if (!spec) throw new Error(`No spec "${options.spec}" in ${design.dir ?? 'design'}/components.`);
+    options.properties ??= spec.properties.join(',');
+    parsed.args[0] ??= spec.figma;
+  }
+  // `bound --spec <component>`: its node from the spec, its record beside the spec (`--out`), its code compared.
+  // `read --spec <component>`: its node from the spec.
+  const bySpec = ['bound', 'read'].includes(name) && typeof options.spec === 'string';
+  const itsSpec = bySpec ? findSpec(root, design, options.spec) : null;
+  if (bySpec) {
+    if (!itsSpec) throw new Error(`No spec "${options.spec}" in ${design.dir ?? 'design'}/components.`);
+    parsed.args[0] ??= itsSpec.figma;
+  }
+  const {file, result} = await runInFigma(scriptCode(name, parsed), {fileKey: typeof options.key === 'string' ? options.key : undefined});
   const out = parsed.options.out;
+  if (name === 'bound') {
+    if (!Array.isArray(result?.tokens)) {
+      console.log(JSON.stringify({file, ...result}));
+      return 1;
+    }
+    const said = {file, ...result};
+    if (itsSpec && out) {
+      const record = boundFile(itsSpec);
+      fs.writeFileSync(path.join(root, record), `${JSON.stringify({component: itsSpec.name, figma: result.node, tokens: result.tokens, instances: result.instances}, null, 2)}\n`);
+      said.written = record;
+    }
+    let differs = false;
+    if (itsSpec) {
+      // The design's tokens against the component's code, where it is built: the look, by its tokens.
+      const groups = [...new Set(result.tokens.map(token => `${cssName(token.split('/')[0])}-`))];
+      const {files, missing, extra} = boundAgainstCode(root, design, itsSpec, result.tokens, groups);
+      if (files.length) {
+        said.code = {files, notRead: missing.map(found => found.token), notInTheDesign: extra.map(found => `${found.file}:${found.line} ${found.name}`)};
+        differs = missing.length + extra.length > 0;
+      }
+    }
+    console.log(JSON.stringify(said));
+    return differs ? 1 : 0;
+  }
+  if (name === 'read') {
+    console.log(JSON.stringify({file, ...result}));
+    return Array.isArray(result?.variants) ? 0 : 1;
+  }
   if (name === 'tokens' && typeof out === 'string' && typeof result?.text === 'string') {
     fs.writeFileSync(path.resolve(process.cwd(), out), result.text);
+    // What was exported, for `design-fence design` to hold the file to (lib/design-check.mjs).
+    if (design.dir || design.tokens) {
+      const written = path.relative(root, path.resolve(process.cwd(), out)).split(path.sep).join('/');
+      fs.writeFileSync(path.join(root, lockFile(design)), `${JSON.stringify({file: written, hash: result.hash, format: result.format, figma: file ?? null}, null, 2)}\n`);
+    }
     const {text, ...rest} = result;
     console.log(JSON.stringify({file, written: out, ...rest}));
     return 0;
   }
   console.log(JSON.stringify({file, ...result}));
+  return 0;
+}
+
+/** `design-fence doctor`: `lib/doctor.mjs`, and with --bridge a call through Figma's bridge. */
+async function checkUp(root, args) {
+  const lines = doctor(root, HOME);
+  if (args.includes('--bridge')) {
+    const key = loadConfig(root)?.design?.fileKey;
+    try {
+      const {file} = await runInFigma('return 1;', {fileKey: key, wait: 30_000});
+      lines.push({state: 'ok', what: `Figma's bridge answers, on "${file}"`});
+    } catch (error) {
+      lines.push({state: 'off', what: "Figma's bridge does not answer", fix: error.message});
+    }
+  }
+  const {text, off} = doctorText(lines);
+  console.log(text);
+  console.log(off ? `\n${off} to put right.` : '\nAll in place.');
+  return off ? 1 : 0;
+}
+
+/**
+ * `design-fence update`: the submodule to its remote's newest commit, then
+ * that version's installer (a new process: this file is the old one), then
+ * what to commit. It does not commit.
+ */
+function update(root) {
+  const at = path.relative(root, HOME).split(path.sep).join('/');
+  const run = (command, args) => spawnSync(command, args, {cwd: root, encoding: 'utf8'});
+  const before = new Set(parseStatus(git(root, ['status', '--porcelain', '-z'])));
+  const from = run('git', ['-C', HOME, 'rev-parse', '--short', 'HEAD']).stdout.trim();
+  const pulled = run('git', ['submodule', 'update', '--remote', '--', at]);
+  if (pulled.status !== 0) {
+    console.error(`design-fence is not a submodule here (${at}), or its remote cannot be reached:\n${pulled.stderr.trim()}`);
+    return 1;
+  }
+  const to = run('git', ['-C', HOME, 'rev-parse', '--short', 'HEAD']).stdout.trim();
+  const config = loadConfig(root);
+  const installed = run(process.execPath, [path.join(HOME, 'install.mjs'), ...(config?.design ? ['--design'] : [])]);
+  process.stdout.write(installed.stdout);
+  if (installed.status !== 0) {
+    console.error(installed.stderr.trim());
+    return 1;
+  }
+  const changed = parseStatus(git(root, ['status', '--porcelain', '-z'])).filter(file => !before.has(file));
+  if (from === to && !changed.length) {
+    console.log(`design-fence is up to date (${to}).`);
+    return 0;
+  }
+  console.log(`\ndesign-fence ${from} → ${to}. To commit the update (it does not commit):`);
+  console.log(`  git add ${changed.join(' ')}`);
+  console.log(`  git commit -m "chore: design-fence ${to}" -m "Reflect: design-fence's files, as released"`);
+  console.log(`Then: node ${at}/bin/design-fence.mjs doctor`);
   return 0;
 }
 
@@ -316,13 +448,29 @@ function main(argv) {
       return commits(root, args);
     case 'rules':
       return rules(root);
+    case 'design':
     case 'specs':
-      return specs(root);
+      return design(root);
+    case 'doctor':
+      return checkUp(root, args);
+    case 'update':
+      return update(root);
+    case 'spec': {
+      const design = loadConfig(root)?.design;
+      const spec = design && args[0] ? findSpec(root, design, args[0]) : null;
+      console.log(spec ? JSON.stringify(spec) : `No spec "${args[0] ?? ''}"${design ? '' : ': the design module is off'}.`);
+      return spec ? 0 : 1;
+    }
+    case 'route': {
+      const way = route(root, args.join(' '), loadConfig(root) ?? {});
+      console.log(routeText(way, path.relative(root, HOME).split(path.sep).join('/')) || 'Not a request: nothing to route.');
+      return 0;
+    }
     case 'hash':
       console.log(fnv1a(fs.readFileSync(path.resolve(process.cwd(), args[0]), 'utf8')));
       return 0;
     case 'figma':
-      return figmaScript(args);
+      return figmaScript(root, args);
     case 'hook':
       return hook(root, args);
     default:

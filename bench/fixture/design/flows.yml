@@ -1,0 +1,27 @@
+# The UX map of the project: its views, the actions on them, and where each
+# leads. This file is the source of truth; diagrams are generated from it
+# when someone asks, never edited. design-fence's playbooks/flows.md says how
+# to keep it.
+#
+views:
+  - id: landing
+    route: /
+    purpose: >-
+      Show what design-fence does, designers first. Its sections, top to
+      bottom: top bar (wordmark, the link to the process), creative freedom
+      (a statement), one source for every decision, how it works, enforced or
+      advice (a statement), any agent or model.
+    components: [Top bar, Link, Section]
+    figma: '4:266'
+
+actions:
+  - id: read-process
+    from: landing
+    trigger: the link at the top, or the link in "How it works"
+    to: 'external: https://github.com/kidCubi/design-fence/blob/main/PROCESS.md'
+    when: ''
+
+flows:
+  - id: read-the-process
+    goal: A developer reads how work moves from a request to main
+    steps: [read-process]

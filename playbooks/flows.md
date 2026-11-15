@@ -21,7 +21,7 @@ Before a change to something users see, read the views that show the components 
 1. The routes: the project's command, or the router's configuration.
 2. For each route's view: the components it renders, its links and navigation calls, its forms and where they lead.
 3. Write what is, with `unsure: true` where the code does not say (a navigation built at runtime, a condition read from data), and list those for the human.
-4. Each route the map cannot place, and each view in the map with no route in the code, is a gap (`start.md`, "Adopt", step 4).
+4. Each route the map cannot place, and each view in the map with no route in the code, is a gap (`adopt.md`, step 4).
 
 ## Draw it
 

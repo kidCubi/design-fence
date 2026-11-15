@@ -198,11 +198,121 @@ test('a bound paint that shows another colour than its variable is found', async
 
 const {parseArgs, runInFigma, scriptCode} = await import('../lib/figma.mjs');
 
+test("bound: the variables of a component's own layers, every variant, not its set's frame nor its instances' insides", async () => {
+  const bound = new Function(`${fs.readFileSync(path.join(HOME, 'figma/bound.js'), 'utf8')}\nreturn bound;`)();
+  const names = {pad: 'space/3', gap: 'space/8', frame: 'line/frame', focus: 'line/focus', text: 'text/default', size: 'font-size/body', inner: 'surface/raised', blur: 'shadow/soft', gone: null};
+  const label = {type: 'TEXT', name: 'Label', fills: [{boundVariables: {color: {id: 'text'}}}], textStyleId: 'S:1'};
+  const icon = {type: 'INSTANCE', name: 'Icon', boundVariables: {paddingLeft: {id: 'inner'}}, getMainComponentAsync: async () => ({name: 'Size=Small', parent: {type: 'COMPONENT_SET', name: 'Icon'}})};
+  const variant = (stroke, extra = {}) => ({type: 'COMPONENT', name: 'State', boundVariables: {paddingLeft: {id: 'pad'}, paddingTop: {id: 'pad'}}, strokes: [{boundVariables: {color: {id: stroke}}}], children: [label, icon], ...extra});
+  const set = {type: 'COMPONENT_SET', name: 'Button', boundVariables: {itemSpacing: {id: 'gap'}}, children: [variant('frame'), variant('focus', {effects: [{boundVariables: {radius: {id: 'blur'}, color: {id: 'gone'}}}]})]};
+  globalThis.figma = {
+    getNodeByIdAsync: async id => ({'1:1': set, '1:2': {type: 'FRAME', name: 'Hero'}})[id] ?? null,
+    getStyleByIdAsync: async () => ({boundVariables: {fontSize: {id: 'size'}}}),
+    variables: {getVariableByIdAsync: async id => (names[id] ? {name: names[id]} : null)},
+  };
+  assert.deepEqual(await bound('1:1'), {node: '1:1', name: 'Button', tokens: ['font-size/body', 'line/focus', 'line/frame', 'shadow/soft', 'space/3', 'text/default'], instances: ['Icon']});
+  assert.match((await bound('1:2')).error, /a frame, not a component/);
+  assert.equal((await bound('9:9')).error, 'not found');
+});
+
+test("readDesign: a component's properties, its first variant part by part with what is set on each (a bound value by its variable's name), the others by what differs", async () => {
+  const readDesign = new Function(`${fs.readFileSync(path.join(HOME, 'figma/read.js'), 'utf8')}\nreturn readDesign;`)();
+  const names = {s4: 'space/4', s6: 'space/6', frame: 'line/frame', muted: 'text/muted', small: 'font-size/small', mono: 'font/family-mono', light: 'font/weight-text', soft: 'shadow/soft'};
+  const solid = (id, extra = {}) => ({type: 'SOLID', color: {r: 0, g: 0.5, b: 1}, ...(id ? {boundVariables: {color: {id}}} : {}), ...extra});
+  const code = {
+    type: 'TEXT', name: 'Code', characters: 'npx design-fence', fills: [solid('muted')], layoutSizingHorizontal: 'FILL', layoutSizingVertical: 'HUG', width: 400, height: 20,
+    fontName: {family: 'JetBrains Mono', style: 'Light'}, fontSize: 14, lineHeight: {unit: 'AUTO'}, letterSpacing: {unit: 'PERCENT', value: 0},
+    // On a text, each binding is a list.
+    boundVariables: {fontSize: [{id: 'small'}], fontFamily: [{id: 'mono'}], fontWeight: [{id: 'light'}]},
+    componentPropertyReferences: {characters: 'Text#4:30'},
+  };
+  const button = {
+    type: 'INSTANCE', name: 'Button', visible: false, layoutSizingHorizontal: 'HUG', layoutSizingVertical: 'HUG', componentPropertyReferences: {visible: 'Copy#4:31'},
+    componentProperties: {'Label#2:4': {type: 'TEXT', value: 'Copy'}, Kind: {type: 'VARIANT', value: 'Secondary'}},
+    getMainComponentAsync: async () => ({name: 'Kind=Secondary', parent: {type: 'COMPONENT_SET', name: 'Button'}}),
+    // Its insides are the Button's own: not read.
+    fills: [solid('frame')], children: [{type: 'TEXT', name: 'Label', characters: 'Copy'}],
+  };
+  const desktop = {
+    type: 'COMPONENT', name: 'Viewport=Desktop', layoutMode: 'HORIZONTAL', itemSpacing: 24, counterAxisAlignItems: 'CENTER', primaryAxisAlignItems: 'MIN',
+    paddingTop: 16, paddingBottom: 16, paddingLeft: 24, paddingRight: 24, layoutSizingHorizontal: 'FIXED', layoutSizingVertical: 'HUG', width: 590.0000610351562, height: 72,
+    boundVariables: {itemSpacing: {id: 's6'}, paddingTop: {id: 's4'}, paddingBottom: {id: 's4'}, paddingLeft: {id: 's6'}, paddingRight: {id: 's6'}},
+    fills: [], strokes: [solid('frame')], strokeWeight: 1, strokeAlign: 'INSIDE', cornerRadius: 0, topLeftRadius: 0, topRightRadius: 0, bottomRightRadius: 0, bottomLeftRadius: 0, opacity: 1, effects: [],
+    children: [code, button],
+  };
+  const styled = {type: 'TEXT', name: 'Note', characters: 'x'.repeat(130), fills: Symbol('mixed'), textStyleId: 'S:1', fontName: {family: 'Public Sans', style: 'Regular'}, fontSize: 12, lineHeight: {unit: 'PIXELS', value: 18}, letterSpacing: {unit: 'PIXELS', value: 0.5}, textAlignHorizontal: 'CENTER', textCase: 'UPPER', layoutSizingHorizontal: 'HUG', layoutSizingVertical: 'HUG'};
+  const box = {
+    type: 'RECTANGLE', name: 'Mark', layoutSizingHorizontal: 'FIXED', layoutSizingVertical: 'FIXED', width: 8, height: 8, layoutPositioning: 'ABSOLUTE', x: 4, y: 6.004,
+    fills: [solid(null, {opacity: 0.5}), {type: 'GRADIENT_LINEAR'}, solid('frame', {visible: false})], strokes: [],
+    cornerRadius: Symbol('mixed'), topLeftRadius: 4, topRightRadius: 4, bottomRightRadius: 0, bottomLeftRadius: 0, opacity: 0.5,
+    effects: [{type: 'DROP_SHADOW', color: {r: 0, g: 0, b: 0, a: 0.25}, offset: {x: 0, y: 2}, radius: 4, spread: 0, boundVariables: {radius: {id: 'soft'}}}, {type: 'LAYER_BLUR', radius: 2, visible: false}],
+  };
+  const mobile = {
+    type: 'COMPONENT', name: 'Viewport=Mobile', layoutMode: 'VERTICAL', itemSpacing: 12, primaryAxisAlignItems: 'SPACE_BETWEEN', counterAxisAlignItems: 'MIN',
+    paddingTop: 16, paddingBottom: 16, paddingLeft: 16, paddingRight: 16, boundVariables: {paddingTop: {id: 's4'}, paddingBottom: {id: 's4'}, paddingLeft: {id: 's4'}, paddingRight: {id: 's4'}},
+    layoutSizingHorizontal: 'FILL', layoutSizingVertical: 'HUG', minWidth: 320, maxWidth: null, width: 343, height: 120,
+    fills: [solid(null)], strokes: [solid('frame')], strokeWeight: Symbol('mixed'), strokeTopWeight: 1, strokeRightWeight: 0, strokeBottomWeight: 1, strokeLeftWeight: 0, strokeAlign: 'CENTER',
+    children: [styled, box],
+  };
+  // A third variant: the first with another gap, its text another colour, its button shown.
+  const wide = {...desktop, name: 'Viewport=Wide', boundVariables: {...desktop.boundVariables, itemSpacing: {id: 's4'}}, children: [{...code, fills: [solid('frame')]}, {...button, visible: true}]};
+  const set = {
+    type: 'COMPONENT_SET', name: 'Command', children: [desktop, mobile, wide],
+    componentPropertyDefinitions: {Viewport: {type: 'VARIANT', defaultValue: 'Desktop', variantOptions: ['Desktop', 'Mobile']}, 'Text#4:30': {type: 'TEXT', defaultValue: 'npx design-fence'}, 'Copy#4:31': {type: 'BOOLEAN', defaultValue: true}},
+  };
+  desktop.parent = set;
+  // A variant has no definitions of its own, and reading them throws, as in Figma.
+  Object.defineProperty(desktop, 'componentPropertyDefinitions', {get: () => { throw new Error('Can only get definitions of a component set or non-variant component'); }});
+  globalThis.figma = {
+    getNodeByIdAsync: async id => ({'4:568': set, '4:244': desktop, '1:2': {type: 'FRAME', name: 'Hero'}})[id] ?? null,
+    getStyleByIdAsync: async () => ({name: 'Note/Small', boundVariables: {fontSize: {id: 'small'}}}),
+    variables: {getVariableByIdAsync: async id => (names[id] ? {name: names[id]} : null)},
+  };
+  const properties = {Viewport: {type: 'variant', default: 'Desktop', values: ['Desktop', 'Mobile']}, Text: {type: 'text', default: 'npx design-fence'}, Copy: {type: 'boolean', default: true}};
+  const first = {
+    name: 'Viewport=Desktop', width: 590, height: 'hug', layout: 'horizontal', gap: 'space/6', padding: ['space/4', 'space/6'], align: 'center', stroke: 'line/frame', strokeWeight: 1,
+    children: [
+      {name: 'Code', type: 'text', follows: {text: 'Text'}, width: 'fill', height: 'hug', fill: 'text/muted', text: 'npx design-fence', font: {family: 'font/family-mono', weight: 'font/weight-text', size: 'font-size/small'}},
+      {name: 'Button', type: 'instance', hidden: true, follows: {visible: 'Copy'}, width: 'hug', height: 'hug', component: 'Button', properties: {Label: 'Copy', Kind: 'Secondary'}},
+    ],
+  };
+  assert.deepEqual(await readDesign('4:568'), {
+    node: '4:568',
+    name: 'Command',
+    properties,
+    variants: [
+      first,
+      {
+        name: 'Viewport=Mobile',
+        sameAs: 'Viewport=Desktop',
+        // What the first sets and this one does not is null; other parts are given whole.
+        except: {
+          width: 'fill', minWidth: 320, layout: 'vertical', gap: null, padding: 'space/4', justify: 'space-between', align: null, fill: '#0080ff', strokeWeight: [1, 0], strokeAlign: 'center',
+          children: [
+            {name: 'Note', type: 'text', width: 'hug', height: 'hug', fill: 'mixed', text: `${'x'.repeat(120)}…`, style: 'Note/Small', font: {family: 'Public Sans', weight: 'Regular', size: 'font-size/small', lineHeight: '18px', letterSpacing: '0.5px'}, textAlign: 'center', case: 'upper'},
+            {name: 'Mark', type: 'rectangle', absolute: true, x: 4, y: 6, width: 8, height: 8, fill: ['#0080ff 50%', 'gradient linear'], radius: [4, 4, 0, 0], opacity: 0.5, effects: [{type: 'drop shadow', y: 2, blur: 'shadow/soft', color: '#000000 25%'}]},
+          ],
+        },
+      },
+      // The same parts: only those that differ, by name, with what differs.
+      {name: 'Viewport=Wide', sameAs: 'Viewport=Desktop', except: {gap: 'space/4', children: [{name: 'Code', fill: 'line/frame'}, {name: 'Button', hidden: null}]}},
+    ],
+  });
+  // One variant, named by its own id: its set's properties, itself alone.
+  assert.deepEqual(await readDesign('4:244'), {node: '4:244', name: 'Viewport=Desktop', properties, variants: [first]});
+  assert.match((await readDesign('1:2')).error, /a frame, not a component/);
+  assert.equal((await readDesign('9:9')).error, 'not found');
+});
+
 test('each script ends with its call, from the command line arguments', () => {
   const tail = (name, argv) => scriptCode(name, parseArgs(argv)).split('\n').at(-1);
   assert.equal(tail('lint-gaps', ['12:34', '--properties', 'Label, Tone']), 'return await lintGaps("12:34", {"properties":["Label","Tone"]});');
   assert.equal(tail('lint-gaps', ['12:34']), 'return await lintGaps("12:34", {});');
   assert.equal(tail('sources', []), 'return await sources();');
+  assert.equal(tail('bound', ['2:193', '--out']), 'return await bound("2:193");');
+  assert.throws(() => scriptCode('bound', parseArgs(['--out'])), /Name the node or the component/);
+  assert.equal(tail('read', ['4:568']), 'return await readDesign("4:568");');
+  assert.throws(() => scriptCode('read', parseArgs([])), /design-fence figma read <node id>, or --spec <component>/);
   assert.equal(
     tail('tokens', ['--format', 'css', '--px', 'space/,radius/', '--hash-only', '--out', 'src/tokens.css']),
     'return await tokens({"format":"css","px":["space/","radius/"],"ms":[],"hashOnly":true});',
@@ -243,17 +353,43 @@ test('runInFigma says what failed: no bridge, another file, the script', async (
   await assert.rejects(runInFigma('x', {server: fakeServer({fail: true}), every: 10}), /failed in Figma: boom/);
 });
 
+test('runInFigma says so when the server answers in a shape it does not know (another version)', async () => {
+  const other = reply => [
+    process.execPath,
+    '-e',
+    `require('readline').createInterface({input: process.stdin}).on('line', line => {
+      const m = JSON.parse(line);
+      if (m.id == null) return;
+      if (m.method === 'initialize') return console.log(JSON.stringify({jsonrpc: '2.0', id: m.id, result: {}}));
+      const text = JSON.stringify((${reply})(m.params.name));
+      console.log(JSON.stringify({jsonrpc: '2.0', id: m.id, result: {content: [{type: 'text', text}]}}));
+    });`,
+  ];
+  await assert.rejects(runInFigma('x', {server: other('() => ({connection: {ok: true}, file: "Kit"})'), every: 10}), /answered figma_get_status without "setup" \(it has: connection, file\): its format changed\. design-fence works with figma-console-mcp@\d/);
+  const status = '{setup: {probeResult: {success: true}}, currentFileName: "Kit"}';
+  await assert.rejects(runInFigma('x', {server: other(`name => name === 'figma_get_status' ? ${status} : {ok: true, value: 1}`), every: 10}), /answered figma_execute without "success"/);
+});
+
 test('runInFigma fails at once when the server stops, with what it said', async () => {
   const dies = [process.execPath, '-e', "console.error('npm error network: request to registry failed'); process.exit(1)"];
   await assert.rejects(runInFigma('x', {server: dies}), /figma-console stopped \(exit 1\): npm error network/);
   await assert.rejects(runInFigma('x', {server: ['no-such-command-design-fence']}), /did not start/);
 });
 
-test('figmaServer: the variable, else the newest figma-console npx has fetched, else npx', async () => {
+test('figmaServer: the variable, else the pinned figma-console where npx has fetched it, else npx with that version', async () => {
   const {figmaServer} = await import('../lib/figma.mjs');
   const cache = fs.mkdtempSync(path.join((await import('node:os')).tmpdir(), 'npx-'));
-  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', 'figma-console-mcp@latest']);
-  for (const [dir, version] of [['a', '1.9.0'], ['b', '1.10.2']]) {
+  const {FIGMA_CONSOLE} = await import('../lib/fence.mjs');
+  const pinned = FIGMA_CONSOLE.split('@')[1];
+  assert.match(pinned, /^\d+\.\d+\.\d+$/, 'a version, never latest');
+  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', FIGMA_CONSOLE]);
+  for (const [dir, version] of [['a', '1.9.0'], ['c', '99.0.0']]) {
+    const pkg = path.join(cache, dir, 'node_modules/figma-console-mcp');
+    fs.mkdirSync(pkg, {recursive: true});
+    fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({version, bin: {'figma-console-mcp': './dist/local.js'}}));
+  }
+  assert.deepEqual(figmaServer({}, cache), ['npx', '-y', FIGMA_CONSOLE], 'another version in the cache is not it');
+  for (const [dir, version] of [['b', pinned]]) {
     const pkg = path.join(cache, dir, 'node_modules/figma-console-mcp');
     fs.mkdirSync(pkg, {recursive: true});
     fs.writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({version, bin: {'figma-console-mcp': './dist/local.js'}}));
