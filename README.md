@@ -63,9 +63,7 @@ Runs that hold, of 5 (before → after)
 | Review a colleague's change | 5 → 5 | 2 → 5 | 1 → 5 | 0 → 3 |
 | Fix a bug users do not see | 5 → 5 | 5 → 5 | 5 → 5 | 0 → 5 |
 
-## Install
-
-### Via command line
+## Install via command line
 
 In the project's folder:
 
@@ -85,7 +83,7 @@ Each teammate runs it once in their clone.
 
 For an agent or a script, the answers are flags: `--yes --agents claude,codex,opencode,other --design`. `--help` lists them all.
 
-### Via prompting
+## Install via prompting
 
 Paste this prompt into your agent, in the project's folder. Put the agent's name in place of `{{agent}}`: `claude`, `codex`, `opencode`, or `other` for any other agent.
 
@@ -107,7 +105,7 @@ explain each step in one plain sentence, and ask me before anything you can't un
    the first step it suggests for this project.
 ```
 
-### Via the agent's plugin (Claude Code, Codex, OpenCode)
+### Install via agent plugin (Claude Code, Codex, OpenCode)
 
 The plugin keeps its own copy of the hooks in your agent tool, outside the project. The fence holds even if the agent edits the project's hooks.
 
