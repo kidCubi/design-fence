@@ -1,3 +1,6 @@
+
+![design-fence: A design system safeguard for your agents, beside a fencer saluting, drawn in a 1-bit dither](docs/banner@2x.png)
+
 # design-fence
 
 > Less tool calls and better design fidelity
