@@ -1,5 +1,7 @@
 # design-fence
 
+> Less tool calls and better design fidelity
+
 design-fence keeps your components from drifting away from your design system's rules, and updates them consistently only after you have reviewed the changes. It is both a workflow and a harness, installed in your project as a git submodule.
 
 1. Define: set a direction (or start from your existing project) and provide visual references.
