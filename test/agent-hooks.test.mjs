@@ -307,6 +307,33 @@ test("the design gate: marking a spec approved needs the human's word; building 
   assert.deepEqual(pre('Edit', approve), {}, "with the human's word");
 });
 
+test('the design gate, by a shell command: a spec approved already is not being approved; a draft, a new one, a path not spelled out still are', () => {
+  const root = designed();
+  const home = path.join(root, '.agents/design-fence');
+  const pre = command => decide(root, {name: 'pre-tool-use', tool: 'Bash', input: {command}, session: 's'}, {home, homedir: os.tmpdir()});
+  const toDraft = `python3 - <<'EOF'\np='design/components/top-bar.md'\ns=open(p).read()\ns=s.replace("status: built\\n","status: draft\\n")\nopen(p,'w').write(s)\nEOF`;
+  const toBuilt = "sed -i '' 's/status: approved/status: built/' design/components/command.md";
+  // An amendment sets a built spec back to draft, and a build marks an approved one built: both name the old status.
+  assert.deepEqual(pre(toDraft), {}, 'built, set back to draft');
+  assert.deepEqual(pre(toBuilt), {}, 'approved, then built, as an edit may');
+  assert.deepEqual(pre(`cd "${root}" && ${toBuilt}`), {}, 'the same from the project by its path');
+  // As a build ran it (bench, f1-gate-opus-5.5, component-build 4): another file of the folder named beside the spec.
+  assert.deepEqual(pre(`git ls-files design/components/command.bound.json && ${toBuilt} && sed -i '' 's#| Command | approved (to build) | \`components/command.md\` |#| Command | built | \`components/command.md\` |#' design/index.md`), {}, "a component's record named beside it");
+  // Still the human's word:
+  assert.match(pre("sed -i '' 's/status: draft/status: approved/' design/components/badge.md").ask, /it marks design\/components\/badge\.md approved/, 'a draft');
+  assert.match(pre("printf -- '---\\nname: Chip\\nstatus: approved\\n---\\n' > design/components/chip.md").ask, /it marks design\/components\/chip\.md approved/, 'a spec that is not there yet');
+  assert.match(pre("sed -i '' 's/status: draft/status: approved/' design/components/top-bar.md design/components/badge.md").ask, /it marks design\/components\/badge\.md approved/, 'two named, one a draft: the draft is the one said');
+  assert.match(pre("sed -i '' 's/status: draft/status: approved/' design/components/top-bar.md design/components/*.md").ask, /it marks design\/components\/top-bar\.md approved/, 'a glob beside it could be any spec');
+  assert.match(pre('for f in top-bar badge; do sed -i "" "s/status: draft/status: built/" design/components/$f.md design/components/top-bar.md; done').ask, /approved/, 'a variable in the path');
+  fs.writeFileSync(path.join(root, 'design/content/pricing.md'), '# Pricing\n\nStatus: draft\n');
+  assert.match(pre("printf 'Status: **approved**\\n' >> design/content/pricing.md").ask, /it marks design\/content\/pricing\.md approved/, "a view's words in draft");
+  // Set back to draft, the spec is a draft: marking it built again is the gate's.
+  const spec = path.join(root, 'design/components/top-bar.md');
+  fs.writeFileSync(spec, fs.readFileSync(spec, 'utf8').replace('status: built', 'status: draft'));
+  assert.match(pre("sed -i '' 's/status: draft/status: built/' design/components/top-bar.md").ask, /it marks design\/components\/top-bar\.md approved/, 'draft again, then built');
+  assert.deepEqual(pre('grep -n "status: built" design/components/top-bar.md'), {}, 'reading is free');
+});
+
 test("the tokens file is the export's: an edit by hand needs the human's word, the export does not", () => {
   const root = designed();
   const home = path.join(root, '.agents/design-fence');
