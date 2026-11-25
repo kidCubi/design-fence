@@ -850,7 +850,8 @@ function designFiles(root) {
  * gate's record, which only the human's word makes true (`playbooks/design.md`,
  * step 4). Returns the reason, or ''. Seen in an edit tool's new text for a
  * file of `design/components/` or `design/content/`, and in a shell command
- * that names one and writes the status.
+ * that names one and writes the status. A file approved already is not being
+ * approved: an edit of it, or a command that names only such files, passes.
  */
 function gateReason(root, tool, input, homedir = os.homedir()) {
   const design = designConfig(root);
@@ -862,9 +863,16 @@ function gateReason(root, tool, input, homedir = os.homedir()) {
   const approves = text => /^[+\s]*status:\s*["']?(approved|built)\b/im.test(text) || /Status:\s*\*\*approved\*\*/i.test(text);
   if (SHELL.test(tool)) {
     const command = String(input?.command ?? input?.cmd ?? '');
-    const names = command.match(new RegExp(`${dir.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&')}/(?:components|content)/[\\w.-]+\\.md`));
-    return names && /status:\s*["']?(approved|built)\b|\*\*approved\*\*/i.test(command) && !/^\s*(?:git\s|grep\b|rg\b|cat\b|head\b|sed\s+-n\b)/.test(command)
-      ? `it marks ${names[0]} approved`
+    const folder = `${dir.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&')}/(?:components|content)/`;
+    const names = command.match(new RegExp(`${folder}[\\w.-]+\\.md`, 'g')) ?? [];
+    // Already approved before this command, every spec it names: not this command's doing, as for an edit below
+    // (an approved spec set back to draft for an amendment, or marked built by its build). A path the command
+    // does not spell out (a glob, a variable, the folder itself) could be any spec: every name then counts, as
+    // before. Another file of the folder, spelled out (a component's `.bound.json`), is not one.
+    const loose = new RegExp(`${folder}(?:[\\w.-]*[*?$[{]|(?=["'\\s;|&)]|$))`).test(command);
+    const fresh = loose ? names : names.filter(file => !approves(readText(path.join(root, file))));
+    return fresh.length && /status:\s*["']?(approved|built)\b|\*\*approved\*\*/i.test(command) && !/^\s*(?:git\s|grep\b|rg\b|cat\b|head\b|sed\s+-n\b)/.test(command)
+      ? `it marks ${fresh[0]} approved`
       : '';
   }
   if (!EDIT.test(tool)) {
